@@ -6,7 +6,14 @@ import { Trophy, Sparkles } from "lucide-react";
 
 const Index = () => {
   const [selectedClubId, setSelectedClubId] = useState<string>("");
+  const [selectedClubName, setSelectedClubName] = useState<string>("");
   const [selectedGameId, setSelectedGameId] = useState<string>("");
+
+  const handleClubSelect = (clubId: string, clubName: string) => {
+    setSelectedClubId(clubId);
+    setSelectedClubName(clubName);
+    setSelectedGameId(""); // Reset game selection when club changes
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
@@ -50,12 +57,27 @@ const Index = () => {
 
           {/* Club Search */}
           <div className="max-w-2xl mx-auto">
-            <ClubSearch onClubSelect={setSelectedClubId} />
+            <ClubSearch onClubSelect={handleClubSelect} />
           </div>
 
           {/* Game List */}
           {selectedClubId && !selectedGameId && (
             <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <button
+                    onClick={() => setSelectedClubId("")}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    ← Anderen Club wählen
+                  </button>
+                  {selectedClubName && (
+                    <h3 className="text-xl font-semibold mt-2 text-foreground">
+                      {selectedClubName}
+                    </h3>
+                  )}
+                </div>
+              </div>
               <GameList 
                 clubId={selectedClubId} 
                 onGameSelect={setSelectedGameId}
