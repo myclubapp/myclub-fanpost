@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Image as ImageIcon, FileText, Palette } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { toPng } from "html-to-image";
+import { toPng, toSvg } from "html-to-image";
 import {
   Select,
   SelectContent,
@@ -55,33 +55,97 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
 
   const handleDownload = async () => {
     const targetRef = activeTab === "preview" ? previewRef : resultRef;
-    
     if (!targetRef.current) return;
 
-    try {
+    const notifyStart = () =>
       toast({
         title: "Download wird vorbereitet",
         description: "Das Bild wird erstellt...",
       });
 
-      // Find the web component element
-      const webComponent = targetRef.current.querySelector(activeTab === "preview" ? "game-preview" : "game-result");
-      
-      if (!webComponent) {
+    const notifySuccess = () =>
+      toast({
+        title: "Erfolgreich!",
+        description: "Das Bild wurde heruntergeladen",
+      });
+
+    const notifyError = () =>
+      toast({
+        title: "Fehler",
+        description:
+          "Bild konnte nicht heruntergeladen werden. Bitte versuchen Sie es erneut.",
+        variant: "destructive",
+      });
+
+    try {
+      notifyStart();
+
+      const host = targetRef.current.querySelector(
+        activeTab === "preview" ? "game-preview" : "game-result"
+      ) as HTMLElement | null;
+
+      if (!host) {
         throw new Error("Komponente nicht gefunden");
       }
 
-      // Wait a moment for the component to fully render
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Try to capture inner content of the Shadow DOM (more reliable)
+      const shadowRoot = (host as any).shadowRoot as ShadowRoot | null;
+      const captureNode =
+        (shadowRoot?.firstElementChild as HTMLElement | null) ?? host;
 
-      // Use html-to-image which supports Shadow DOM better
-      const dataUrl = await toPng(webComponent as HTMLElement, {
+      // Preload images (including CSS background-images) and fonts
+      const preloadAssets = async (rootEl: HTMLElement) => {
+        const urls = new Set<string>();
+
+        // <img> tags
+        rootEl.querySelectorAll("img").forEach((img) => {
+          const src = (img as HTMLImageElement).src;
+          if (src) urls.add(src);
+        });
+
+        // background-image urls
+        const elements = rootEl.querySelectorAll<HTMLElement>("*");
+        const urlRegex = /url\(["']?([^"')]+)["']?\)/g;
+        elements.forEach((el) => {
+          const bg = getComputedStyle(el).backgroundImage;
+          let m;
+          while ((m = urlRegex.exec(bg)) !== null) {
+            urls.add(m[1]);
+          }
+        });
+
+        await Promise.all(
+          Array.from(urls).map(
+            (u) =>
+              new Promise<void>((resolve) => {
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.onload = () => resolve();
+                img.onerror = () => resolve(); // Ignore failures to avoid blocking
+                img.src = u;
+              })
+          )
+        );
+
+        // Wait for fonts to be ready
+        try {
+          // @ts-ignore
+          await document.fonts?.ready;
+        } catch (_) {
+          // ignore
+        }
+        // Small extra delay to ensure layout settled
+        await new Promise((r) => setTimeout(r, 400));
+      };
+
+      await preloadAssets(captureNode);
+
+      const dataUrl = await toPng(captureNode, {
         backgroundColor: null,
-        pixelRatio: 2, // Higher quality
+        pixelRatio: 2,
         cacheBust: true,
       });
 
-      // Download the image
       const link = document.createElement("a");
       link.href = dataUrl;
       link.download = `${activeTab}-${gameId}-${Date.now()}.png`;
@@ -89,17 +153,39 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
       link.click();
       document.body.removeChild(link);
 
-      toast({
-        title: "Erfolgreich!",
-        description: "Das Bild wurde heruntergeladen",
-      });
+      notifySuccess();
     } catch (error) {
-      console.error("Download error:", error);
-      toast({
-        title: "Fehler",
-        description: "Bild konnte nicht heruntergeladen werden. Bitte versuchen Sie es erneut.",
-        variant: "destructive",
-      });
+      console.error("PNG export failed, trying SVG fallback:", error);
+      try {
+        const fallbackNode =
+          ((targetRef.current.querySelector(
+            activeTab === "preview" ? "game-preview" : "game-result"
+          ) as any)?.shadowRoot?.firstElementChild as HTMLElement | null) ??
+          (targetRef.current.querySelector(
+            activeTab === "preview" ? "game-preview" : "game-result"
+          ) as HTMLElement);
+
+        const svgDataUrl = await toSvg(fallbackNode, {
+          cacheBust: true,
+          backgroundColor: null,
+        });
+
+        const link = document.createElement("a");
+        link.href = svgDataUrl;
+        link.download = `${activeTab}-${gameId}-${Date.now()}.svg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        toast({
+          title: "Als SVG exportiert",
+          description:
+            "PNG-Export fehlgeschlagen, SVG wurde stattdessen heruntergeladen.",
+        });
+      } catch (svgErr) {
+        console.error("SVG fallback failed:", svgErr);
+        notifyError();
+      }
     }
   };
 
