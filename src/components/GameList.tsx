@@ -36,7 +36,22 @@ export const GameList = ({ clubId, onGameSelect }: GameListProps) => {
         if (!response.ok) throw new Error("Fehler beim Laden der Spiele");
         
         const data: Game[] = await response.json();
-        setGames(data || []);
+        
+        // Sort games by date (newest first)
+        const sortedGames = data.sort((a, b) => {
+          // Parse date format DD.MM.YYYY
+          const parseDate = (dateStr: string) => {
+            const [day, month, year] = dateStr.split('.');
+            return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          };
+          
+          const dateA = parseDate(a.date);
+          const dateB = parseDate(b.date);
+          
+          return dateB.getTime() - dateA.getTime(); // Newest first
+        });
+        
+        setGames(sortedGames || []);
       } catch (error) {
         toast({
           title: "Fehler",
