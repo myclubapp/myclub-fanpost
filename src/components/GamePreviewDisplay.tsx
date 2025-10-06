@@ -104,21 +104,21 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
   };
 
   return (
-    <Card className="shadow-[var(--shadow-card)] border-border/50">
+    <Card className="shadow-[var(--shadow-card)] border-border bg-card/50 backdrop-blur-sm">
       <CardHeader>
         <div className="flex items-center justify-between flex-wrap gap-4">
-          <CardTitle className="text-2xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          <CardTitle className="text-2xl font-bold text-foreground">
             Social Media Vorschau
           </CardTitle>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
               <Palette className="h-4 w-4 text-muted-foreground" />
-              <Label htmlFor="theme-select" className="text-sm">Theme:</Label>
+              <Label htmlFor="theme-select" className="text-sm text-muted-foreground">Theme:</Label>
               <Select value={selectedTheme} onValueChange={setSelectedTheme}>
-                <SelectTrigger id="theme-select" className="w-[140px]">
+                <SelectTrigger id="theme-select" className="w-[180px] border-border">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-card border-border">
                   {AVAILABLE_THEMES.map((theme) => (
                     <SelectItem key={theme.value} value={theme.value}>
                       {theme.label}
@@ -129,8 +129,7 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
             </div>
             <Button 
               onClick={handleDownload} 
-              variant="gradient"
-              className="gap-2"
+              className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               <Download className="h-4 w-4" />
               Als Bild exportieren
@@ -140,12 +139,12 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="preview" className="gap-2">
+          <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted/50">
+            <TabsTrigger value="preview" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <ImageIcon className="h-4 w-4" />
               Spielvorschau
             </TabsTrigger>
-            <TabsTrigger value="result" className="gap-2">
+            <TabsTrigger value="result" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <FileText className="h-4 w-4" />
               Resultat
             </TabsTrigger>
@@ -154,7 +153,7 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
           <TabsContent value="preview" className="mt-0">
             <div 
               ref={previewRef}
-              className="flex justify-center items-center p-8 bg-muted/20 rounded-lg border border-border/50"
+              className="flex justify-center items-center p-8 bg-muted/10 rounded-lg border border-border"
             >
               <game-preview
                 club={clubId}
@@ -169,7 +168,7 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
           <TabsContent value="result" className="mt-0">
             <div 
               ref={resultRef}
-              className="flex justify-center items-center p-8 bg-muted/20 rounded-lg border border-border/50"
+              className="flex justify-center items-center p-8 bg-muted/10 rounded-lg border border-border"
             >
               <game-result
                 club={clubId}

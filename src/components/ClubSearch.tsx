@@ -85,22 +85,22 @@ export const ClubSearch = ({ onClubSelect }: ClubSearchProps) => {
   }
 
   return (
-    <Card className="shadow-[var(--shadow-card)] border-border/50 hover:shadow-[var(--shadow-glow)] transition-all duration-300">
+    <Card className="shadow-[var(--shadow-card)] border-border hover:shadow-[var(--shadow-glow)] transition-all duration-300 bg-card/50 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="text-2xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+        <CardTitle className="text-2xl font-bold text-foreground">
           Club auswählen
         </CardTitle>
-        <CardDescription>
-          Wählen Sie Ihren Verein aus ({clubs.length} Clubs verfügbar)
+        <CardDescription className="text-muted-foreground">
+          Wähle deinen Verein aus ({clubs.length} Clubs verfügbar)
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <Select value={selectedClubId} onValueChange={handleClubChange}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full h-12 text-base border-border bg-background hover:border-primary transition-colors">
               <SelectValue placeholder="Club auswählen..." />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-card border-border">
               {clubs.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Building2 className="h-12 w-12 mx-auto mb-2 opacity-50" />
@@ -108,7 +108,11 @@ export const ClubSearch = ({ onClubSelect }: ClubSearchProps) => {
                 </div>
               ) : (
                 clubs.map((club) => (
-                  <SelectItem key={club.id} value={club.id}>
+                  <SelectItem 
+                    key={club.id} 
+                    value={club.id}
+                    className="text-base cursor-pointer hover:bg-primary/10"
+                  >
                     {club.name}
                   </SelectItem>
                 ))

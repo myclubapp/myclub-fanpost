@@ -93,13 +93,13 @@ export const GameList = ({ clubId, onGameSelect }: GameListProps) => {
   }
 
   return (
-    <Card className="shadow-[var(--shadow-card)] border-border/50">
+    <Card className="shadow-[var(--shadow-card)] border-border bg-card/50 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="text-2xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+        <CardTitle className="text-2xl font-bold text-foreground">
           Verfügbare Spiele
         </CardTitle>
-        <CardDescription>
-          Wählen Sie ein Spiel für die Vorschau aus
+        <CardDescription className="text-muted-foreground">
+          Wähle ein Spiel für die Vorschau aus
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -107,13 +107,13 @@ export const GameList = ({ clubId, onGameSelect }: GameListProps) => {
           {games.map((game) => (
             <div
               key={game.id}
-              className="group p-4 rounded-lg border border-border bg-card hover:bg-accent/5 hover:border-primary/50 transition-all duration-300 cursor-pointer"
+              className="group p-5 rounded-lg border border-border bg-background hover:bg-primary/5 hover:border-primary transition-all duration-300 cursor-pointer"
               onClick={() => onGameSelect(game.id)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 space-y-2">
-                  <div className="font-semibold text-lg">
-                    {game.teamHome} vs {game.teamAway}
+                  <div className="font-semibold text-lg text-foreground">
+                    {game.teamHome} <span className="text-muted-foreground">vs</span> {game.teamAway}
                   </div>
                   {game.result && game.result !== "-:-" && (
                     <div className="text-sm font-medium text-primary">
