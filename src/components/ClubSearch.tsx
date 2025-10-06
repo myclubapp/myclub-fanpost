@@ -35,6 +35,7 @@ export const ClubSearch = ({ onClubSelect }: ClubSearchProps) => {
         if (!response.ok) throw new Error("Fehler beim Laden der Clubs");
         
         const data = await response.json();
+        console.log("Clubs API Response:", data);
         
         // Extract unique clubs from the games data
         const clubMap = new Map<string, Club>();
@@ -42,10 +43,17 @@ export const ClubSearch = ({ onClubSelect }: ClubSearchProps) => {
         if (Array.isArray(data)) {
           data.forEach((game: any) => {
             if (game.clubId) {
+              // Try to extract a meaningful club name
+              const clubName = game.teamHome?.includes(game.clubId) 
+                ? game.teamHome 
+                : game.teamAway?.includes(game.clubId)
+                ? game.teamAway
+                : game.teamHome || game.teamAway || game.name || game.clubId;
+              
               if (!clubMap.has(game.clubId)) {
                 clubMap.set(game.clubId, {
                   clubId: game.clubId,
-                  name: game.teamHome || game.teamAway || game.clubId,
+                  name: clubName,
                 });
               }
             }
@@ -56,9 +64,18 @@ export const ClubSearch = ({ onClubSelect }: ClubSearchProps) => {
           a.name.localeCompare(b.name)
         );
         
+        console.log("Extracted clubs:", clubsList);
         setClubs(clubsList);
         setFilteredClubs(clubsList);
+        
+        if (clubsList.length === 0) {
+          toast({
+            title: "Keine Clubs gefunden",
+            description: "Es konnten keine Clubs geladen werden. Versuchen Sie es später erneut.",
+          });
+        }
       } catch (error) {
+        console.error("Error fetching clubs:", error);
         toast({
           title: "Fehler",
           description: "Clubs konnten nicht geladen werden",
