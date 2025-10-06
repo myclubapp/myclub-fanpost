@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Image as ImageIcon, FileText, Palette } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import html2canvas from "html2canvas";
+import { toPng } from "html-to-image";
 import {
   Select,
   SelectContent,
@@ -72,33 +72,27 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
       }
 
       // Wait a moment for the component to fully render
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Capture the component as canvas
-      const canvas = await html2canvas(webComponent as HTMLElement, {
+      // Use html-to-image which supports Shadow DOM better
+      const dataUrl = await toPng(webComponent as HTMLElement, {
         backgroundColor: null,
-        scale: 2, // Higher quality
-        logging: false,
+        pixelRatio: 2, // Higher quality
+        cacheBust: true,
       });
 
-      // Convert to blob and download
-      canvas.toBlob((blob) => {
-        if (!blob) return;
-        
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `${activeTab}-${gameId}-${Date.now()}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+      // Download the image
+      const link = document.createElement("a");
+      link.href = dataUrl;
+      link.download = `${activeTab}-${gameId}-${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-        toast({
-          title: "Erfolgreich!",
-          description: "Das Bild wurde heruntergeladen",
-        });
-      }, "image/png");
+      toast({
+        title: "Erfolgreich!",
+        description: "Das Bild wurde heruntergeladen",
+      });
     } catch (error) {
       console.error("Download error:", error);
       toast({
