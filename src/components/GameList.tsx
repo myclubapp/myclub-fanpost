@@ -5,12 +5,14 @@ import { Calendar, MapPin, Clock, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Game {
-  gameId: string;
-  date: string;
+  id: string;
+  name: string;
+  result: string;
+  teamHome: string;
+  teamAway: string;
   time: string;
-  homeTeam: string;
-  awayTeam: string;
-  location?: string;
+  date: string;
+  liga: string;
 }
 
 interface GameListProps {
@@ -33,8 +35,8 @@ export const GameList = ({ clubId, onGameSelect }: GameListProps) => {
         
         if (!response.ok) throw new Error("Fehler beim Laden der Spiele");
         
-        const data = await response.json();
-        setGames(data.games || []);
+        const data: Game[] = await response.json();
+        setGames(data || []);
       } catch (error) {
         toast({
           title: "Fehler",
@@ -89,15 +91,20 @@ export const GameList = ({ clubId, onGameSelect }: GameListProps) => {
         <div className="space-y-3">
           {games.map((game) => (
             <div
-              key={game.gameId}
+              key={game.id}
               className="group p-4 rounded-lg border border-border bg-card hover:bg-accent/5 hover:border-primary/50 transition-all duration-300 cursor-pointer"
-              onClick={() => onGameSelect(game.gameId)}
+              onClick={() => onGameSelect(game.id)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 space-y-2">
                   <div className="font-semibold text-lg">
-                    {game.homeTeam} vs {game.awayTeam}
+                    {game.teamHome} vs {game.teamAway}
                   </div>
+                  {game.result && game.result !== "-:-" && (
+                    <div className="text-sm font-medium text-primary">
+                      Resultat: {game.result}
+                    </div>
+                  )}
                   <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
@@ -107,10 +114,10 @@ export const GameList = ({ clubId, onGameSelect }: GameListProps) => {
                       <Clock className="h-4 w-4" />
                       {game.time}
                     </div>
-                    {game.location && (
+                    {game.liga && (
                       <div className="flex items-center gap-1">
                         <MapPin className="h-4 w-4" />
-                        {game.location}
+                        {game.liga}
                       </div>
                     )}
                   </div>
