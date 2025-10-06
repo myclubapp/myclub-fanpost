@@ -1,16 +1,18 @@
 import { useState, useEffect } from "react";
-import { Search, Building2, Users } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Building2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Club {
-  clubId: string;
+  id: string;
   name: string;
-  teamHome?: string;
-  teamAway?: string;
-  [key: string]: any;
 }
 
 interface ClubSearchProps {
@@ -19,8 +21,7 @@ interface ClubSearchProps {
 
 export const ClubSearch = ({ onClubSelect }: ClubSearchProps) => {
   const [clubs, setClubs] = useState<Club[]>([]);
-  const [filteredClubs, setFilteredClubs] = useState<Club[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedClubId, setSelectedClubId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -34,41 +35,15 @@ export const ClubSearch = ({ onClubSelect }: ClubSearchProps) => {
         
         if (!response.ok) throw new Error("Fehler beim Laden der Clubs");
         
-        const data = await response.json();
-        console.log("Clubs API Response:", data);
+        const data: Club[] = await response.json();
         
-        // Extract unique clubs from the games data
-        const clubMap = new Map<string, Club>();
-        
-        if (Array.isArray(data)) {
-          data.forEach((game: any) => {
-            if (game.clubId) {
-              // Try to extract a meaningful club name
-              const clubName = game.teamHome?.includes(game.clubId) 
-                ? game.teamHome 
-                : game.teamAway?.includes(game.clubId)
-                ? game.teamAway
-                : game.teamHome || game.teamAway || game.name || game.clubId;
-              
-              if (!clubMap.has(game.clubId)) {
-                clubMap.set(game.clubId, {
-                  clubId: game.clubId,
-                  name: clubName,
-                });
-              }
-            }
-          });
-        }
-        
-        const clubsList = Array.from(clubMap.values()).sort((a, b) => 
+        const sortedClubs = data.sort((a, b) => 
           a.name.localeCompare(b.name)
         );
         
-        console.log("Extracted clubs:", clubsList);
-        setClubs(clubsList);
-        setFilteredClubs(clubsList);
+        setClubs(sortedClubs);
         
-        if (clubsList.length === 0) {
+        if (sortedClubs.length === 0) {
           toast({
             title: "Keine Clubs gefunden",
             description: "Es konnten keine Clubs geladen werden. Versuchen Sie es später erneut.",
@@ -89,21 +64,12 @@ export const ClubSearch = ({ onClubSelect }: ClubSearchProps) => {
     fetchClubs();
   }, [toast]);
 
-  useEffect(() => {
-    if (searchTerm.trim() === "") {
-      setFilteredClubs(clubs);
-    } else {
-      const filtered = clubs.filter(
-        (club) =>
-          club.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          club.clubId.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredClubs(filtered);
+  const handleClubChange = (clubId: string) => {
+    setSelectedClubId(clubId);
+    const selectedClub = clubs.find((club) => club.id === clubId);
+    if (selectedClub) {
+      onClubSelect(selectedClub.id, selectedClub.name);
     }
-  }, [searchTerm, clubs]);
-
-  const handleClubSelect = (club: Club) => {
-    onClubSelect(club.clubId, club.name);
   };
 
   if (loading) {
@@ -125,54 +91,30 @@ export const ClubSearch = ({ onClubSelect }: ClubSearchProps) => {
           Club auswählen
         </CardTitle>
         <CardDescription>
-          Suchen Sie nach Ihrem Verein ({clubs.length} Clubs verfügbar)
+          Wählen Sie Ihren Verein aus ({clubs.length} Clubs verfügbar)
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Club-Name oder ID suchen..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 transition-all duration-300 focus:shadow-md"
-            />
-          </div>
-
-          <ScrollArea className="h-[400px] rounded-md border border-border/50">
-            <div className="space-y-2 p-2">
-              {filteredClubs.length === 0 ? (
+          <Select value={selectedClubId} onValueChange={handleClubChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Club auswählen..." />
+            </SelectTrigger>
+            <SelectContent>
+              {clubs.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Building2 className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>Keine Clubs gefunden</p>
+                  <p>Keine Clubs verfügbar</p>
                 </div>
               ) : (
-                filteredClubs.map((club) => (
-                  <div
-                    key={club.clubId}
-                    onClick={() => handleClubSelect(club)}
-                    className="group p-4 rounded-lg border border-border bg-card hover:bg-accent/5 hover:border-primary/50 transition-all duration-300 cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-md bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                        <Users className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                          {club.name}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {club.clubId}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                clubs.map((club) => (
+                  <SelectItem key={club.id} value={club.id}>
+                    {club.name}
+                  </SelectItem>
                 ))
               )}
-            </div>
-          </ScrollArea>
+            </SelectContent>
+          </Select>
         </div>
       </CardContent>
     </Card>
