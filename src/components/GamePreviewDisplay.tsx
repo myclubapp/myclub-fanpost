@@ -21,11 +21,7 @@ interface GamePreviewDisplayProps {
 
 const AVAILABLE_THEMES = [
   { value: "myclub", label: "myclub" },
-  { value: "dark", label: "Dark" },
-  { value: "light", label: "Light" },
-  { value: "blue", label: "Blue" },
-  { value: "red", label: "Red" },
-  { value: "green", label: "Green" },
+  { value: "kadetten-unihockey", label: "Kadetten Unihockey" },
 ];
 
 // Declare the custom web components
