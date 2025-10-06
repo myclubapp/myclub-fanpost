@@ -1,0 +1,126 @@
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Calendar, MapPin, Clock, ChevronRight } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+interface Game {
+  gameId: string;
+  date: string;
+  time: string;
+  homeTeam: string;
+  awayTeam: string;
+  location?: string;
+}
+
+interface GameListProps {
+  clubId: string;
+  onGameSelect: (gameId: string) => void;
+}
+
+export const GameList = ({ clubId, onGameSelect }: GameListProps) => {
+  const [games, setGames] = useState<Game[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchGames = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(
+          `https://europe-west6-myclubmanagement.cloudfunctions.net/gamePreviewClubGames?clubId=${clubId}`
+        );
+        
+        if (!response.ok) throw new Error("Fehler beim Laden der Spiele");
+        
+        const data = await response.json();
+        setGames(data.games || []);
+      } catch (error) {
+        toast({
+          title: "Fehler",
+          description: "Spiele konnten nicht geladen werden",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGames();
+  }, [clubId, toast]);
+
+  if (loading) {
+    return (
+      <Card className="shadow-[var(--shadow-card)]">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (games.length === 0) {
+    return (
+      <Card className="shadow-[var(--shadow-card)]">
+        <CardContent className="pt-6">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">
+              Keine Spiele für diesen Club gefunden
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="shadow-[var(--shadow-card)] border-border/50">
+      <CardHeader>
+        <CardTitle className="text-2xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          Verfügbare Spiele
+        </CardTitle>
+        <CardDescription>
+          Wählen Sie ein Spiel für die Vorschau aus
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {games.map((game) => (
+            <div
+              key={game.gameId}
+              className="group p-4 rounded-lg border border-border bg-card hover:bg-accent/5 hover:border-primary/50 transition-all duration-300 cursor-pointer"
+              onClick={() => onGameSelect(game.gameId)}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex-1 space-y-2">
+                  <div className="font-semibold text-lg">
+                    {game.homeTeam} vs {game.awayTeam}
+                  </div>
+                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      {game.date}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      {game.time}
+                    </div>
+                    {game.location && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-4 w-4" />
+                        {game.location}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-300" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
