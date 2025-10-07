@@ -34,8 +34,15 @@ const Index = () => {
     if (sport) setSelectedSport(sport);
     if (clubId) setSelectedClubId(clubId);
     if (teamId) setSelectedTeamId(teamId);
-    if (gameId && !selectedGameIds.includes(gameId)) {
-      setSelectedGameIds([gameId]);
+    if (gameId) {
+      // Split comma-separated game IDs
+      const gameIdsFromUrl = gameId.split(',').map(id => id.trim()).filter(id => id);
+      // Only update if the game IDs are different
+      const currentIdsStr = selectedGameIds.sort().join(',');
+      const newIdsStr = gameIdsFromUrl.sort().join(',');
+      if (currentIdsStr !== newIdsStr) {
+        setSelectedGameIds(gameIdsFromUrl);
+      }
     }
   }, [sport, clubId, teamId, gameId]);
 
@@ -128,7 +135,9 @@ const Index = () => {
   const handleGameSelect = (gameIds: string[], hasResults: boolean[]) => {
     setSelectedGameIds(gameIds);
     setGamesHaveResults(hasResults);
-    navigate(`/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIds[0]}`);
+    // Join multiple game IDs with comma for URL
+    const gameIdsParam = gameIds.join(',');
+    navigate(`/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIdsParam}`);
   };
 
   return (
