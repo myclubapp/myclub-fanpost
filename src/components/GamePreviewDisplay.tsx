@@ -17,7 +17,10 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ImageCropper } from "./ImageCropper";
 
+type SportType = "unihockey" | "volleyball" | "handball";
+
 interface GamePreviewDisplayProps {
+  sportType: SportType;
   clubId: string;
   gameId: string;
 }
@@ -40,7 +43,7 @@ declare global {
   }
 }
 
-export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) => {
+export const GamePreviewDisplay = ({ sportType, clubId, gameId }: GamePreviewDisplayProps) => {
   const previewRef = useRef<HTMLDivElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -51,6 +54,10 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [isHomeGame, setIsHomeGame] = useState(false);
+
+  // Add "su-" prefix for Swiss Unihockey
+  const prefixedClubId = sportType === "unihockey" ? `su-${clubId}` : clubId;
+  const prefixedGameId = sportType === "unihockey" ? `su-${gameId}` : gameId;
 
   useEffect(() => {
     // Load the web component script
@@ -272,8 +279,8 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
               className="flex justify-center items-center p-8 bg-muted/10 rounded-lg border border-border"
             >
               <game-preview
-                club={clubId}
-                game={gameId}
+                club={prefixedClubId}
+                game={prefixedGameId}
                 width="600"
                 height="600"
                 theme={selectedTheme}
@@ -289,8 +296,8 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
               className="flex justify-center items-center p-8 bg-muted/10 rounded-lg border border-border"
             >
               <game-result
-                club={clubId}
-                game={gameId}
+                club={prefixedClubId}
+                game={prefixedGameId}
                 width="600"
                 height="600"
                 theme={selectedTheme}
