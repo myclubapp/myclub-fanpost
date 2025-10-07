@@ -7,6 +7,7 @@ import { GamePreviewDisplay } from "@/components/GamePreviewDisplay";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import myclubLogo from "@/assets/myclub-logo.png";
 
 export type SportType = "unihockey" | "volleyball" | "handball";
@@ -127,12 +128,14 @@ const Index = () => {
                       <Label htmlFor="volleyball" className="text-base font-medium cursor-pointer flex-1">
                         Volleyball
                       </Label>
+                      <Badge variant="secondary" className="ml-auto">Coming soon</Badge>
                     </div>
                     <div className="flex items-center space-x-3 p-4 rounded-lg border border-border hover:border-primary transition-colors cursor-pointer bg-background">
                       <RadioGroupItem value="handball" id="handball" />
                       <Label htmlFor="handball" className="text-base font-medium cursor-pointer flex-1">
                         Handball
                       </Label>
+                      <Badge variant="secondary" className="ml-auto">Coming soon</Badge>
                     </div>
                   </RadioGroup>
                 </CardContent>
