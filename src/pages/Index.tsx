@@ -146,14 +146,25 @@ const Index = () => {
       <header className="border-b border-border/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                setSelectedSport("");
+                setSelectedClubId("");
+                setSelectedClubName("");
+                setSelectedTeamId("");
+                setSelectedTeamName("");
+                setSelectedGameIds([]);
+                navigate("/");
+              }}
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
+            >
               <img src={myclubLogo} alt="myclub" className="h-10 w-auto" />
               <div className="border-l border-border/50 pl-3">
                 <h1 className="text-xl font-bold text-foreground">
                   FanPost
                 </h1>
               </div>
-            </div>
+            </button>
           </div>
         </div>
       </header>
