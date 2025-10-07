@@ -21,8 +21,11 @@ interface GamePreviewDisplayProps {
 }
 
 const AVAILABLE_THEMES = [
-  { value: "myclub", label: "myclub" },
   { value: "kadetten-unihockey", label: "Kadetten Unihockey" },
+  { value: "myclub-light", label: "MyClub Light" },
+  { value: "myclub-dark", label: "MyClub Dark" },
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
 ];
 
 // Declare the custom web components
@@ -41,7 +44,7 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("preview");
-  const [selectedTheme, setSelectedTheme] = useState("myclub");
+  const [selectedTheme, setSelectedTheme] = useState("myclub-light");
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
 
   useEffect(() => {
