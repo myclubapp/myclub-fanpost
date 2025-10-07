@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Image as ImageIcon, FileText, Palette, Upload, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { toPng } from "html-to-image";
+import { saveSvgAsPng } from "save-svg-as-png";
 import {
   Select,
   SelectContent,
@@ -142,17 +142,7 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
         throw new Error("Kein SVG-Element gefunden");
       }
 
-      // Clone the SVG and add it to a temporary container in the light DOM
-      const container = document.createElement("div");
-      container.style.position = "absolute";
-      container.style.left = "-9999px";
-      container.style.top = "-9999px";
-      document.body.appendChild(container);
-
-      const svgClone = svgElement.cloneNode(true) as SVGElement;
-      container.appendChild(svgClone);
-
-      // Get dimensions from viewBox
+      // Get dimensions from viewBox for accurate sizing
       let width = 600;
       let height = 600;
 
@@ -162,28 +152,13 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
         height = vb.height;
       }
 
-      // Set explicit dimensions on the clone and container
-      svgClone.setAttribute("width", width.toString());
-      svgClone.setAttribute("height", height.toString());
-      container.style.width = `${width}px`;
-      container.style.height = `${height}px`;
-
-      // Convert to PNG using html-to-image on the container
-      const dataUrl = await toPng(container, {
+      const options = {
+        scale: 2,
         width,
         height,
-        pixelRatio: 2,
-        cacheBust: true,
-      });
+      };
 
-      // Clean up
-      document.body.removeChild(container);
-
-      // Download the image
-      const link = document.createElement("a");
-      link.download = `${activeTab}-${gameId}-${Date.now()}.png`;
-      link.href = dataUrl;
-      link.click();
+      await saveSvgAsPng(svgElement, `${activeTab}-${gameId}-${Date.now()}.png`, options);
       
       notifySuccess();
     } catch (error) {
