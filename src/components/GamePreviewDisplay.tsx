@@ -211,16 +211,18 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
             Social Media Vorschau
           </CardTitle>
           <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-2">
-              <Checkbox 
-                id="home-game" 
-                checked={isHomeGame}
-                onCheckedChange={(checked) => setIsHomeGame(checked as boolean)}
-              />
-              <Label htmlFor="home-game" className="text-sm text-muted-foreground cursor-pointer">
-                Ist Heimspiel
-              </Label>
-            </div>
+            {activeTab === "preview" && (
+              <div className="flex items-center gap-2">
+                <Checkbox 
+                  id="home-game" 
+                  checked={isHomeGame}
+                  onCheckedChange={(checked) => setIsHomeGame(checked as boolean)}
+                />
+                <Label htmlFor="home-game" className="text-sm text-muted-foreground cursor-pointer">
+                  Ist Heimspiel
+                </Label>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <Palette className="h-4 w-4 text-muted-foreground" />
               <Label htmlFor="theme-select" className="text-sm text-muted-foreground">Theme:</Label>
