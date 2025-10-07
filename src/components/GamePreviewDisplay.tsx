@@ -65,6 +65,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [isHomeGame, setIsHomeGame] = useState(false);
+  const [showResultDetail, setShowResultDetail] = useState(false);
   const [svgDimensions, setSvgDimensions] = useState({ width: "400", height: "400" });
 
   // Map sport type to API type
@@ -353,13 +354,25 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
             <div className="flex items-center gap-4 flex-wrap">
               {activeTab === "preview" && (
                 <div className="flex items-center gap-2">
-                  <Checkbox 
-                    id="home-game" 
+                  <Checkbox
+                    id="home-game"
                     checked={isHomeGame}
                     onCheckedChange={(checked) => setIsHomeGame(checked as boolean)}
                   />
                   <Label htmlFor="home-game" className="text-sm text-muted-foreground cursor-pointer">
                     Ist Heimspiel
+                  </Label>
+                </div>
+              )}
+              {activeTab === "result" && (
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="result-detail"
+                    checked={showResultDetail}
+                    onCheckedChange={(checked) => setShowResultDetail(checked as boolean)}
+                  />
+                  <Label htmlFor="result-detail" className="text-sm text-muted-foreground cursor-pointer">
+                    Details anzeigen
                   </Label>
                 </div>
               )}
@@ -451,6 +464,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
                     height={svgDimensions.height}
                     theme={selectedTheme}
                     ishomegame={isHomeGame.toString()}
+                    showresultdetail={showResultDetail.toString()}
                     {...(backgroundImage && { backgroundimage: backgroundImage })}
                     style={{ width: '100%', height: 'auto', display: 'block' }}
                   />
