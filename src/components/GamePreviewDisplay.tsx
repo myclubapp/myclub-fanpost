@@ -21,7 +21,7 @@ type SportType = "unihockey" | "volleyball" | "handball";
 
 interface GamePreviewDisplayProps {
   sportType: SportType;
-  clubId: string;
+  teamId: string;
   gameId: string;
 }
 
@@ -43,7 +43,7 @@ declare global {
   }
 }
 
-export const GamePreviewDisplay = ({ sportType, clubId, gameId }: GamePreviewDisplayProps) => {
+export const GamePreviewDisplay = ({ sportType, teamId, gameId }: GamePreviewDisplayProps) => {
   const previewRef = useRef<HTMLDivElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -55,8 +55,8 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameId }: GamePreviewDis
   const [showCropper, setShowCropper] = useState(false);
   const [isHomeGame, setIsHomeGame] = useState(false);
 
-  // Add "su-" prefix for Swiss Unihockey
-  const prefixedClubId = sportType === "unihockey" ? `su-${clubId}` : clubId;
+  // Add "su-" prefix for Swiss Unihockey (API expects teamId as "club" parameter)
+  const prefixedTeamId = sportType === "unihockey" ? `su-${teamId}` : teamId;
   const prefixedGameId = sportType === "unihockey" ? `su-${gameId}` : gameId;
 
   useEffect(() => {
@@ -279,7 +279,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameId }: GamePreviewDis
               className="flex justify-center items-center p-8 bg-muted/10 rounded-lg border border-border"
             >
               <game-preview
-                club={prefixedClubId}
+                club={prefixedTeamId}
                 game={prefixedGameId}
                 width="600"
                 height="600"
@@ -296,7 +296,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameId }: GamePreviewDis
               className="flex justify-center items-center p-8 bg-muted/10 rounded-lg border border-border"
             >
               <game-result
-                club={prefixedClubId}
+                club={prefixedTeamId}
                 game={prefixedGameId}
                 width="600"
                 height="600"
