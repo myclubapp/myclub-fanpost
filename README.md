@@ -1,73 +1,115 @@
-# Welcome to your Lovable project
+## FanPost – Social-Media-Spielvorschauen für Vereine
 
-## Project info
+Erstelle in Sekunden hochwertige Social-Media-Bilder zu Spielen deines Vereins. Wähle Sportart, Club, Team und Spiel(e) – die App generiert automatisch moderne Spielvorschauen zum Teilen.
 
-**URL**: https://lovable.dev/projects/eb8030d0-485e-4a3d-9857-8334c565c1d7
+![myclub logo](./src/assets/myclub-logo.png)
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+### Features
 
-**Use Lovable**
+- **Sportarten**: Unihockey (Volleyball/Handball geplant)
+- **Geführter Flow**: Sportart → Club → Team → Spielauswahl
+- **Mehrfachauswahl**: Mehrere Spiele gleichzeitig auswählen
+- **Automatische Vorschau**: Hochwertige Visualisierung mit `myclub-game-preview`
+- **Saubere URLs**: Teilbare Deep-Links inkl. Mehrfach-Spiel-IDs
+- **UI-Komponenten**: Moderne Oberfläche mit shadcn-ui, Tailwind CSS und Radix UI
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/eb8030d0-485e-4a3d-9857-8334c565c1d7) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+### Tech-Stack
 
-**Use your preferred IDE**
+- Build-Tool: Vite (React + TypeScript, SWC)
+- UI: shadcn-ui, Radix UI, Tailwind CSS
+- State & Data: React Query
+- Routing: React Router v6
+- Preview/Render: `myclub-game-preview`
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Projektstruktur (Auszug)
 
-Follow these steps:
+- `src/pages/Index.tsx`: Haupt-Flow (Sport/Club/Team/Spiele, Vorschau)
+- `src/App.tsx`: App-Shell, Routing, Provider
+- `src/components/*`: Such- und Anzeige-Komponenten (Club, Team, Spiele, Preview)
+- `src/components/ui/*`: shadcn-ui Komponenten
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+---
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Routen
 
-# Step 3: Install the necessary dependencies.
-npm i
+- `/` – Einstieg, Sportart wählen
+- `/:sport` – Clubsuche
+- `/:sport/:clubId` – Teams des Clubs
+- `/:sport/:clubId/:teamId` – Spiele des Teams
+- `/:sport/:clubId/:teamId/:gameId` – Spielvorschau; mehrere `gameId`s mit Komma trennen, z. B. `abc,def,ghi`
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+Beispiel: `/unihockey/12345/67890/a1b2,a3b4`
+
+---
+
+### Lokale Entwicklung
+
+Voraussetzungen: Node.js (empfohlen via nvm) und npm.
+
+```bash
+git clone <REPO_URL>
+cd myclub-fanpost
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Standard-Dev-Server: Port 8080 (siehe `vite.config.ts`).
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Nützliche Skripte:
 
-**Use GitHub Codespaces**
+- `npm run dev` – Entwicklungsserver starten
+- `npm run build` – Produktion builden
+- `npm run preview` – Produktionsbuild lokal serven
+- `npm run lint` – Linting ausführen
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+---
 
-## What technologies are used for this project?
+### Datenquellen
 
-This project is built with:
+- Club-/Team-/Spieldaten für Unihockey werden über eine Cloud-Function als GraphQL-ähnliche Abfrage geladen. Die URLs sind im Code hinterlegt (siehe `Index.tsx`). Volleyball/Handball sind vorbereitet, aber noch ohne Datenquelle.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Hinweis: Netzwerkfehler werden geloggt, die UI bleibt bedienbar.
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/eb8030d0-485e-4a3d-9857-8334c565c1d7) and click on Share -> Publish.
+### Nutzung (Kurz)
 
-## Can I connect a custom domain to my Lovable project?
+1. Sportart wählen
+2. Club suchen und wählen
+3. Team wählen
+4. Spiel(e) wählen – Mehrfachauswahl möglich
+5. Vorschau ansehen und Bild exportieren/teilen
 
-Yes, you can!
+Deep-Linking: Die aktuelle Auswahl spiegelt sich in der URL wider und kann geteilt werden.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+---
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+### Styling & Komponenten
+
+- Tailwind Utilities und Design-Tokens (`bg-background`, `text-foreground`, usw.)
+- shadcn-ui (z. B. `Card`, `RadioGroup`, `Badge`) und Radix UI als Basis
+- Toast/Toaster sind integriert (`ui/toaster`, `ui/sonner`)
+
+---
+
+### Deployment
+
+- Standard Vite-Setup eignet sich für statische Hosts oder Plattformen wie Vercel/Netlify.
+- Prüfe Produktionsbuild lokal:
+
+```bash
+npm run build
+npm run preview
+```
+
+---
+
+### Lizenz
+
+Falls nicht anders angegeben, proprietär. Bitte intern verwenden oder Lizenzhinweise ergänzen.
