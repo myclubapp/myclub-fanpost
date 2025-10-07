@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Image as ImageIcon, FileText, Palette, Upload, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { saveSvgAsPng } from "save-svg-as-png";
+import { toPng } from "html-to-image";
 import {
   Select,
   SelectContent,
@@ -163,25 +163,20 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
         throw new Error("Kein SVG-Element gefunden");
       }
 
-      // Get dimensions from viewBox for accurate sizing
-      let width = 600;
-      let height = 600;
+      // Convert SVG to PNG using html-to-image with high quality
+      const dataUrl = await toPng(svgElement as unknown as HTMLElement, {
+        quality: 1,
+        pixelRatio: 3,
+        backgroundColor: '#ffffff',
+        cacheBust: true,
+        skipAutoScale: false,
+      });
 
-      if (svgElement.viewBox && svgElement.viewBox.baseVal) {
-        const vb = svgElement.viewBox.baseVal;
-        width = vb.width;
-        height = vb.height;
-      }
-
-      const options = {
-        scale: 3,
-        width,
-        height,
-        encoderOptions: 1,
-        backgroundColor: 'white',
-      };
-
-      await saveSvgAsPng(svgElement, `${activeTab}-${gameId}-${Date.now()}.png`, options);
+      // Download the image
+      const link = document.createElement('a');
+      link.download = `${activeTab}-${gameId}-${Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
       
       notifySuccess();
     } catch (error) {
