@@ -26,7 +26,12 @@ const Index = () => {
   const [selectedClubName, setSelectedClubName] = useState<string>("");
   const [selectedTeamId, setSelectedTeamId] = useState<string>(teamId || "");
   const [selectedTeamName, setSelectedTeamName] = useState<string>("");
-  const [selectedGameIds, setSelectedGameIds] = useState<string[]>(gameId ? [gameId] : []);
+  const [selectedGameIds, setSelectedGameIds] = useState<string[]>(() => {
+    if (gameId) {
+      return gameId.split(',').map(id => id.trim()).filter(id => id);
+    }
+    return [];
+  });
   const [gamesHaveResults, setGamesHaveResults] = useState<boolean[]>([]);
 
   // Sync URL params with state
@@ -37,11 +42,11 @@ const Index = () => {
     if (gameId) {
       // Split comma-separated game IDs
       const gameIdsFromUrl = gameId.split(',').map(id => id.trim()).filter(id => id);
-      // Only update if the game IDs are different
-      const currentIdsStr = selectedGameIds.sort().join(',');
-      const newIdsStr = gameIdsFromUrl.sort().join(',');
-      if (currentIdsStr !== newIdsStr) {
-        setSelectedGameIds(gameIdsFromUrl);
+      setSelectedGameIds(gameIdsFromUrl);
+    } else {
+      // Reset game IDs if no gameId in URL
+      if (selectedGameIds.length > 0) {
+        setSelectedGameIds([]);
       }
     }
   }, [sport, clubId, teamId, gameId]);

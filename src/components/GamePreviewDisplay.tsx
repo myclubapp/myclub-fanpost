@@ -64,6 +64,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [isHomeGame, setIsHomeGame] = useState(false);
+  const [svgDimensions, setSvgDimensions] = useState({ width: "400", height: "400" });
 
   // Add "su-" prefix for Swiss Unihockey
   const prefixedClubId = sportType === "unihockey" ? `su-${clubId}` : clubId;
@@ -75,6 +76,25 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
     const hasAnyResult = gamesHaveResults.some(hasResult => hasResult);
     setActiveTab(hasAnyResult ? "result" : "preview");
   }, [gamesHaveResults]);
+
+  // Update SVG dimensions based on screen size
+  useEffect(() => {
+    const updateDimensions = () => {
+      const screenWidth = window.innerWidth;
+      if (screenWidth < 400) {
+        setSvgDimensions({ width: "300", height: "300" });
+      } else {
+        setSvgDimensions({ width: "400", height: "400" });
+      }
+    };
+
+    // Set initial dimensions
+    updateDimensions();
+
+    // Listen for window resize
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
 
   useEffect(() => {
     // Load the web component script
@@ -391,42 +411,49 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
           </div>
           
           <TabsContent value="preview" className="mt-0">
-            <div 
+            <div
               ref={previewRef}
-              className="flex justify-center items-center p-4 sm:p-8 bg-muted/10 rounded-lg border border-border overflow-auto"
+              className="w-full bg-muted/10 rounded-lg border border-border overflow-hidden"
             >
-              <div className="w-full max-w-[600px] aspect-square">
-                <game-preview
-                  club={prefixedClubId}
-                  game={prefixedGameId}
-                  width="600"
-                  height="600"
-                  theme={selectedTheme}
-                  ishomegame={isHomeGame.toString()}
-                  {...(backgroundImage && { backgroundimage: backgroundImage })}
-                  style={{ width: '100%', height: '100%' }}
-                />
+              <div className="w-full p-4 sm:p-8">
+                <div className={`w-full mx-auto ${prefixedGameId2 ? 'max-w-[1200px]' : 'max-w-[600px]'}`}>
+                  <game-preview
+                    key={`${prefixedGameId}-${prefixedGameId2 || 'single'}`}
+                    club={prefixedClubId}
+                    game={prefixedGameId}
+                    {...(prefixedGameId2 && { "game-2": prefixedGameId2 })}
+                    width={svgDimensions.width}
+                    height={svgDimensions.height}
+                    theme={selectedTheme}
+                    ishomegame={isHomeGame.toString()}
+                    {...(backgroundImage && { backgroundimage: backgroundImage })}
+                    style={{ width: '100%', height: 'auto', display: 'block' }}
+                  />
+                </div>
               </div>
             </div>
           </TabsContent>
           
           <TabsContent value="result" className="mt-0">
-            <div 
+            <div
               ref={resultRef}
-              className="flex justify-center items-center p-4 sm:p-8 bg-muted/10 rounded-lg border border-border overflow-auto"
+              className="w-full bg-muted/10 rounded-lg border border-border overflow-hidden"
             >
-              <div className="w-full max-w-[600px] aspect-square">
-                <game-result
-                  club={prefixedClubId}
-                  game={prefixedGameId}
-                  {...(prefixedGameId2 && { "game-2": prefixedGameId2 })}
-                  width="600"
-                  height="600"
-                  theme={selectedTheme}
-                  ishomegame={isHomeGame.toString()}
-                  {...(backgroundImage && { backgroundimage: backgroundImage })}
-                  style={{ width: '100%', height: '100%' }}
-                />
+              <div className="w-full p-4 sm:p-8">
+                <div className={`w-full mx-auto ${prefixedGameId2 ? 'max-w-[1200px]' : 'max-w-[600px]'}`}>
+                  <game-result
+                    key={`${prefixedGameId}-${prefixedGameId2 || 'single'}`}
+                    club={prefixedClubId}
+                    game={prefixedGameId}
+                    {...(prefixedGameId2 && { "game-2": prefixedGameId2 })}
+                    width={svgDimensions.width}
+                    height={svgDimensions.height}
+                    theme={selectedTheme}
+                    ishomegame={isHomeGame.toString()}
+                    {...(backgroundImage && { backgroundimage: backgroundImage })}
+                    style={{ width: '100%', height: 'auto', display: 'block' }}
+                  />
+                </div>
               </div>
             </div>
           </TabsContent>
