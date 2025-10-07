@@ -67,11 +67,8 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
   const [isHomeGame, setIsHomeGame] = useState(false);
   const [svgDimensions, setSvgDimensions] = useState({ width: "400", height: "400" });
 
-  // Add "su-" prefix for Swiss Unihockey
-  const prefixedClubId = sportType === "unihockey" ? `su-${clubId}` : clubId;
-  const prefixedGameId = sportType === "unihockey" ? `su-${gameId}` : gameId;
-  const prefixedGameId2 = gameId2 && sportType === "unihockey" ? `su-${gameId2}` : gameId2;
-  const prefixedGameId3 = gameId3 && sportType === "unihockey" ? `su-${gameId3}` : gameId3;
+  // Map sport type to API type
+  const apiType = sportType === "unihockey" ? "swissunihockey" : sportType;
 
   // Update tab when gamesHaveResults changes
   useEffect(() => {
@@ -418,13 +415,13 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
               className="w-full bg-muted/10 rounded-lg border border-border overflow-hidden"
             >
               <div className="w-full p-4 sm:p-8">
-                <div className={`w-full mx-auto ${prefixedGameId3 ? 'max-w-[1800px]' : prefixedGameId2 ? 'max-w-[1200px]' : 'max-w-[600px]'}`}>
+                <div className={`w-full mx-auto ${gameId3 ? 'max-w-[1800px]' : gameId2 ? 'max-w-[1200px]' : 'max-w-[600px]'}`}>
                   <game-preview
-                    key={`${prefixedGameId}-${prefixedGameId2 || 'single'}-${prefixedGameId3 || 'single'}`}
-                    club={prefixedClubId}
-                    game={prefixedGameId}
-                    {...(prefixedGameId2 && { "game-2": prefixedGameId2 })}
-                    {...(prefixedGameId3 && { "game-3": prefixedGameId3 })}
+                    key={`${gameId}-${gameId2 || 'single'}-${gameId3 || 'single'}`}
+                    type={apiType}
+                    game={gameId}
+                    {...(gameId2 && { "game-2": gameId2 })}
+                    {...(gameId3 && { "game-3": gameId3 })}
                     width={svgDimensions.width}
                     height={svgDimensions.height}
                     theme={selectedTheme}
@@ -443,13 +440,13 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
               className="w-full bg-muted/10 rounded-lg border border-border overflow-hidden"
             >
               <div className="w-full p-4 sm:p-8">
-                <div className={`w-full mx-auto ${prefixedGameId3 ? 'max-w-[1800px]' : prefixedGameId2 ? 'max-w-[1200px]' : 'max-w-[600px]'}`}>
+                <div className={`w-full mx-auto ${gameId3 ? 'max-w-[1800px]' : gameId2 ? 'max-w-[1200px]' : 'max-w-[600px]'}`}>
                   <game-result
-                    key={`${prefixedGameId}-${prefixedGameId2 || 'single'}-${prefixedGameId3 || 'single'}`}
-                    club={prefixedClubId}
-                    game={prefixedGameId}
-                    {...(prefixedGameId2 && { "game-2": prefixedGameId2 })}
-                    {...(prefixedGameId3 && { "game-3": prefixedGameId3 })}
+                    key={`${gameId}-${gameId2 || 'single'}-${gameId3 || 'single'}`}
+                    type={apiType}
+                    game={gameId}
+                    {...(gameId2 && { "game-2": gameId2 })}
+                    {...(gameId3 && { "game-3": gameId3 })}
                     width={svgDimensions.width}
                     height={svgDimensions.height}
                     theme={selectedTheme}
