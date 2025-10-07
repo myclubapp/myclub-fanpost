@@ -27,6 +27,7 @@ const Index = () => {
   const [selectedTeamId, setSelectedTeamId] = useState<string>(teamId || "");
   const [selectedTeamName, setSelectedTeamName] = useState<string>("");
   const [selectedGameIds, setSelectedGameIds] = useState<string[]>(gameId ? [gameId] : []);
+  const [gamesHaveResults, setGamesHaveResults] = useState<boolean[]>([]);
 
   // Sync URL params with state
   useEffect(() => {
@@ -124,8 +125,9 @@ const Index = () => {
     navigate(`/${selectedSport}/${selectedClubId}/${teamId}`);
   };
 
-  const handleGameSelect = (gameIds: string[]) => {
+  const handleGameSelect = (gameIds: string[], hasResults: boolean[]) => {
     setSelectedGameIds(gameIds);
+    setGamesHaveResults(hasResults);
     navigate(`/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIds[0]}`);
   };
 
@@ -297,6 +299,7 @@ const Index = () => {
                 sportType={selectedSport as SportType}
                 clubId={selectedClubId} 
                 gameIds={selectedGameIds}
+                gamesHaveResults={gamesHaveResults}
               />
             </div>
           )}

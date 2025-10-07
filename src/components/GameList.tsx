@@ -19,7 +19,7 @@ interface Game {
 interface GameListProps {
   sportType: SportType;
   teamId: string;
-  onGameSelect: (gameIds: string[]) => void;
+  onGameSelect: (gameIds: string[], hasResults: boolean[]) => void;
 }
 
 const SPORT_API_URLS: Record<SportType, (teamId: string) => string> = {
@@ -70,7 +70,14 @@ export const GameList = ({ sportType, teamId, onGameSelect }: GameListProps) => 
       });
       return;
     }
-    onGameSelect(selectedGameIds);
+    
+    // Check if selected games have results
+    const hasResults = selectedGameIds.map(id => {
+      const game = games.find(g => g.id === id);
+      return !!(game?.result && game.result !== "" && game.result !== "-:-");
+    });
+    
+    onGameSelect(selectedGameIds, hasResults);
   };
 
   useEffect(() => {
