@@ -174,9 +174,11 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
       }
 
       const options = {
-        scale: 2,
+        scale: 3,
         width,
         height,
+        encoderOptions: 1,
+        backgroundColor: 'white',
       };
 
       await saveSvgAsPng(svgElement, `${activeTab}-${gameId}-${Date.now()}.png`, options);
@@ -209,79 +211,80 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
         <CardTitle className="text-2xl font-bold text-foreground mb-4">
           Social Media Vorschau
         </CardTitle>
-        <div className="flex flex-col gap-4">
-          <TabsList className="grid w-full grid-cols-2 bg-muted/50">
-            <TabsTrigger value="preview" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <ImageIcon className="h-4 w-4" />
-              Spielvorschau
-            </TabsTrigger>
-            <TabsTrigger value="result" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <FileText className="h-4 w-4" />
-              Resultat
-            </TabsTrigger>
-          </TabsList>
-          
-          <div className="flex items-center gap-4 flex-wrap">
-            {activeTab === "preview" && (
-              <div className="flex items-center gap-2">
-                <Checkbox 
-                  id="home-game" 
-                  checked={isHomeGame}
-                  onCheckedChange={(checked) => setIsHomeGame(checked as boolean)}
-                />
-                <Label htmlFor="home-game" className="text-sm text-muted-foreground cursor-pointer">
-                  Ist Heimspiel
-                </Label>
-              </div>
-            )}
-            <div className="flex items-center gap-2">
-              <Palette className="h-4 w-4 text-muted-foreground" />
-              <Label htmlFor="theme-select" className="text-sm text-muted-foreground">Theme:</Label>
-              <Select value={selectedTheme} onValueChange={setSelectedTheme}>
-                <SelectTrigger id="theme-select" className="w-[180px] border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  {AVAILABLE_THEMES.map((theme) => (
-                    <SelectItem key={theme.value} value={theme.value}>
-                      {theme.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <Input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleBackgroundImageUpload}
-                className="hidden"
-                id="background-upload"
-              />
-              <Label
-                htmlFor="background-upload"
-                className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-md border border-border bg-background hover:bg-muted/50 text-sm transition-colors"
-              >
-                <Upload className="h-4 w-4" />
-                Hintergrundbild
-              </Label>
-              {backgroundImage && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleRemoveBackgroundImage}
-                  className="h-9 w-9"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="flex flex-col gap-4 mb-6">
+            <TabsList className="grid w-full grid-cols-2 bg-muted/50">
+              <TabsTrigger value="preview" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <ImageIcon className="h-4 w-4" />
+                Spielvorschau
+              </TabsTrigger>
+              <TabsTrigger value="result" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <FileText className="h-4 w-4" />
+                Resultat
+              </TabsTrigger>
+            </TabsList>
+            
+            <div className="flex items-center gap-4 flex-wrap">
+              {activeTab === "preview" && (
+                <div className="flex items-center gap-2">
+                  <Checkbox 
+                    id="home-game" 
+                    checked={isHomeGame}
+                    onCheckedChange={(checked) => setIsHomeGame(checked as boolean)}
+                  />
+                  <Label htmlFor="home-game" className="text-sm text-muted-foreground cursor-pointer">
+                    Ist Heimspiel
+                  </Label>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <Palette className="h-4 w-4 text-muted-foreground" />
+                <Label htmlFor="theme-select" className="text-sm text-muted-foreground">Theme:</Label>
+                <Select value={selectedTheme} onValueChange={setSelectedTheme}>
+                  <SelectTrigger id="theme-select" className="w-[180px] border-border">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    {AVAILABLE_THEMES.map((theme) => (
+                      <SelectItem key={theme.value} value={theme.value}>
+                        {theme.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleBackgroundImageUpload}
+                  className="hidden"
+                  id="background-upload"
+                />
+                <Label
+                  htmlFor="background-upload"
+                  className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-md border border-border bg-background hover:bg-muted/50 text-sm transition-colors"
+                >
+                  <Upload className="h-4 w-4" />
+                  Hintergrundbild
+                </Label>
+                {backgroundImage && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleRemoveBackgroundImage}
+                    className="h-9 w-9"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+          
           <TabsContent value="preview" className="mt-0">
             <div 
               ref={previewRef}
