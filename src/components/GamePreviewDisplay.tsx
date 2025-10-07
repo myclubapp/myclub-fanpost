@@ -311,7 +311,7 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
                 width="600"
                 height="600"
                 theme={selectedTheme}
-                backgroundimage={backgroundImage || undefined}
+                {...(backgroundImage && { backgroundimage: backgroundImage })}
               />
             </div>
           </TabsContent>
@@ -327,7 +327,7 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
                 width="600"
                 height="600"
                 theme={selectedTheme}
-                backgroundimage={backgroundImage || undefined}
+                {...(backgroundImage && { backgroundimage: backgroundImage })}
               />
             </div>
           </TabsContent>
