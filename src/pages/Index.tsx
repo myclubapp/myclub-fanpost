@@ -187,7 +187,7 @@ const Index = () => {
               </div>
               <GamePreviewDisplay 
                 sportType={selectedSport as SportType}
-                teamId={selectedTeamId} 
+                clubId={selectedClubId} 
                 gameId={selectedGameId}
               />
             </div>
