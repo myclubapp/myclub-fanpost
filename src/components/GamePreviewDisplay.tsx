@@ -290,35 +290,41 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
           <TabsContent value="preview" className="mt-0">
             <div 
               ref={previewRef}
-              className="flex justify-center items-center p-8 bg-muted/10 rounded-lg border border-border"
+              className="flex justify-center items-center p-4 sm:p-8 bg-muted/10 rounded-lg border border-border overflow-auto"
             >
-              <game-preview
-                club={prefixedClubId}
-                game={prefixedGameId}
-                width="600"
-                height="600"
-                theme={selectedTheme}
-                ishomegame={isHomeGame.toString()}
-                {...(backgroundImage && { backgroundimage: backgroundImage })}
-              />
+              <div className="w-full max-w-[600px] aspect-square">
+                <game-preview
+                  club={prefixedClubId}
+                  game={prefixedGameId}
+                  width="600"
+                  height="600"
+                  theme={selectedTheme}
+                  ishomegame={isHomeGame.toString()}
+                  {...(backgroundImage && { backgroundimage: backgroundImage })}
+                  style="width: 100%; height: 100%;"
+                />
+              </div>
             </div>
           </TabsContent>
           
           <TabsContent value="result" className="mt-0">
             <div 
               ref={resultRef}
-              className="flex justify-center items-center p-8 bg-muted/10 rounded-lg border border-border"
+              className="flex justify-center items-center p-4 sm:p-8 bg-muted/10 rounded-lg border border-border overflow-auto"
             >
-              <game-result
-                club={prefixedClubId}
-                game={prefixedGameId}
-                {...(prefixedGameId2 && { "game-2": prefixedGameId2 })}
-                width="600"
-                height="600"
-                theme={selectedTheme}
-                ishomegame={isHomeGame.toString()}
-                {...(backgroundImage && { backgroundimage: backgroundImage })}
-              />
+              <div className="w-full max-w-[600px] aspect-square">
+                <game-result
+                  club={prefixedClubId}
+                  game={prefixedGameId}
+                  {...(prefixedGameId2 && { "game-2": prefixedGameId2 })}
+                  width="600"
+                  height="600"
+                  theme={selectedTheme}
+                  ishomegame={isHomeGame.toString()}
+                  {...(backgroundImage && { backgroundimage: backgroundImage })}
+                  style="width: 100%; height: 100%;"
+                />
+              </div>
             </div>
           </TabsContent>
         </Tabs>
