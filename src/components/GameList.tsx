@@ -4,23 +4,28 @@ import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Clock, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+type SportType = "unihockey" | "volleyball" | "handball";
+
 interface Game {
   id: string;
-  name: string;
   result: string;
-  teamHome: string;
-  teamAway: string;
-  time: string;
   date: string;
-  liga: string;
+  time: string;
 }
 
 interface GameListProps {
-  clubId: string;
+  sportType: SportType;
+  teamId: string;
   onGameSelect: (gameId: string) => void;
 }
 
-export const GameList = ({ clubId, onGameSelect }: GameListProps) => {
+const SPORT_API_URLS: Record<SportType, (teamId: string) => string> = {
+  unihockey: (teamId) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissunihockey?query=%7B%0A%20%20games(teamId%3A%20%22${teamId}%22)%20%7B%0A%20%20%20%20id%0A%20%20%20%20result%0A%20%20%20%20date%0A%20%20%20%20time%0A%20%20%7D%0A%7D%0A`,
+  volleyball: (teamId) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissvolley?query=%7B%0A%20%20games(teamId%3A%20%22${teamId}%22)%20%7B%0A%20%20%20%20id%0A%20%20%20%20result%0A%20%20%20%20date%0A%20%20%20%20time%0A%20%20%7D%0A%7D%0A`,
+  handball: (teamId) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swisshandball?query=%7B%0A%20%20games(teamId%3A%20%22${teamId}%22)%20%7B%0A%20%20%20%20id%0A%20%20%20%20result%0A%20%20%20%20date%0A%20%20%20%20time%0A%20%20%7D%0A%7D%0A`
+};
+
+export const GameList = ({ sportType, teamId, onGameSelect }: GameListProps) => {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -29,13 +34,13 @@ export const GameList = ({ clubId, onGameSelect }: GameListProps) => {
     const fetchGames = async () => {
       setLoading(true);
       try {
-        const response = await fetch(
-          `https://europe-west6-myclubmanagement.cloudfunctions.net/gamePreviewClubGames?clubId=${clubId}`
-        );
+        const apiUrl = SPORT_API_URLS[sportType](teamId);
+        const response = await fetch(apiUrl);
         
         if (!response.ok) throw new Error("Fehler beim Laden der Spiele");
         
-        const data: Game[] = await response.json();
+        const result = await response.json();
+        const data: Game[] = result.data?.games || [];
         
         // Sort games by date (newest first)
         const sortedGames = data.sort((a, b) => {
@@ -51,8 +56,9 @@ export const GameList = ({ clubId, onGameSelect }: GameListProps) => {
           return dateB.getTime() - dateA.getTime(); // Newest first
         });
         
-        setGames(sortedGames || []);
+        setGames(sortedGames);
       } catch (error) {
+        console.error("Error fetching games:", error);
         toast({
           title: "Fehler",
           description: "Spiele konnten nicht geladen werden",
@@ -64,7 +70,7 @@ export const GameList = ({ clubId, onGameSelect }: GameListProps) => {
     };
 
     fetchGames();
-  }, [clubId, toast]);
+  }, [sportType, teamId, toast]);
 
   if (loading) {
     return (
@@ -113,7 +119,7 @@ export const GameList = ({ clubId, onGameSelect }: GameListProps) => {
               <div className="flex items-center justify-between">
                 <div className="flex-1 space-y-2">
                   <div className="font-semibold text-lg text-foreground">
-                    {game.teamHome} <span className="text-muted-foreground">vs</span> {game.teamAway}
+                    Spiel #{game.id}
                   </div>
                   {game.result && game.result !== "-:-" && (
                     <div className="text-sm font-medium text-primary">
@@ -129,12 +135,6 @@ export const GameList = ({ clubId, onGameSelect }: GameListProps) => {
                       <Clock className="h-4 w-4" />
                       {game.time}
                     </div>
-                    {game.liga && (
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        {game.liga}
-                      </div>
-                    )}
                   </div>
                 </div>
                 <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-300" />

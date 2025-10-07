@@ -167,7 +167,8 @@ const Index = () => {
                 )}
               </div>
               <GameList 
-                clubId={selectedTeamId} 
+                sportType={selectedSport as SportType}
+                teamId={selectedTeamId} 
                 onGameSelect={setSelectedGameId}
               />
             </div>
