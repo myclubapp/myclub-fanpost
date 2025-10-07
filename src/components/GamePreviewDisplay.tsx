@@ -266,13 +266,6 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
                 </Button>
               )}
             </div>
-            <Button 
-              onClick={handleDownload} 
-              className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              <Download className="h-4 w-4" />
-              Als Bild exportieren
-            </Button>
           </div>
         </div>
       </CardHeader>
@@ -330,6 +323,14 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
             </div>
           </TabsContent>
         </Tabs>
+        
+        <Button 
+          onClick={handleDownload} 
+          className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground mt-6"
+        >
+          <Download className="h-4 w-4" />
+          Als Bild exportieren
+        </Button>
       </CardContent>
     </Card>
     </>
