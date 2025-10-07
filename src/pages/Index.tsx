@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ClubSearch } from "@/components/ClubSearch";
+import { TeamSearch } from "@/components/TeamSearch";
 import { GameList } from "@/components/GameList";
 import { GamePreviewDisplay } from "@/components/GamePreviewDisplay";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -13,19 +14,31 @@ const Index = () => {
   const [selectedSport, setSelectedSport] = useState<SportType | "">("");
   const [selectedClubId, setSelectedClubId] = useState<string>("");
   const [selectedClubName, setSelectedClubName] = useState<string>("");
+  const [selectedTeamId, setSelectedTeamId] = useState<string>("");
+  const [selectedTeamName, setSelectedTeamName] = useState<string>("");
   const [selectedGameId, setSelectedGameId] = useState<string>("");
 
   const handleSportSelect = (sport: SportType) => {
     setSelectedSport(sport);
     setSelectedClubId("");
     setSelectedClubName("");
+    setSelectedTeamId("");
+    setSelectedTeamName("");
     setSelectedGameId("");
   };
 
   const handleClubSelect = (clubId: string, clubName: string) => {
     setSelectedClubId(clubId);
     setSelectedClubName(clubName);
-    setSelectedGameId(""); // Reset game selection when club changes
+    setSelectedTeamId("");
+    setSelectedTeamName("");
+    setSelectedGameId("");
+  };
+
+  const handleTeamSelect = (teamId: string, teamName: string) => {
+    setSelectedTeamId(teamId);
+    setSelectedTeamName(teamName);
+    setSelectedGameId("");
   };
 
   return (
@@ -117,9 +130,9 @@ const Index = () => {
             </div>
           )}
 
-          {/* Game List */}
-          {selectedClubId && !selectedGameId && (
-            <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+          {/* Team Search */}
+          {selectedClubId && !selectedTeamId && (
+            <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="mb-6">
                 <button
                   onClick={() => setSelectedClubId("")}
@@ -127,21 +140,41 @@ const Index = () => {
                 >
                   ← Anderen Club wählen
                 </button>
-                {selectedClubName && (
+              </div>
+              <TeamSearch 
+                sportType={selectedSport as SportType}
+                clubId={selectedClubId}
+                clubName={selectedClubName}
+                onTeamSelect={handleTeamSelect} 
+              />
+            </div>
+          )}
+
+          {/* Game List */}
+          {selectedTeamId && !selectedGameId && (
+            <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="mb-6">
+                <button
+                  onClick={() => setSelectedTeamId("")}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors mb-3"
+                >
+                  ← Anderes Team wählen
+                </button>
+                {selectedTeamName && (
                   <h3 className="text-2xl font-bold text-foreground">
-                    {selectedClubName}
+                    {selectedClubName} - {selectedTeamName}
                   </h3>
                 )}
               </div>
               <GameList 
-                clubId={selectedClubId} 
+                clubId={selectedTeamId} 
                 onGameSelect={setSelectedGameId}
               />
             </div>
           )}
 
           {/* Game Preview Display */}
-          {selectedClubId && selectedGameId && (
+          {selectedTeamId && selectedGameId && (
             <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="mb-6">
                 <button
@@ -152,7 +185,7 @@ const Index = () => {
                 </button>
               </div>
               <GamePreviewDisplay 
-                clubId={selectedClubId} 
+                clubId={selectedTeamId} 
                 gameId={selectedGameId}
               />
             </div>
