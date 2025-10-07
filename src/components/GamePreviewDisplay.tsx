@@ -206,10 +206,21 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
       )}
       <Card className="shadow-[var(--shadow-card)] border-border bg-card/50 backdrop-blur-sm">
       <CardHeader>
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <CardTitle className="text-2xl font-bold text-foreground">
-            Social Media Vorschau
-          </CardTitle>
+        <CardTitle className="text-2xl font-bold text-foreground mb-4">
+          Social Media Vorschau
+        </CardTitle>
+        <div className="flex flex-col gap-4">
+          <TabsList className="grid w-full grid-cols-2 bg-muted/50">
+            <TabsTrigger value="preview" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <ImageIcon className="h-4 w-4" />
+              Spielvorschau
+            </TabsTrigger>
+            <TabsTrigger value="result" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <FileText className="h-4 w-4" />
+              Resultat
+            </TabsTrigger>
+          </TabsList>
+          
           <div className="flex items-center gap-4 flex-wrap">
             {activeTab === "preview" && (
               <div className="flex items-center gap-2">
@@ -271,17 +282,6 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted/50">
-            <TabsTrigger value="preview" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <ImageIcon className="h-4 w-4" />
-              Spielvorschau
-            </TabsTrigger>
-            <TabsTrigger value="result" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <FileText className="h-4 w-4" />
-              Resultat
-            </TabsTrigger>
-          </TabsList>
-          
           <TabsContent value="preview" className="mt-0">
             <div 
               ref={previewRef}
