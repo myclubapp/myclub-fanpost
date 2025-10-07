@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { ClubSearch } from "@/components/ClubSearch";
 import { TeamSearch } from "@/components/TeamSearch";
 import { GameList } from "@/components/GameList";
@@ -11,12 +12,28 @@ import myclubLogo from "@/assets/myclub-logo.png";
 export type SportType = "unihockey" | "volleyball" | "handball";
 
 const Index = () => {
-  const [selectedSport, setSelectedSport] = useState<SportType | "">("");
-  const [selectedClubId, setSelectedClubId] = useState<string>("");
+  const { sport, clubId, teamId, gameId } = useParams<{
+    sport?: SportType;
+    clubId?: string;
+    teamId?: string;
+    gameId?: string;
+  }>();
+  const navigate = useNavigate();
+
+  const [selectedSport, setSelectedSport] = useState<SportType | "">(sport || "");
+  const [selectedClubId, setSelectedClubId] = useState<string>(clubId || "");
   const [selectedClubName, setSelectedClubName] = useState<string>("");
-  const [selectedTeamId, setSelectedTeamId] = useState<string>("");
+  const [selectedTeamId, setSelectedTeamId] = useState<string>(teamId || "");
   const [selectedTeamName, setSelectedTeamName] = useState<string>("");
-  const [selectedGameId, setSelectedGameId] = useState<string>("");
+  const [selectedGameId, setSelectedGameId] = useState<string>(gameId || "");
+
+  // Sync URL params with state
+  useEffect(() => {
+    if (sport) setSelectedSport(sport);
+    if (clubId) setSelectedClubId(clubId);
+    if (teamId) setSelectedTeamId(teamId);
+    if (gameId) setSelectedGameId(gameId);
+  }, [sport, clubId, teamId, gameId]);
 
   const handleSportSelect = (sport: SportType) => {
     setSelectedSport(sport);
@@ -25,6 +42,7 @@ const Index = () => {
     setSelectedTeamId("");
     setSelectedTeamName("");
     setSelectedGameId("");
+    navigate(`/${sport}`);
   };
 
   const handleClubSelect = (clubId: string, clubName: string) => {
@@ -33,12 +51,19 @@ const Index = () => {
     setSelectedTeamId("");
     setSelectedTeamName("");
     setSelectedGameId("");
+    navigate(`/${selectedSport}/${clubId}`);
   };
 
   const handleTeamSelect = (teamId: string, teamName: string) => {
     setSelectedTeamId(teamId);
     setSelectedTeamName(teamName);
     setSelectedGameId("");
+    navigate(`/${selectedSport}/${selectedClubId}/${teamId}`);
+  };
+
+  const handleGameSelect = (gameId: string) => {
+    setSelectedGameId(gameId);
+    navigate(`/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameId}`);
   };
 
   return (
@@ -120,7 +145,10 @@ const Index = () => {
             <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="mb-6">
                 <button
-                  onClick={() => setSelectedSport("")}
+                  onClick={() => {
+                    setSelectedSport("");
+                    navigate("/");
+                  }}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors mb-3"
                 >
                   ← Andere Sportart wählen
@@ -135,7 +163,10 @@ const Index = () => {
             <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="mb-6">
                 <button
-                  onClick={() => setSelectedClubId("")}
+                  onClick={() => {
+                    setSelectedClubId("");
+                    navigate(`/${selectedSport}`);
+                  }}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors mb-3"
                 >
                   ← Anderen Club wählen
@@ -155,7 +186,10 @@ const Index = () => {
             <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="mb-6">
                 <button
-                  onClick={() => setSelectedTeamId("")}
+                  onClick={() => {
+                    setSelectedTeamId("");
+                    navigate(`/${selectedSport}/${selectedClubId}`);
+                  }}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors mb-3"
                 >
                   ← Anderes Team wählen
@@ -169,7 +203,7 @@ const Index = () => {
               <GameList 
                 sportType={selectedSport as SportType}
                 teamId={selectedTeamId} 
-                onGameSelect={setSelectedGameId}
+                onGameSelect={handleGameSelect}
               />
             </div>
           )}
@@ -179,7 +213,10 @@ const Index = () => {
             <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="mb-6">
                 <button
-                  onClick={() => setSelectedGameId("")}
+                  onClick={() => {
+                    setSelectedGameId("");
+                    navigate(`/${selectedSport}/${selectedClubId}/${selectedTeamId}`);
+                  }}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   ← Zurück zur Spielauswahl
