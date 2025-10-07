@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { ImageCropper } from "./ImageCropper";
 
 interface GamePreviewDisplayProps {
   clubId: string;
@@ -46,6 +47,8 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
   const [activeTab, setActiveTab] = useState("preview");
   const [selectedTheme, setSelectedTheme] = useState("myclub-light");
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+  const [tempImage, setTempImage] = useState<string | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
 
   useEffect(() => {
     // Load the web component script
@@ -73,14 +76,20 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
       
       const reader = new FileReader();
       reader.onload = (e) => {
-        setBackgroundImage(e.target?.result as string);
-        toast({
-          title: "Hintergrundbild hochgeladen",
-          description: "Das Bild wurde erfolgreich hochgeladen.",
-        });
+        setTempImage(e.target?.result as string);
+        setShowCropper(true);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleCropComplete = (croppedImage: string) => {
+    setBackgroundImage(croppedImage);
+    setTempImage(null);
+    toast({
+      title: "Hintergrundbild zugeschnitten",
+      description: "Das Bild wurde erfolgreich zugeschnitten.",
+    });
   };
 
   const handleRemoveBackgroundImage = () => {
@@ -227,7 +236,22 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
   };
 
   return (
-    <Card className="shadow-[var(--shadow-card)] border-border bg-card/50 backdrop-blur-sm">
+    <>
+      {tempImage && (
+        <ImageCropper
+          image={tempImage}
+          open={showCropper}
+          onClose={() => {
+            setShowCropper(false);
+            setTempImage(null);
+            if (fileInputRef.current) {
+              fileInputRef.current.value = '';
+            }
+          }}
+          onCropComplete={handleCropComplete}
+        />
+      )}
+      <Card className="shadow-[var(--shadow-card)] border-border bg-card/50 backdrop-blur-sm">
       <CardHeader>
         <div className="flex items-center justify-between flex-wrap gap-4">
           <CardTitle className="text-2xl font-bold text-foreground">
@@ -334,5 +358,6 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
         </Tabs>
       </CardContent>
     </Card>
+    </>
   );
 };
