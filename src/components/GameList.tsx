@@ -48,10 +48,10 @@ export const GameList = ({ sportType, teamId, onGameSelect }: GameListProps) => 
       if (prev.includes(gameId)) {
         return prev.filter((id) => id !== gameId);
       } else {
-        if (prev.length >= 2) {
+        if (prev.length >= 3) {
           toast({
             title: "Maximum erreicht",
-            description: "Du kannst maximal 2 Spiele auswählen",
+            description: "Du kannst maximal 3 Spiele auswählen",
             variant: "destructive",
           });
           return prev;

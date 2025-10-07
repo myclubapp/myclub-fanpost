@@ -50,6 +50,7 @@ declare global {
 export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResults = [] }: GamePreviewDisplayProps) => {
   const gameId = gameIds[0];
   const gameId2 = gameIds.length > 1 ? gameIds[1] : undefined;
+  const gameId3 = gameIds.length > 2 ? gameIds[2] : undefined;
   const previewRef = useRef<HTMLDivElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -70,6 +71,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
   const prefixedClubId = sportType === "unihockey" ? `su-${clubId}` : clubId;
   const prefixedGameId = sportType === "unihockey" ? `su-${gameId}` : gameId;
   const prefixedGameId2 = gameId2 && sportType === "unihockey" ? `su-${gameId2}` : gameId2;
+  const prefixedGameId3 = gameId3 && sportType === "unihockey" ? `su-${gameId3}` : gameId3;
 
   // Update tab when gamesHaveResults changes
   useEffect(() => {
@@ -416,12 +418,13 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
               className="w-full bg-muted/10 rounded-lg border border-border overflow-hidden"
             >
               <div className="w-full p-4 sm:p-8">
-                <div className={`w-full mx-auto ${prefixedGameId2 ? 'max-w-[1200px]' : 'max-w-[600px]'}`}>
+                <div className={`w-full mx-auto ${prefixedGameId3 ? 'max-w-[1800px]' : prefixedGameId2 ? 'max-w-[1200px]' : 'max-w-[600px]'}`}>
                   <game-preview
-                    key={`${prefixedGameId}-${prefixedGameId2 || 'single'}`}
+                    key={`${prefixedGameId}-${prefixedGameId2 || 'single'}-${prefixedGameId3 || 'single'}`}
                     club={prefixedClubId}
                     game={prefixedGameId}
                     {...(prefixedGameId2 && { "game-2": prefixedGameId2 })}
+                    {...(prefixedGameId3 && { "game-3": prefixedGameId3 })}
                     width={svgDimensions.width}
                     height={svgDimensions.height}
                     theme={selectedTheme}
@@ -440,12 +443,13 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
               className="w-full bg-muted/10 rounded-lg border border-border overflow-hidden"
             >
               <div className="w-full p-4 sm:p-8">
-                <div className={`w-full mx-auto ${prefixedGameId2 ? 'max-w-[1200px]' : 'max-w-[600px]'}`}>
+                <div className={`w-full mx-auto ${prefixedGameId3 ? 'max-w-[1800px]' : prefixedGameId2 ? 'max-w-[1200px]' : 'max-w-[600px]'}`}>
                   <game-result
-                    key={`${prefixedGameId}-${prefixedGameId2 || 'single'}`}
+                    key={`${prefixedGameId}-${prefixedGameId2 || 'single'}-${prefixedGameId3 || 'single'}`}
                     club={prefixedClubId}
                     game={prefixedGameId}
                     {...(prefixedGameId2 && { "game-2": prefixedGameId2 })}
+                    {...(prefixedGameId3 && { "game-3": prefixedGameId3 })}
                     width={svgDimensions.width}
                     height={svgDimensions.height}
                     theme={selectedTheme}
