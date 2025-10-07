@@ -4,7 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Download, Image as ImageIcon, FileText, Palette, Upload, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { toPng } from "html-to-image";
+import * as svg from "save-svg-as-png";
+import { Share } from "@capacitor/share";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { Capacitor } from "@capacitor/core";
 import {
   Select,
   SelectContent,
@@ -122,6 +125,40 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
     }
   };
 
+  const inlineExternalImages = async (svgElement: SVGSVGElement): Promise<void> => {
+    const images = svgElement.querySelectorAll("image");
+    const promises = Array.from(images).map(async (img) => {
+      const href = img.getAttribute("href") || img.getAttribute("xlink:href");
+      if (href && (href.startsWith("http://") || href.startsWith("https://"))) {
+        try {
+          const response = await fetch(href);
+          const blob = await response.blob();
+          const dataUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+          img.setAttribute("href", dataUrl);
+        } catch (error) {
+          console.error("Failed to inline image:", href, error);
+        }
+      }
+    });
+    await Promise.all(promises);
+  };
+
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = (reader.result as string).split(",")[1]; // remove prefix
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
   const handleDownload = async () => {
     const targetRef = activeTab === "preview" ? previewRef : resultRef;
     if (!targetRef.current) return;
@@ -163,38 +200,91 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
         throw new Error("Kein SVG-Element gefunden");
       }
 
-      // Convert SVG to PNG using html-to-image with high quality
-      const dataUrl = await toPng(svgElement as unknown as HTMLElement, {
-        quality: 1,
-        pixelRatio: 3,
-        backgroundColor: '#ffffff',
-        cacheBust: true,
-        skipAutoScale: false,
-      });
+      // Inline external images (team logos, etc.)
+      await inlineExternalImages(svgElement);
 
-      // Convert data URL to Blob
-      const response = await fetch(dataUrl);
+      // Get SVG dimensions from viewBox or attributes
+      let width = 600;
+      let height = 600;
+
+      if (svgElement.viewBox && svgElement.viewBox.baseVal) {
+        width = svgElement.viewBox.baseVal.width;
+        height = svgElement.viewBox.baseVal.height;
+      } else if (svgElement.getAttribute('width') && svgElement.getAttribute('height')) {
+        width = parseFloat(svgElement.getAttribute('width') || '600');
+        height = parseFloat(svgElement.getAttribute('height') || '600');
+      }
+
+      const options = {
+        scale: 2,
+        backgroundColor: "white",
+        width,
+        height,
+      };
+
+      // Convert SVG to PNG URI
+      const pngUri = await svg.svgAsPngUri(svgElement, options);
+
+      // Convert URI to Blob
+      const response = await fetch(pngUri);
       const blob = await response.blob();
       const fileName = `${activeTab}-${gameId}-${Date.now()}.png`;
 
-      // Check if Web Share API is available and if we can share files
-      const canShare = navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'image/png' })] });
+      // Check if running on native platform (iOS/Android)
+      const isNative = Capacitor.isNativePlatform();
 
-      if (canShare) {
-        // Use native share on mobile devices
-        const file = new File([blob], fileName, { type: 'image/png' });
-        await navigator.share({
-          files: [file],
-          title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
-        });
-        notifySuccess(true);
+      if (isNative) {
+        // Use Capacitor Share for native platforms
+        try {
+          const base64Data = await blobToBase64(blob);
+
+          // Save to filesystem
+          await Filesystem.writeFile({
+            path: fileName,
+            data: base64Data,
+            directory: Directory.Cache,
+          });
+
+          // Get file URI
+          const fileUri = await Filesystem.getUri({
+            directory: Directory.Cache,
+            path: fileName,
+          });
+
+          // Share using Capacitor
+          await Share.share({
+            title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
+            text: activeTab === "preview" ? "Schau dir diese Spielvorschau an!" : "Schau dir dieses Resultat an!",
+            url: fileUri.uri,
+            dialogTitle: "Bild teilen",
+          });
+
+          notifySuccess(true);
+        } catch (error) {
+          console.error("Capacitor share failed:", error);
+          throw error;
+        }
       } else {
-        // Fallback to download on desktop
-        const link = document.createElement('a');
-        link.download = fileName;
-        link.href = dataUrl;
-        link.click();
-        notifySuccess(false);
+        // Web platform - try Web Share API first
+        const canShare = navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'image/png' })] });
+
+        if (canShare) {
+          // Use native share on mobile browsers
+          const file = new File([blob], fileName, { type: 'image/png' });
+          await navigator.share({
+            files: [file],
+            title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
+            text: activeTab === "preview" ? "Schau dir diese Spielvorschau an!" : "Schau dir dieses Resultat an!",
+          });
+          notifySuccess(true);
+        } else {
+          // Fallback to download on desktop
+          const link = document.createElement('a');
+          link.download = fileName;
+          link.href = pngUri;
+          link.click();
+          notifySuccess(false);
+        }
       }
     } catch (error) {
       console.error("Export failed:", error);
