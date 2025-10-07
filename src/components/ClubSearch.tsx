@@ -10,16 +10,31 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+type SportType = "unihockey" | "volleyball" | "handball";
+
 interface Club {
   id: string;
   name: string;
 }
 
 interface ClubSearchProps {
+  sportType: SportType;
   onClubSelect: (clubId: string, clubName: string) => void;
 }
 
-export const ClubSearch = ({ onClubSelect }: ClubSearchProps) => {
+const SPORT_API_URLS: Record<SportType, string> = {
+  unihockey: "https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissunihockey?query=%7B%0A%20%20clubs%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%7D%20%0A%7D",
+  volleyball: "https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissvolley?query=%7B%0A%20%20clubs%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A",
+  handball: "https://europe-west6-myclubmanagement.cloudfunctions.net/api/swisshandball?query=%7B%0A%20%20clubs%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A"
+};
+
+const SPORT_LABELS: Record<SportType, string> = {
+  unihockey: "Unihockey",
+  volleyball: "Volleyball",
+  handball: "Handball"
+};
+
+export const ClubSearch = ({ sportType, onClubSelect }: ClubSearchProps) => {
   const [clubs, setClubs] = useState<Club[]>([]);
   const [selectedClubId, setSelectedClubId] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -29,13 +44,13 @@ export const ClubSearch = ({ onClubSelect }: ClubSearchProps) => {
     const fetchClubs = async () => {
       setLoading(true);
       try {
-        const response = await fetch(
-          "https://europe-west6-myclubmanagement.cloudfunctions.net/gamePreviewClubs"
-        );
+        const apiUrl = SPORT_API_URLS[sportType];
+        const response = await fetch(apiUrl);
         
         if (!response.ok) throw new Error("Fehler beim Laden der Clubs");
         
-        const data: Club[] = await response.json();
+        const result = await response.json();
+        const data: Club[] = result.data?.clubs || [];
         
         const sortedClubs = data.sort((a, b) => 
           a.name.localeCompare(b.name)
@@ -62,7 +77,7 @@ export const ClubSearch = ({ onClubSelect }: ClubSearchProps) => {
     };
 
     fetchClubs();
-  }, [toast]);
+  }, [sportType, toast]);
 
   const handleClubChange = (clubId: string) => {
     setSelectedClubId(clubId);
@@ -88,10 +103,10 @@ export const ClubSearch = ({ onClubSelect }: ClubSearchProps) => {
     <Card className="shadow-[var(--shadow-card)] border-border hover:shadow-[var(--shadow-glow)] transition-all duration-300 bg-card/50 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-foreground">
-          Club auswählen
+          {SPORT_LABELS[sportType]} Club auswählen
         </CardTitle>
         <CardDescription className="text-muted-foreground">
-          Wähle deinen Verein aus ({clubs.length} Clubs verfügbar)
+          Wähle deinen {SPORT_LABELS[sportType]}-Verein aus ({clubs.length} Clubs verfügbar)
         </CardDescription>
       </CardHeader>
       <CardContent>

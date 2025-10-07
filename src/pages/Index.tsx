@@ -2,12 +2,25 @@ import { useState } from "react";
 import { ClubSearch } from "@/components/ClubSearch";
 import { GameList } from "@/components/GameList";
 import { GamePreviewDisplay } from "@/components/GamePreviewDisplay";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import myclubLogo from "@/assets/myclub-logo.png";
 
+export type SportType = "unihockey" | "volleyball" | "handball";
+
 const Index = () => {
+  const [selectedSport, setSelectedSport] = useState<SportType | "">("");
   const [selectedClubId, setSelectedClubId] = useState<string>("");
   const [selectedClubName, setSelectedClubName] = useState<string>("");
   const [selectedGameId, setSelectedGameId] = useState<string>("");
+
+  const handleSportSelect = (sport: SportType) => {
+    setSelectedSport(sport);
+    setSelectedClubId("");
+    setSelectedClubName("");
+    setSelectedGameId("");
+  };
 
   const handleClubSelect = (clubId: string, clubName: string) => {
     setSelectedClubId(clubId);
@@ -37,7 +50,7 @@ const Index = () => {
       <main className="container mx-auto px-4 py-12">
         <div className="max-w-7xl mx-auto space-y-12">
           {/* Welcome Section */}
-          {!selectedClubId && (
+          {!selectedSport && (
             <div className="text-center py-16 space-y-6">
               <h2 className="text-5xl md:text-6xl font-bold text-foreground leading-tight">
                 Spielvorschauen,{" "}
@@ -51,10 +64,58 @@ const Index = () => {
             </div>
           )}
 
+          {/* Sport Selection */}
+          {!selectedSport && (
+            <div className="max-w-2xl mx-auto">
+              <Card className="shadow-[var(--shadow-card)] border-border hover:shadow-[var(--shadow-glow)] transition-all duration-300 bg-card/50 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold text-foreground">
+                    Sportart auswählen
+                  </CardTitle>
+                  <CardDescription className="text-muted-foreground">
+                    Wähle zuerst die Sportart deines Vereins
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <RadioGroup onValueChange={(value) => handleSportSelect(value as SportType)} className="space-y-4">
+                    <div className="flex items-center space-x-3 p-4 rounded-lg border border-border hover:border-primary transition-colors cursor-pointer bg-background">
+                      <RadioGroupItem value="unihockey" id="unihockey" />
+                      <Label htmlFor="unihockey" className="text-base font-medium cursor-pointer flex-1">
+                        Unihockey
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-3 p-4 rounded-lg border border-border hover:border-primary transition-colors cursor-pointer bg-background">
+                      <RadioGroupItem value="volleyball" id="volleyball" />
+                      <Label htmlFor="volleyball" className="text-base font-medium cursor-pointer flex-1">
+                        Volleyball
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-3 p-4 rounded-lg border border-border hover:border-primary transition-colors cursor-pointer bg-background">
+                      <RadioGroupItem value="handball" id="handball" />
+                      <Label htmlFor="handball" className="text-base font-medium cursor-pointer flex-1">
+                        Handball
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* Club Search */}
-          <div className="max-w-2xl mx-auto">
-            <ClubSearch onClubSelect={handleClubSelect} />
-          </div>
+          {selectedSport && !selectedClubId && (
+            <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="mb-6">
+                <button
+                  onClick={() => setSelectedSport("")}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors mb-3"
+                >
+                  ← Andere Sportart wählen
+                </button>
+              </div>
+              <ClubSearch sportType={selectedSport} onClubSelect={handleClubSelect} />
+            </div>
+          )}
 
           {/* Game List */}
           {selectedClubId && !selectedGameId && (
