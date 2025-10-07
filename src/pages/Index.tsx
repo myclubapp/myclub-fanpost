@@ -25,7 +25,7 @@ const Index = () => {
               <img src={myclubLogo} alt="myclub" className="h-10 w-auto" />
               <div className="border-l border-border/50 pl-3">
                 <h1 className="text-xl font-bold text-foreground">
-                  Sports Media Creator
+                  FanPost
                 </h1>
               </div>
             </div>
@@ -103,7 +103,7 @@ const Index = () => {
       <footer className="border-t border-border/50 mt-20">
         <div className="container mx-auto px-4 py-8 text-center">
           <p className="text-sm text-muted-foreground">
-            Sports Media Creator - Powered by{" "}
+            FanPost - Powered by{" "}
             <a 
               href="https://my-club.app" 
               target="_blank" 
