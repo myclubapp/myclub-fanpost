@@ -42,7 +42,7 @@ const Index = () => {
       if (!selectedClubId || selectedClubName || !selectedSport) return;
       
       const apiUrls: Record<SportType, string> = {
-        unihockey: "https://api.swissunihockey.ch/rest/v1/clubs",
+        unihockey: "https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissunihockey?query={%0A%20%20clubs{%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20}%20%0A}",
         volleyball: "",
         handball: "",
       };
@@ -53,10 +53,10 @@ const Index = () => {
       try {
         const response = await fetch(apiUrl);
         const data = await response.json();
-        const clubs = data.entries || [];
-        const club = clubs.find((c: { id: number }) => c.id.toString() === selectedClubId);
+        const clubs = data.data?.clubs || [];
+        const club = clubs.find((c: { id: string, name: string }) => c.id === selectedClubId);
         if (club) {
-          setSelectedClubName(club.text);
+          setSelectedClubName(club.name);
         }
       } catch (error) {
         console.error("Error fetching club name:", error);
@@ -72,7 +72,7 @@ const Index = () => {
       if (!selectedTeamId || selectedTeamName || !selectedSport || !selectedClubId) return;
       
       const apiUrls: Record<SportType, (clubId: string) => string> = {
-        unihockey: (clubId: string) => `https://api.swissunihockey.ch/rest/v1/clubs/${clubId}/teams`,
+        unihockey: (clubId: string) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissunihockey?query={%0A%20%20teams(clubId%3A%20%22${clubId}%22)%20{%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20}%0A}%0A`,
         volleyball: () => "",
         handball: () => "",
       };
@@ -83,10 +83,10 @@ const Index = () => {
       try {
         const response = await fetch(apiUrl);
         const data = await response.json();
-        const teams = data.entries || [];
-        const team = teams.find((t: { id: number }) => t.id.toString() === selectedTeamId);
+        const teams = data.data?.teams || [];
+        const team = teams.find((t: { id: string, name: string }) => t.id === selectedTeamId);
         if (team) {
-          setSelectedTeamName(team.text);
+          setSelectedTeamName(team.name);
         }
       } catch (error) {
         console.error("Error fetching team name:", error);
