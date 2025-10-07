@@ -303,7 +303,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
                   theme={selectedTheme}
                   ishomegame={isHomeGame.toString()}
                   {...(backgroundImage && { backgroundimage: backgroundImage })}
-                  style="width: 100%; height: 100%;"
+                  style={{ width: '100%', height: '100%' }}
                 />
               </div>
             </div>
@@ -324,7 +324,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
                   theme={selectedTheme}
                   ishomegame={isHomeGame.toString()}
                   {...(backgroundImage && { backgroundimage: backgroundImage })}
-                  style="width: 100%; height: 100%;"
+                  style={{ width: '100%', height: '100%' }}
                 />
               </div>
             </div>
