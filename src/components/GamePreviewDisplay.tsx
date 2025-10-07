@@ -142,26 +142,22 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
         throw new Error("Kein SVG-Element gefunden");
       }
 
-      // Get dimensions
-      const rect = svgElement.getBoundingClientRect();
-      let width = rect.width;
-      let height = rect.height;
+      // Get dimensions from viewBox for accurate sizing
+      let width = 600;
+      let height = 600;
 
       if (svgElement.viewBox && svgElement.viewBox.baseVal) {
         const vb = svgElement.viewBox.baseVal;
-        const vbRatio = vb.width / vb.height;
-        const domRatio = rect.width / rect.height;
-
-        if (domRatio > vbRatio) {
-          width = height * vbRatio;
-        } else {
-          height = width / vbRatio;
-        }
+        width = vb.width;
+        height = vb.height;
+      } else {
+        const rect = svgElement.getBoundingClientRect();
+        width = rect.width;
+        height = rect.height;
       }
 
       const options = {
         scale: 2,
-        backgroundColor: "white",
         width,
         height,
       };
