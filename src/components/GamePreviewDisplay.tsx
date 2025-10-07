@@ -128,21 +128,21 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
 
     const notifyStart = () =>
       toast({
-        title: "Download wird vorbereitet",
+        title: "Bild wird vorbereitet",
         description: "Das Bild wird erstellt...",
       });
 
-    const notifySuccess = () =>
+    const notifySuccess = (isShare: boolean) =>
       toast({
         title: "Erfolgreich!",
-        description: "Das Bild wurde heruntergeladen",
+        description: isShare ? "Das Bild wurde geteilt" : "Das Bild wurde heruntergeladen",
       });
 
     const notifyError = () =>
       toast({
         title: "Fehler",
         description:
-          "Bild konnte nicht heruntergeladen werden. Bitte versuchen Sie es erneut.",
+          "Bild konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
         variant: "destructive",
       });
 
@@ -151,7 +151,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
 
       const componentSelector = activeTab === "preview" ? "game-preview" : "game-result";
       const gameElement = targetRef.current.querySelector(componentSelector);
-      
+
       if (!gameElement) {
         throw new Error("Komponente nicht gefunden");
       }
@@ -172,16 +172,36 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
         skipAutoScale: false,
       });
 
-      // Download the image
-      const link = document.createElement('a');
-      link.download = `${activeTab}-${gameId}-${Date.now()}.png`;
-      link.href = dataUrl;
-      link.click();
-      
-      notifySuccess();
+      // Convert data URL to Blob
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const fileName = `${activeTab}-${gameId}-${Date.now()}.png`;
+
+      // Check if Web Share API is available and if we can share files
+      const canShare = navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'image/png' })] });
+
+      if (canShare) {
+        // Use native share on mobile devices
+        const file = new File([blob], fileName, { type: 'image/png' });
+        await navigator.share({
+          files: [file],
+          title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
+        });
+        notifySuccess(true);
+      } else {
+        // Fallback to download on desktop
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = dataUrl;
+        link.click();
+        notifySuccess(false);
+      }
     } catch (error) {
       console.error("Export failed:", error);
-      notifyError();
+      // Don't show error if user cancelled the share dialog
+      if ((error as Error).name !== 'AbortError') {
+        notifyError();
+      }
     }
   };
 
