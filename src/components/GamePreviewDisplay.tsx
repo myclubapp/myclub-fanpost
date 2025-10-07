@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ImageCropper } from "./ImageCropper";
 
 interface GamePreviewDisplayProps {
@@ -49,6 +50,7 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
+  const [isHomeGame, setIsHomeGame] = useState(false);
 
   useEffect(() => {
     // Load the web component script
@@ -259,6 +261,16 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
           </CardTitle>
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
+              <Checkbox 
+                id="home-game" 
+                checked={isHomeGame}
+                onCheckedChange={(checked) => setIsHomeGame(checked as boolean)}
+              />
+              <Label htmlFor="home-game" className="text-sm text-muted-foreground cursor-pointer">
+                Ist Heimspiel
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
               <Palette className="h-4 w-4 text-muted-foreground" />
               <Label htmlFor="theme-select" className="text-sm text-muted-foreground">Theme:</Label>
               <Select value={selectedTheme} onValueChange={setSelectedTheme}>
@@ -335,6 +347,7 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
                 width="600"
                 height="600"
                 theme={selectedTheme}
+                ishomegame={isHomeGame.toString()}
                 {...(backgroundImage && { backgroundimage: backgroundImage })}
               />
             </div>
@@ -351,6 +364,7 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
                 width="600"
                 height="600"
                 theme={selectedTheme}
+                ishomegame={isHomeGame.toString()}
                 {...(backgroundImage && { backgroundimage: backgroundImage })}
               />
             </div>
