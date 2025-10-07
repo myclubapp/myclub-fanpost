@@ -22,7 +22,7 @@ type SportType = "unihockey" | "volleyball" | "handball";
 interface GamePreviewDisplayProps {
   sportType: SportType;
   clubId: string;
-  gameId: string;
+  gameIds: string[];
 }
 
 const AVAILABLE_THEMES = [
@@ -43,7 +43,9 @@ declare global {
   }
 }
 
-export const GamePreviewDisplay = ({ sportType, clubId, gameId }: GamePreviewDisplayProps) => {
+export const GamePreviewDisplay = ({ sportType, clubId, gameIds }: GamePreviewDisplayProps) => {
+  const gameId = gameIds[0];
+  const gameId2 = gameIds.length > 1 ? gameIds[1] : undefined;
   const previewRef = useRef<HTMLDivElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -58,6 +60,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameId }: GamePreviewDis
   // Add "su-" prefix for Swiss Unihockey
   const prefixedClubId = sportType === "unihockey" ? `su-${clubId}` : clubId;
   const prefixedGameId = sportType === "unihockey" ? `su-${gameId}` : gameId;
+  const prefixedGameId2 = gameId2 && sportType === "unihockey" ? `su-${gameId2}` : gameId2;
 
   useEffect(() => {
     // Load the web component script
@@ -298,6 +301,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameId }: GamePreviewDis
               <game-result
                 club={prefixedClubId}
                 game={prefixedGameId}
+                {...(prefixedGameId2 && { "game-2": prefixedGameId2 })}
                 width="600"
                 height="600"
                 theme={selectedTheme}

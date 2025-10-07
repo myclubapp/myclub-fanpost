@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Clock, ChevronRight } from "lucide-react";
+import { Calendar, MapPin, Clock, ChevronRight, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type SportType = "unihockey" | "volleyball" | "handball";
 
@@ -18,7 +19,7 @@ interface Game {
 interface GameListProps {
   sportType: SportType;
   teamId: string;
-  onGameSelect: (gameId: string) => void;
+  onGameSelect: (gameIds: string[]) => void;
 }
 
 const SPORT_API_URLS: Record<SportType, (teamId: string) => string> = {
@@ -30,7 +31,38 @@ const SPORT_API_URLS: Record<SportType, (teamId: string) => string> = {
 export const GameList = ({ sportType, teamId, onGameSelect }: GameListProps) => {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedGameIds, setSelectedGameIds] = useState<string[]>([]);
   const { toast } = useToast();
+
+  const handleGameToggle = (gameId: string) => {
+    setSelectedGameIds((prev) => {
+      if (prev.includes(gameId)) {
+        return prev.filter((id) => id !== gameId);
+      } else {
+        if (prev.length >= 2) {
+          toast({
+            title: "Maximum erreicht",
+            description: "Du kannst maximal 2 Spiele auswählen",
+            variant: "destructive",
+          });
+          return prev;
+        }
+        return [...prev, gameId];
+      }
+    });
+  };
+
+  const handleContinue = () => {
+    if (selectedGameIds.length === 0) {
+      toast({
+        title: "Keine Auswahl",
+        description: "Bitte wähle mindestens ein Spiel aus",
+        variant: "destructive",
+      });
+      return;
+    }
+    onGameSelect(selectedGameIds);
+  };
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -107,44 +139,65 @@ export const GameList = ({ sportType, teamId, onGameSelect }: GameListProps) => 
           Verfügbare Spiele
         </CardTitle>
         <CardDescription className="text-muted-foreground">
-          Wähle ein Spiel für die Vorschau aus
+          Wähle 1-2 Spiele aus ({selectedGameIds.length} ausgewählt)
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {games.map((game) => (
-            <div
-              key={game.id}
-              className="group p-5 rounded-lg border border-border bg-background hover:bg-primary/5 hover:border-primary transition-all duration-300 cursor-pointer"
-              onClick={() => onGameSelect(game.id)}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <span className="font-semibold text-base text-foreground">{game.teamHome}</span>
-                    <span className="text-sm text-muted-foreground">vs</span>
-                    <span className="font-semibold text-base text-foreground">{game.teamAway}</span>
-                  </div>
-                  {game.result && game.result !== "-:-" && game.result !== "" && (
-                    <div className="text-sm font-medium text-primary">
-                      Resultat: {game.result}
+          {games.map((game) => {
+            const isSelected = selectedGameIds.includes(game.id);
+            return (
+              <div
+                key={game.id}
+                className={`group p-5 rounded-lg border transition-all duration-300 cursor-pointer ${
+                  isSelected 
+                    ? 'border-primary bg-primary/5' 
+                    : 'border-border bg-background hover:bg-primary/5 hover:border-primary'
+                }`}
+                onClick={() => handleGameToggle(game.id)}
+              >
+                <div className="flex items-center gap-4">
+                  <Checkbox 
+                    checked={isSelected}
+                    onCheckedChange={() => handleGameToggle(game.id)}
+                    className="pointer-events-none"
+                  />
+                  <div className="flex-1 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <span className="font-semibold text-base text-foreground">{game.teamHome}</span>
+                      <span className="text-sm text-muted-foreground">vs</span>
+                      <span className="font-semibold text-base text-foreground">{game.teamAway}</span>
                     </div>
-                  )}
-                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      {game.date}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      {game.time}
+                    {game.result && game.result !== "-:-" && game.result !== "" && (
+                      <div className="text-sm font-medium text-primary">
+                        Resultat: {game.result}
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        {game.date}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        {game.time}
+                      </div>
                     </div>
                   </div>
                 </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-300" />
               </div>
-            </div>
-          ))}
+            );
+          })}
+        </div>
+        <div className="mt-6 flex justify-end">
+          <Button 
+            onClick={handleContinue}
+            disabled={selectedGameIds.length === 0}
+            className="gap-2"
+          >
+            Weiter
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </CardContent>
     </Card>

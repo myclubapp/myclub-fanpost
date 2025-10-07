@@ -26,14 +26,16 @@ const Index = () => {
   const [selectedClubName, setSelectedClubName] = useState<string>("");
   const [selectedTeamId, setSelectedTeamId] = useState<string>(teamId || "");
   const [selectedTeamName, setSelectedTeamName] = useState<string>("");
-  const [selectedGameId, setSelectedGameId] = useState<string>(gameId || "");
+  const [selectedGameIds, setSelectedGameIds] = useState<string[]>(gameId ? [gameId] : []);
 
   // Sync URL params with state
   useEffect(() => {
     if (sport) setSelectedSport(sport);
     if (clubId) setSelectedClubId(clubId);
     if (teamId) setSelectedTeamId(teamId);
-    if (gameId) setSelectedGameId(gameId);
+    if (gameId && !selectedGameIds.includes(gameId)) {
+      setSelectedGameIds([gameId]);
+    }
   }, [sport, clubId, teamId, gameId]);
 
   // Load club name from API when clubId is set via URL
@@ -102,7 +104,7 @@ const Index = () => {
     setSelectedClubName("");
     setSelectedTeamId("");
     setSelectedTeamName("");
-    setSelectedGameId("");
+    setSelectedGameIds([]);
     navigate(`/${sport}`);
   };
 
@@ -111,20 +113,20 @@ const Index = () => {
     setSelectedClubName(clubName);
     setSelectedTeamId("");
     setSelectedTeamName("");
-    setSelectedGameId("");
+    setSelectedGameIds([]);
     navigate(`/${selectedSport}/${clubId}`);
   };
 
   const handleTeamSelect = (teamId: string, teamName: string) => {
     setSelectedTeamId(teamId);
     setSelectedTeamName(teamName);
-    setSelectedGameId("");
+    setSelectedGameIds([]);
     navigate(`/${selectedSport}/${selectedClubId}/${teamId}`);
   };
 
-  const handleGameSelect = (gameId: string) => {
-    setSelectedGameId(gameId);
-    navigate(`/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameId}`);
+  const handleGameSelect = (gameIds: string[]) => {
+    setSelectedGameIds(gameIds);
+    navigate(`/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIds[0]}`);
   };
 
   return (
@@ -250,12 +252,13 @@ const Index = () => {
           )}
 
           {/* Game List */}
-          {selectedTeamId && !selectedGameId && (
+          {selectedTeamId && selectedGameIds.length === 0 && (
             <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="mb-6">
                 <button
                   onClick={() => {
                     setSelectedTeamId("");
+                    setSelectedGameIds([]);
                     navigate(`/${selectedSport}/${selectedClubId}`);
                   }}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors mb-3"
@@ -277,12 +280,12 @@ const Index = () => {
           )}
 
           {/* Game Preview Display */}
-          {selectedTeamId && selectedGameId && (
+          {selectedTeamId && selectedGameIds.length > 0 && (
             <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="mb-6">
                 <button
                   onClick={() => {
-                    setSelectedGameId("");
+                    setSelectedGameIds([]);
                     navigate(`/${selectedSport}/${selectedClubId}/${selectedTeamId}`);
                   }}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
@@ -293,7 +296,7 @@ const Index = () => {
               <GamePreviewDisplay 
                 sportType={selectedSport as SportType}
                 clubId={selectedClubId} 
-                gameId={selectedGameId}
+                gameIds={selectedGameIds}
               />
             </div>
           )}
