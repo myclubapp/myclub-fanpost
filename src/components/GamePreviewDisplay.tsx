@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Image as ImageIcon, FileText, Palette } from "lucide-react";
+import { Download, Image as ImageIcon, FileText, Palette, Upload, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { toPng, toSvg } from "html-to-image";
@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 interface GamePreviewDisplayProps {
   clubId: string;
@@ -37,9 +38,11 @@ declare global {
 export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) => {
   const previewRef = useRef<HTMLDivElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("preview");
   const [selectedTheme, setSelectedTheme] = useState("myclub");
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
 
   useEffect(() => {
     // Load the web component script
@@ -52,6 +55,37 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
       document.head.removeChild(script);
     };
   }, []);
+
+  const handleBackgroundImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Ungültiger Dateityp",
+          description: "Bitte wählen Sie eine Bilddatei aus.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setBackgroundImage(e.target?.result as string);
+        toast({
+          title: "Hintergrundbild hochgeladen",
+          description: "Das Bild wurde erfolgreich hochgeladen.",
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveBackgroundImage = () => {
+    setBackgroundImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleDownload = async () => {
     const targetRef = activeTab === "preview" ? previewRef : resultRef;
@@ -213,6 +247,33 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
                 </SelectContent>
               </Select>
             </div>
+            <div className="flex items-center gap-2">
+              <Input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleBackgroundImageUpload}
+                className="hidden"
+                id="background-upload"
+              />
+              <Label
+                htmlFor="background-upload"
+                className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-md border border-border bg-background hover:bg-muted/50 text-sm transition-colors"
+              >
+                <Upload className="h-4 w-4" />
+                Hintergrundbild
+              </Label>
+              {backgroundImage && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleRemoveBackgroundImage}
+                  className="h-9 w-9"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
             <Button 
               onClick={handleDownload} 
               className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
@@ -247,6 +308,7 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
                 width="600"
                 height="600"
                 theme={selectedTheme}
+                backgroundimage={backgroundImage || undefined}
               />
             </div>
           </TabsContent>
@@ -262,6 +324,7 @@ export const GamePreviewDisplay = ({ clubId, gameId }: GamePreviewDisplayProps) 
                 width="600"
                 height="600"
                 theme={selectedTheme}
+                backgroundimage={backgroundImage || undefined}
               />
             </div>
           </TabsContent>
