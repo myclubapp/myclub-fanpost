@@ -234,6 +234,11 @@ const Index = () => {
                 >
                   ← Anderen Club wählen
                 </button>
+                {selectedClubName && (
+                  <h3 className="text-2xl font-bold text-foreground">
+                    {selectedClubName}
+                  </h3>
+                )}
               </div>
               <TeamSearch 
                 sportType={selectedSport as SportType}

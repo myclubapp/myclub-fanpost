@@ -99,7 +99,7 @@ export const TeamSearch = ({ sportType, clubId, clubName, onTeamSelect }: TeamSe
     <Card className="shadow-[var(--shadow-card)] border-border hover:shadow-[var(--shadow-glow)] transition-all duration-300 bg-card/50 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-foreground">
-          {clubName}
+          Team auswählen
         </CardTitle>
         <CardDescription className="text-muted-foreground">
           Wähle ein Team aus ({teams.length} Teams verfügbar)
