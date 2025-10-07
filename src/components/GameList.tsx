@@ -34,20 +34,27 @@ export const GameList = ({ sportType, teamId, onGameSelect }: GameListProps) => 
   const [selectedGameIds, setSelectedGameIds] = useState<string[]>([]);
   const { toast } = useToast();
 
+  // Group games by date
+  const getGamesByDate = (gameId: string): Game[] => {
+    const game = games.find(g => g.id === gameId);
+    if (!game) return [];
+    return games.filter(g => g.date === game.date);
+  };
+
   const handleGameToggle = (gameId: string) => {
+    const gamesOnSameDate = getGamesByDate(gameId);
+    
     setSelectedGameIds((prev) => {
-      if (prev.includes(gameId)) {
-        return prev.filter((id) => id !== gameId);
+      // Check if any game from this date is already selected
+      const isAlreadySelected = gamesOnSameDate.some(g => prev.includes(g.id));
+      
+      if (isAlreadySelected) {
+        // Deselect all games from this date
+        return prev.filter(id => !gamesOnSameDate.map(g => g.id).includes(id));
       } else {
-        if (prev.length >= 2) {
-          toast({
-            title: "Maximum erreicht",
-            description: "Du kannst maximal 2 Spiele auswählen",
-            variant: "destructive",
-          });
-          return prev;
-        }
-        return [...prev, gameId];
+        // Select games from this date (max 2)
+        const gameIdsToAdd = gamesOnSameDate.slice(0, 2).map(g => g.id);
+        return gameIdsToAdd;
       }
     });
   };
@@ -139,13 +146,18 @@ export const GameList = ({ sportType, teamId, onGameSelect }: GameListProps) => 
           Verfügbare Spiele
         </CardTitle>
         <CardDescription className="text-muted-foreground">
-          Wähle 1-2 Spiele aus ({selectedGameIds.length} ausgewählt)
+          {selectedGameIds.length === 0 
+            ? "Wähle ein oder mehrere Spiele vom gleichen Tag aus" 
+            : `${selectedGameIds.length} Spiel${selectedGameIds.length > 1 ? 'e' : ''} ausgewählt`}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
           {games.map((game) => {
             const isSelected = selectedGameIds.includes(game.id);
+            const gamesOnSameDate = getGamesByDate(game.id);
+            const hasMultipleGamesOnSameDate = gamesOnSameDate.length > 1;
+            
             return (
               <div
                 key={game.id}
@@ -163,10 +175,15 @@ export const GameList = ({ sportType, teamId, onGameSelect }: GameListProps) => 
                     className="pointer-events-none"
                   />
                   <div className="flex-1 space-y-3">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
                       <span className="font-semibold text-base text-foreground">{game.teamHome}</span>
                       <span className="text-sm text-muted-foreground">vs</span>
                       <span className="font-semibold text-base text-foreground">{game.teamAway}</span>
+                      {hasMultipleGamesOnSameDate && (
+                        <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                          {gamesOnSameDate.length} Spiele am gleichen Tag
+                        </span>
+                      )}
                     </div>
                     {game.result && game.result !== "-:-" && game.result !== "" && (
                       <div className="text-sm font-medium text-primary">
