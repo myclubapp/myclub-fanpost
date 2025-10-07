@@ -35,26 +35,28 @@ export const GameList = ({ sportType, teamId, onGameSelect }: GameListProps) => 
   const { toast } = useToast();
 
   // Group games by date
-  const getGamesByDate = (gameId: string): Game[] => {
-    const game = games.find(g => g.id === gameId);
-    if (!game) return [];
-    return games.filter(g => g.date === game.date);
-  };
+  const groupedGames = games.reduce((acc, game) => {
+    if (!acc[game.date]) {
+      acc[game.date] = [];
+    }
+    acc[game.date].push(game);
+    return acc;
+  }, {} as Record<string, Game[]>);
 
   const handleGameToggle = (gameId: string) => {
-    const gamesOnSameDate = getGamesByDate(gameId);
-    
     setSelectedGameIds((prev) => {
-      // Check if any game from this date is already selected
-      const isAlreadySelected = gamesOnSameDate.some(g => prev.includes(g.id));
-      
-      if (isAlreadySelected) {
-        // Deselect all games from this date
-        return prev.filter(id => !gamesOnSameDate.map(g => g.id).includes(id));
+      if (prev.includes(gameId)) {
+        return prev.filter((id) => id !== gameId);
       } else {
-        // Select games from this date (max 2)
-        const gameIdsToAdd = gamesOnSameDate.slice(0, 2).map(g => g.id);
-        return gameIdsToAdd;
+        if (prev.length >= 2) {
+          toast({
+            title: "Maximum erreicht",
+            description: "Du kannst maximal 2 Spiele auswählen",
+            variant: "destructive",
+          });
+          return prev;
+        }
+        return [...prev, gameId];
       }
     });
   };
@@ -152,55 +154,71 @@ export const GameList = ({ sportType, teamId, onGameSelect }: GameListProps) => 
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          {games.map((game) => {
-            const isSelected = selectedGameIds.includes(game.id);
-            const gamesOnSameDate = getGamesByDate(game.id);
-            const hasMultipleGamesOnSameDate = gamesOnSameDate.length > 1;
+        <div className="space-y-4">
+          {Object.entries(groupedGames).map(([date, gamesOnDate]) => {
+            const hasMultipleGames = gamesOnDate.length > 1;
             
             return (
-              <div
-                key={game.id}
-                className={`group p-5 rounded-lg border transition-all duration-300 cursor-pointer ${
-                  isSelected 
-                    ? 'border-primary bg-primary/5' 
-                    : 'border-border bg-background hover:bg-primary/5 hover:border-primary'
-                }`}
-                onClick={() => handleGameToggle(game.id)}
+              <div 
+                key={date}
+                className={`rounded-lg ${hasMultipleGames ? 'border-2 border-primary/20 p-3 bg-primary/5' : ''}`}
               >
-                <div className="flex items-center gap-4">
-                  <Checkbox 
-                    checked={isSelected}
-                    onCheckedChange={() => handleGameToggle(game.id)}
-                    className="pointer-events-none"
-                  />
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <span className="font-semibold text-base text-foreground">{game.teamHome}</span>
-                      <span className="text-sm text-muted-foreground">vs</span>
-                      <span className="font-semibold text-base text-foreground">{game.teamAway}</span>
-                      {hasMultipleGamesOnSameDate && (
-                        <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
-                          {gamesOnSameDate.length} Spiele am gleichen Tag
-                        </span>
-                      )}
-                    </div>
-                    {game.result && game.result !== "-:-" && game.result !== "" && (
-                      <div className="text-sm font-medium text-primary">
-                        Resultat: {game.result}
-                      </div>
-                    )}
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {game.date}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {game.time}
-                      </div>
-                    </div>
+                {hasMultipleGames && (
+                  <div className="flex items-center gap-2 mb-3 px-2">
+                    <Calendar className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-semibold text-primary">
+                      {date} - {gamesOnDate.length} Spiele
+                    </span>
                   </div>
+                )}
+                <div className="space-y-2">
+                  {gamesOnDate.map((game) => {
+                    const isSelected = selectedGameIds.includes(game.id);
+                    
+                    return (
+                      <div
+                        key={game.id}
+                        className={`group p-4 rounded-lg border transition-all duration-300 cursor-pointer ${
+                          isSelected 
+                            ? 'border-primary bg-primary/10' 
+                            : 'border-border bg-background hover:bg-muted/50 hover:border-muted-foreground/30'
+                        }`}
+                        onClick={() => handleGameToggle(game.id)}
+                      >
+                        <div className="flex items-center gap-4">
+                          <Checkbox 
+                            checked={isSelected}
+                            onCheckedChange={() => handleGameToggle(game.id)}
+                            className="pointer-events-none"
+                          />
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center gap-3">
+                              <span className="font-semibold text-base text-foreground">{game.teamHome}</span>
+                              <span className="text-sm text-muted-foreground">vs</span>
+                              <span className="font-semibold text-base text-foreground">{game.teamAway}</span>
+                            </div>
+                            {game.result && game.result !== "-:-" && game.result !== "" && (
+                              <div className="text-sm font-medium text-primary">
+                                Resultat: {game.result}
+                              </div>
+                            )}
+                            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                              {!hasMultipleGames && (
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="h-4 w-4" />
+                                  {game.date}
+                                </div>
+                              )}
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-4 w-4" />
+                                {game.time}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
