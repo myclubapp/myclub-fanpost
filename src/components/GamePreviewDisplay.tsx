@@ -50,17 +50,48 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds }: GamePreviewDi
   const resultRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("preview");
+  const [activeTab, setActiveTab] = useState<string>("preview");
   const [selectedTheme, setSelectedTheme] = useState("myclub-light");
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [isHomeGame, setIsHomeGame] = useState(false);
+  const [hasResult, setHasResult] = useState(false);
 
   // Add "su-" prefix for Swiss Unihockey
   const prefixedClubId = sportType === "unihockey" ? `su-${clubId}` : clubId;
   const prefixedGameId = sportType === "unihockey" ? `su-${gameId}` : gameId;
   const prefixedGameId2 = gameId2 && sportType === "unihockey" ? `su-${gameId2}` : gameId2;
+
+  // Fetch game data to check if result exists
+  useEffect(() => {
+    const fetchGameData = async () => {
+      const apiUrls: Record<SportType, (gameId: string) => string> = {
+        unihockey: (id) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissunihockey?query=%7B%0A%20%20game(id%3A%20%22${id}%22)%20%7B%0A%20%20%20%20result%0A%20%20%7D%0A%7D`,
+        volleyball: (id) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissvolley?query=%7B%0A%20%20game(id%3A%20%22${id}%22)%20%7B%0A%20%20%20%20result%0A%20%20%7D%0A%7D`,
+        handball: (id) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swisshandball?query=%7B%0A%20%20game(id%3A%20%22${id}%22)%20%7B%0A%20%20%20%20result%0A%20%20%7D%0A%7D`,
+      };
+
+      try {
+        const response = await fetch(apiUrls[sportType](gameId));
+        const data = await response.json();
+        const result = data.data?.game?.result;
+        
+        if (result && result !== "" && result !== "-:-") {
+          setHasResult(true);
+          setActiveTab("result");
+        } else {
+          setHasResult(false);
+          setActiveTab("preview");
+        }
+      } catch (error) {
+        console.error("Error fetching game data:", error);
+        setActiveTab("preview");
+      }
+    };
+
+    fetchGameData();
+  }, [gameId, sportType]);
 
   useEffect(() => {
     // Load the web component script
