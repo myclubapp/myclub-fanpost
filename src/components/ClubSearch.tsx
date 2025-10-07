@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
-import { Building2 } from "lucide-react";
+import { Building2, Check } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 type SportType = "unihockey" | "volleyball" | "handball";
 
@@ -110,31 +112,35 @@ export const ClubSearch = ({ sportType, onClubSelect }: ClubSearchProps) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          <Select value={selectedClubId} onValueChange={handleClubChange}>
-            <SelectTrigger className="w-full h-12 text-base border-border bg-background hover:border-primary transition-colors">
-              <SelectValue placeholder="Club auswählen..." />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border">
-              {clubs.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Building2 className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>Keine Clubs verfügbar</p>
-                </div>
-              ) : (
-                clubs.map((club) => (
-                  <SelectItem 
-                    key={club.id} 
-                    value={club.id}
-                    className="text-base cursor-pointer hover:bg-primary/10"
-                  >
-                    {club.name}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
-        </div>
+        <Command className="rounded-lg border border-border shadow-md">
+          <CommandInput placeholder="Club suchen..." />
+          <CommandList>
+            <CommandEmpty>
+              <div className="text-center py-6 text-muted-foreground">
+                <Building2 className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>Keine Clubs gefunden</p>
+              </div>
+            </CommandEmpty>
+            <CommandGroup>
+              {clubs.map((club) => (
+                <CommandItem
+                  key={club.id}
+                  value={club.name}
+                  onSelect={() => handleClubChange(club.id)}
+                  className="cursor-pointer"
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      selectedClubId === club.id ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {club.name}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
       </CardContent>
     </Card>
   );
