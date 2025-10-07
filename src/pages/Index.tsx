@@ -36,6 +36,66 @@ const Index = () => {
     if (gameId) setSelectedGameId(gameId);
   }, [sport, clubId, teamId, gameId]);
 
+  // Load club name from API when clubId is set via URL
+  useEffect(() => {
+    const fetchClubName = async () => {
+      if (!selectedClubId || selectedClubName || !selectedSport) return;
+      
+      const apiUrls: Record<SportType, string> = {
+        unihockey: "https://api.swissunihockey.ch/rest/v1/clubs",
+        volleyball: "",
+        handball: "",
+      };
+
+      const apiUrl = apiUrls[selectedSport as SportType];
+      if (!apiUrl) return;
+
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        const clubs = data.entries || [];
+        const club = clubs.find((c: { id: number }) => c.id.toString() === selectedClubId);
+        if (club) {
+          setSelectedClubName(club.text);
+        }
+      } catch (error) {
+        console.error("Error fetching club name:", error);
+      }
+    };
+
+    fetchClubName();
+  }, [selectedClubId, selectedClubName, selectedSport]);
+
+  // Load team name from API when teamId is set via URL
+  useEffect(() => {
+    const fetchTeamName = async () => {
+      if (!selectedTeamId || selectedTeamName || !selectedSport || !selectedClubId) return;
+      
+      const apiUrls: Record<SportType, (clubId: string) => string> = {
+        unihockey: (clubId: string) => `https://api.swissunihockey.ch/rest/v1/clubs/${clubId}/teams`,
+        volleyball: () => "",
+        handball: () => "",
+      };
+
+      const apiUrl = apiUrls[selectedSport as SportType](selectedClubId);
+      if (!apiUrl) return;
+
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        const teams = data.entries || [];
+        const team = teams.find((t: { id: number }) => t.id.toString() === selectedTeamId);
+        if (team) {
+          setSelectedTeamName(team.text);
+        }
+      } catch (error) {
+        console.error("Error fetching team name:", error);
+      }
+    };
+
+    fetchTeamName();
+  }, [selectedTeamId, selectedTeamName, selectedSport, selectedClubId]);
+
   const handleSportSelect = (sport: SportType) => {
     setSelectedSport(sport);
     setSelectedClubId("");
