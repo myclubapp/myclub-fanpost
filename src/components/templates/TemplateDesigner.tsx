@@ -54,9 +54,11 @@ interface TemplateDesignerProps {
   config: any;
   onChange: (config: any) => void;
   onSupportedGamesChange: (games: number) => void;
+  format: '4:5' | '1:1';
+  onFormatChange: (format: '4:5' | '1:1') => void;
 }
 
-export const TemplateDesigner = ({ supportedGames, config, onChange, onSupportedGamesChange }: TemplateDesignerProps) => {
+export const TemplateDesigner = ({ supportedGames, config, onChange, onSupportedGamesChange, format, onFormatChange }: TemplateDesignerProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -71,7 +73,6 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   const [previewData, setPreviewData] = useState<any>(null);
   const [lockAspectRatio, setLockAspectRatio] = useState(true);
   const [expandedGame, setExpandedGame] = useState<number | null>(1);
-  const [format, setFormat] = useState<'4:5' | '1:1'>(config.format || '4:5');
 
   // Canvas dimensions based on format
   const canvasDimensions = format === '4:5' 
@@ -190,19 +191,6 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
     setSelectedElement(newElement.id);
   };
 
-  const addImageElement = () => {
-    const newElement: SVGElement = {
-      id: `image-${Date.now()}`,
-      type: 'image',
-      x: 400,
-      y: 400,
-      width: 189,
-      height: 189,
-      href: 'https://via.placeholder.com/189'
-    };
-    setElements(prev => [...prev, newElement]);
-    setSelectedElement(newElement.id);
-  };
 
   const addApiImageField = (apiField: string) => {
     const newElement: SVGElement = {
@@ -307,13 +295,37 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
 
   const loadPreviewData = async () => {
     try {
-      const response = await fetch('https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissunihockey?query=%7B%0A%20%20game(gameId%3A%20%221073721%22)%20%7B%0A%20%20%20%20teamHome%0A%20%20%20%20teamAway%0A%20%20%20%20date%0A%20%20%20%20time%0A%20%20%20%20location%0A%20%20%20%20city%0A%20%20%20%20result%0A%20%20%20%20resultDetail%0A%20%20%20%20teamHomeLogo%0A%20%20%20%20teamAwayLogo%0A%20%20%7D%0A%7D%0A');
-      const data = await response.json();
-      setPreviewData(data.data.game);
+      const gameIds = ['1073721', '1073723', '1073724'];
+      const gamesToLoad = gameIds.slice(0, supportedGames);
+      
+      const promises = gamesToLoad.map(gameId =>
+        fetch(`https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissunihockey?query=%7B%0A%20%20game(gameId%3A%20%22${gameId}%22)%20%7B%0A%20%20%20%20teamHome%0A%20%20%20%20teamAway%0A%20%20%20%20date%0A%20%20%20%20time%0A%20%20%20%20location%0A%20%20%20%20city%0A%20%20%20%20result%0A%20%20%20%20resultDetail%0A%20%20%20%20teamHomeLogo%0A%20%20%20%20teamAwayLogo%0A%20%20%7D%0A%7D%0A`)
+          .then(res => res.json())
+          .then(data => data.data.game)
+      );
+      
+      const gamesData = await Promise.all(promises);
+      
+      // Create preview data with suffixed fields for games 2 and 3
+      const previewDataObj: any = gamesData[0]; // Game 1 has no suffix
+      
+      if (gamesData[1]) {
+        Object.keys(gamesData[1]).forEach(key => {
+          previewDataObj[`${key}2`] = gamesData[1][key];
+        });
+      }
+      
+      if (gamesData[2]) {
+        Object.keys(gamesData[2]).forEach(key => {
+          previewDataObj[`${key}3`] = gamesData[2][key];
+        });
+      }
+      
+      setPreviewData(previewDataObj);
       setPreviewMode(true);
       toast({
         title: "Vorschau geladen",
-        description: "Template wird mit Beispieldaten angezeigt",
+        description: `Template wird mit Beispieldaten für ${supportedGames} ${supportedGames === 1 ? 'Spiel' : 'Spiele'} angezeigt`,
       });
     } catch (error) {
       toast({
@@ -375,10 +387,6 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
               <Type className="h-4 w-4" />
               Statischer Text
             </Button>
-            <Button onClick={addImageElement} size="sm" variant="outline" className="gap-2">
-              <ImageIcon className="h-4 w-4" />
-              Bild-URL
-            </Button>
             <Button 
               onClick={() => fileInputRef.current?.click()} 
               size="sm" 
@@ -405,11 +413,6 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
               onChange={handleFileUpload}
               className="hidden"
             />
-            
-            <div className="flex gap-2 items-center ml-auto">
-              <Database className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">API-Felder per Drag & Drop</span>
-            </div>
           </div>
 
           {/* Drag & Drop API Fields per Game */}
@@ -489,7 +492,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
               <Button
                 variant={format === '4:5' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setFormat('4:5')}
+                onClick={() => onFormatChange('4:5')}
                 className="gap-2"
               >
                 <RectangleHorizontal className="h-4 w-4" />
@@ -498,13 +501,19 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
               <Button
                 variant={format === '1:1' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setFormat('1:1')}
+                onClick={() => onFormatChange('1:1')}
                 className="gap-2"
               >
                 <Square className="h-4 w-4" />
                 1:1 (Quadratisch)
               </Button>
             </div>
+            <span className="text-sm text-muted-foreground ml-2">
+              {canvasDimensions.width}x{canvasDimensions.height}px
+            </span>
+          </div>
+
+          <div className="border rounded-none overflow-auto bg-muted/10">
             <span className="text-sm text-muted-foreground ml-2">
               {canvasDimensions.width}x{canvasDimensions.height}px
             </span>
@@ -735,6 +744,28 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                   )}
 
                   <div className="space-y-2">
+                    <Label>Schriftart</Label>
+                    <Select
+                      value={selectedElementData.fontFamily}
+                      onValueChange={(value) => updateElement(selectedElementData.id, { fontFamily: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Bebas Neue, sans-serif">Bebas Neue</SelectItem>
+                        <SelectItem value="Arial, sans-serif">Arial</SelectItem>
+                        <SelectItem value="Helvetica, sans-serif">Helvetica</SelectItem>
+                        <SelectItem value="Times New Roman, serif">Times New Roman</SelectItem>
+                        <SelectItem value="Georgia, serif">Georgia</SelectItem>
+                        <SelectItem value="Courier New, monospace">Courier New</SelectItem>
+                        <SelectItem value="Verdana, sans-serif">Verdana</SelectItem>
+                        <SelectItem value="Impact, sans-serif">Impact</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                   <div className="space-y-2">
                     <Label>Schriftgröße</Label>
                     <Input
                       type="number"

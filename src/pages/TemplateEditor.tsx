@@ -29,6 +29,7 @@ const TemplateEditor = () => {
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
   const [supportedGames, setSupportedGames] = useState<number>(1);
+  const [format, setFormat] = useState<'4:5' | '1:1'>('4:5');
   const [svgConfig, setSvgConfig] = useState<any>({});
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
@@ -66,6 +67,9 @@ const TemplateEditor = () => {
       setName(data.name);
       setSupportedGames(data.supported_games || 1);
       setSvgConfig(data.svg_config || {});
+      if (typeof data.svg_config === 'object' && data.svg_config !== null && 'format' in data.svg_config) {
+        setFormat((data.svg_config as any).format || '4:5');
+      }
     } catch (error: any) {
       toast({
         title: "Fehler beim Laden",
@@ -207,24 +211,42 @@ const TemplateEditor = () => {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="games">Anzahl Spiele</Label>
-                <Select
-                  value={supportedGames.toString()}
-                  onValueChange={(value) => setSupportedGames(parseInt(value))}
-                >
-                  <SelectTrigger id="games">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 Spiel</SelectItem>
-                    <SelectItem value="2">2 Spiele</SelectItem>
-                    <SelectItem value="3">3 Spiele</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.supported_games && (
-                  <p className="text-sm text-destructive">{errors.supported_games}</p>
-                )}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="games">Anzahl Spiele</Label>
+                  <Select
+                    value={supportedGames.toString()}
+                    onValueChange={(value) => setSupportedGames(parseInt(value))}
+                  >
+                    <SelectTrigger id="games">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 Spiel</SelectItem>
+                      <SelectItem value="2">2 Spiele</SelectItem>
+                      <SelectItem value="3">3 Spiele</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.supported_games && (
+                    <p className="text-sm text-destructive">{errors.supported_games}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="format">Format</Label>
+                  <Select
+                    value={format}
+                    onValueChange={(value: '4:5' | '1:1') => setFormat(value)}
+                  >
+                    <SelectTrigger id="format">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="4:5">4:5 (Instagram - 1080x1350)</SelectItem>
+                      <SelectItem value="1:1">1:1 (Quadratisch - 1080x1080)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -234,6 +256,8 @@ const TemplateEditor = () => {
             config={svgConfig}
             onChange={setSvgConfig}
             onSupportedGamesChange={setSupportedGames}
+            format={format}
+            onFormatChange={setFormat}
           />
         </div>
       </div>
