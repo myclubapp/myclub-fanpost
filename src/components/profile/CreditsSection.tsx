@@ -4,7 +4,8 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { useCredits } from '@/hooks/useCredits';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Coins, RefreshCw, ShoppingBag, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
+import { Loader2, Coins, RefreshCw, ShoppingBag, ArrowDownCircle, ArrowUpCircle, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface CreditTransaction {
   id: string;
@@ -176,25 +177,22 @@ export const CreditsSection = () => {
                   
                   {/* Show game URL and template info for consumption transactions */}
                   {transaction.transaction_type === 'consumption' && (transaction.game_url || transaction.template_info) && (
-                    <div className="pl-7 space-y-1 text-xs text-muted-foreground border-t pt-2">
+                    <div className="pl-7 flex flex-wrap gap-3 text-xs border-t pt-2 mt-1">
                       {transaction.game_url && (
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">Spiel:</span>
-                          <a 
-                            href={transaction.game_url} 
-                            className="text-primary hover:underline"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {transaction.game_url}
-                          </a>
-                        </div>
+                        <Link 
+                          to={transaction.game_url} 
+                          className="flex items-center gap-1 text-primary hover:underline"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          Spiel ansehen
+                        </Link>
                       )}
                       {transaction.template_info && (
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">Template:</span>
-                          <span className="font-mono">{transaction.template_info}</span>
-                        </div>
+                        <span className="px-2 py-0.5 bg-muted rounded text-muted-foreground">
+                          {transaction.template_info.startsWith('template=') 
+                            ? `Custom Template` 
+                            : transaction.template_info.replace('theme=', 'Theme: ')}
+                        </span>
                       )}
                     </div>
                   )}
