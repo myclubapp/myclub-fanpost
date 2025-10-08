@@ -100,6 +100,58 @@ serve(async (req) => {
           .from('user_roles')
           .update({ role: 'paid_user' })
           .eq('user_id', user.id);
+        
+        // Update credits immediately when upgrading to paid
+        logStep("Updating credits for new paid user");
+        await supabaseClient
+          .from('user_credits')
+          .update({ 
+            credits_remaining: 10,
+            credits_purchased: 0,
+            last_reset_date: new Date().toISOString().split('T')[0],
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id);
+        
+        // Log the credit transaction
+        await supabaseClient
+          .from('credit_transactions')
+          .insert({
+            user_id: user.id,
+            amount: 10,
+            transaction_type: 'monthly_reset',
+            description: 'Upgrade zu Pro - Initiale Credits'
+          });
+      } else if (roleData?.role === 'paid_user') {
+        // Check if paid user has less than 10 credits and update if needed
+        const { data: creditsData } = await supabaseClient
+          .from('user_credits')
+          .select('credits_remaining')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (creditsData && creditsData.credits_remaining < 10) {
+          logStep("Updating credits for existing paid user with insufficient credits");
+          await supabaseClient
+            .from('user_credits')
+            .update({ 
+              credits_remaining: 10,
+              credits_purchased: 0,
+              last_reset_date: new Date().toISOString().split('T')[0],
+              updated_at: new Date().toISOString()
+            })
+            .eq('user_id', user.id);
+          
+          // Log the credit transaction
+          await supabaseClient
+            .from('credit_transactions')
+            .insert({
+              user_id: user.id,
+              amount: 10 - creditsData.credits_remaining,
+              transaction_type: 'monthly_reset',
+              description: 'Pro Credits aufgefüllt'
+            });
+        }
       }
     } else {
       logStep("No active subscription found");
