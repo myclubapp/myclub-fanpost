@@ -80,10 +80,28 @@ export default {
             height: "0",
           },
         },
+        "blob": {
+          "0%": {
+            transform: "scale(1) rotate(0deg)",
+          },
+          "25%": {
+            transform: "scale(1.1, 0.9) rotate(-5deg)",
+          },
+          "50%": {
+            transform: "scale(0.9, 1.1) rotate(5deg)",
+          },
+          "75%": {
+            transform: "scale(1.05, 0.95) rotate(-2deg)",
+          },
+          "100%": {
+            transform: "scale(1) rotate(0deg)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "blob": "blob 0.6s ease-in-out",
       },
     },
   },

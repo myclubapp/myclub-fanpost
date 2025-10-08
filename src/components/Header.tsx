@@ -157,7 +157,7 @@ export const Header = () => {
               {user ? (
                 <>
                   {credits && (
-                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary transition-transform ${showPop ? 'animate-[scale-in_0.3s_ease-out]' : ''}`}>
+                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary ${showPop ? 'animate-blob' : ''}`}>
                       <Coins className="h-4 w-4" />
                       <span className="text-sm font-medium">{credits.credits_remaining}</span>
                     </div>
@@ -218,7 +218,7 @@ export const Header = () => {
         {/* Mobile Navigation */}
         <div className="flex md:hidden items-center gap-2">
           {!loading && user && credits && (
-            <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 text-primary transition-transform ${showPop ? 'animate-[scale-in_0.3s_ease-out]' : ''}`}>
+            <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 text-primary ${showPop ? 'animate-blob' : ''}`}>
               <Coins className="h-3.5 w-3.5" />
               <span className="text-xs font-medium">{credits.credits_remaining}</span>
             </div>
