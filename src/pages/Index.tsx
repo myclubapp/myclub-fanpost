@@ -179,6 +179,10 @@ const Index = () => {
               <ul className="space-y-2">
                 <li className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-primary" />
+                  <span>3 Credits pro Monat</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
                   <span>Basis Posts erstellen</span>
                 </li>
                 <li className="flex items-center gap-2">
@@ -205,6 +209,10 @@ const Index = () => {
               <ul className="space-y-2">
                 <li className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-primary" />
+                  <span>10 Credits pro Monat</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
                   <span>Alle Free Features</span>
                 </li>
                 <li className="flex items-center gap-2">
@@ -213,7 +221,7 @@ const Index = () => {
                 </li>
                 <li className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-primary" />
-                  <span>Unbegrenzte Posts</span>
+                  <span>Unbegrenzte Post-Erstellung</span>
                 </li>
               </ul>
               <Button className="w-full" onClick={() => navigate('/auth')}>
@@ -232,6 +240,10 @@ const Index = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <ul className="space-y-2">
+                <li className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  <span>Unbegrenzte Credits</span>
+                </li>
                 <li className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-primary" />
                   <span>Alle Pro Features</span>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useCredits } from '@/hooks/useCredits';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save, User, Crown, Sparkles } from 'lucide-react';
+import { Loader2, Save, User, Crown, Sparkles, Coins } from 'lucide-react';
 import { z } from 'zod';
 
 const profileSchema = z.object({
@@ -21,6 +22,7 @@ const profileSchema = z.object({
 const Profile = () => {
   const { user, loading: authLoading } = useAuth();
   const { role, loading: roleLoading, isPaidUser } = useUserRole();
+  const { credits, loading: creditsLoading } = useCredits();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -163,15 +165,38 @@ const Profile = () => {
                 </Badge>
               </div>
             </CardHeader>
-            {!isPaidUser && (
-              <CardContent>
+            <CardContent className="space-y-4">
+              {/* Credits Display */}
+              {credits && (
+                <div className="bg-muted/50 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Coins className="h-5 w-5 text-primary" />
+                      <h4 className="font-semibold">Verfügbare Credits</h4>
+                    </div>
+                    <span className="text-2xl font-bold text-primary">{credits.credits_remaining}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {isPaidUser 
+                      ? 'Sie erhalten 10 Credits pro Monat' 
+                      : 'Sie erhalten 3 Credits pro Monat'}
+                  </p>
+                  {credits.credits_purchased > 0 && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Inkl. {credits.credits_purchased} gekaufte Credits
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {!isPaidUser && (
                 <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4">
                   <div className="flex items-start gap-3">
                     <Sparkles className="h-5 w-5 text-primary mt-0.5" />
                     <div className="flex-1">
                       <h4 className="font-semibold mb-1">Upgrade zu Premium</h4>
                       <p className="text-sm text-muted-foreground mb-3">
-                        Erstellen Sie eigene Templates, generieren Sie Bilder mit AI und nutzen Sie erweiterte Funktionen.
+                        Erstellen Sie eigene Templates, erhalten Sie 10 Credits pro Monat und nutzen Sie erweiterte Funktionen.
                       </p>
                       <Button size="sm">
                         Jetzt upgraden
@@ -179,8 +204,8 @@ const Profile = () => {
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            )}
+              )}
+            </CardContent>
           </Card>
 
           {/* Profile Information Card */}

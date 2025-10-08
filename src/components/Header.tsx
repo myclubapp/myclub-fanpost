@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
-import { LogOut, User, FileText } from 'lucide-react';
+import { useCredits } from '@/hooks/useCredits';
+import { LogOut, User, FileText, Coins } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +25,7 @@ import logo from '@/assets/myclub-logo.png';
 export const Header = () => {
   const { user, signOut, loading } = useAuth();
   const { isPaidUser } = useUserRole();
+  const { credits } = useCredits();
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -112,34 +114,44 @@ export const Header = () => {
           {!loading && (
             <>
               {user ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <User className="h-5 w-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>
-                      {user.email}
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate('/profile')}>
-                      <User className="mr-2 h-4 w-4" />
-                      Mein Profil
-                    </DropdownMenuItem>
-                    {isPaidUser && (
-                      <DropdownMenuItem onClick={() => navigate('/templates')}>
-                        <FileText className="mr-2 h-4 w-4" />
-                        Meine Templates
+                <>
+                  {/* Credits Display */}
+                  {credits && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary">
+                      <Coins className="h-4 w-4" />
+                      <span className="text-sm font-medium">{credits.credits_remaining}</span>
+                    </div>
+                  )}
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <User className="h-5 w-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>
+                        {user.email}
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => navigate('/profile')}>
+                        <User className="mr-2 h-4 w-4" />
+                        Mein Profil
                       </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Abmelden
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      {isPaidUser && (
+                        <DropdownMenuItem onClick={() => navigate('/templates')}>
+                          <FileText className="mr-2 h-4 w-4" />
+                          Meine Templates
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleSignOut}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Abmelden
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
               ) : (
                 <Button asChild variant="default">
                   <Link to="/auth">Login</Link>

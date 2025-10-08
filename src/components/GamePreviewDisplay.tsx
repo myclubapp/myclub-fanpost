@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Download, Image as ImageIcon, FileText, Palette, Upload, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useCredits } from "@/hooks/useCredits";
 import * as svg from "save-svg-as-png";
 import { Share } from "@capacitor/share";
 import { Filesystem, Directory } from "@capacitor/filesystem";
@@ -55,6 +57,8 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
   const resultRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { credits, hasCredits, consumeCredit, loading: creditsLoading } = useCredits();
   
   // Set initial tab based on whether games have results
   const hasAnyResult = gamesHaveResults.some(hasResult => hasResult);
@@ -180,6 +184,26 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
   };
 
   const handleDownload = async () => {
+    // Check if user is logged in
+    if (!user) {
+      toast({
+        title: "Anmeldung erforderlich",
+        description: "Bitte melden Sie sich an, um Posts zu erstellen",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if user has credits
+    if (!hasCredits) {
+      toast({
+        title: "Keine Credits verfügbar",
+        description: "Sie haben keine Credits mehr. Upgraden Sie Ihren Account oder warten Sie bis zum nächsten Monat.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const targetRef = activeTab === "preview" ? previewRef : resultRef;
     if (!targetRef.current) return;
 
@@ -192,7 +216,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
     const notifySuccess = (isShare: boolean) =>
       toast({
         title: "Erfolgreich!",
-        description: isShare ? "Das Bild wurde geteilt" : "Das Bild wurde heruntergeladen",
+        description: isShare ? "Das Bild wurde geteilt. 1 Credit wurde verbraucht." : "Das Bild wurde heruntergeladen. 1 Credit wurde verbraucht.",
       });
 
     const notifyError = () =>
@@ -279,6 +303,15 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
             dialogTitle: "Bild teilen",
           });
 
+          // Consume credit after successful share
+          const creditConsumed = await consumeCredit();
+          if (!creditConsumed) {
+            toast({
+              title: "Warnung",
+              description: "Das Bild wurde erstellt, aber es gab ein Problem beim Verbrauch des Credits.",
+              variant: "destructive",
+            });
+          }
           notifySuccess(true);
         } catch (error) {
           console.error("Capacitor share failed:", error);
@@ -296,6 +329,16 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
             title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
             text: activeTab === "preview" ? "Schau dir diese Spielvorschau an!" : "Schau dir dieses Resultat an!",
           });
+          
+          // Consume credit after successful share
+          const creditConsumed = await consumeCredit();
+          if (!creditConsumed) {
+            toast({
+              title: "Warnung",
+              description: "Das Bild wurde erstellt, aber es gab ein Problem beim Verbrauch des Credits.",
+              variant: "destructive",
+            });
+          }
           notifySuccess(true);
         } else {
           // Fallback to download on desktop
@@ -303,6 +346,16 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
           link.download = fileName;
           link.href = pngUri;
           link.click();
+          
+          // Consume credit after successful download
+          const creditConsumed = await consumeCredit();
+          if (!creditConsumed) {
+            toast({
+              title: "Warnung",
+              description: "Das Bild wurde heruntergeladen, aber es gab ein Problem beim Verbrauch des Credits.",
+              variant: "destructive",
+            });
+          }
           notifySuccess(false);
         }
       }
