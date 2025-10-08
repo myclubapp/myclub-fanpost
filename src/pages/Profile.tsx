@@ -13,9 +13,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save, User, Crown, Sparkles, Coins, CreditCard, ArrowUpCircle, ArrowDownCircle, RefreshCw, ShoppingBag, Trash2 } from 'lucide-react';
+import { Loader2, Save, User, Crown, Sparkles, Coins, CreditCard, ArrowUpCircle, ArrowDownCircle, RefreshCw, ShoppingBag, Trash2, Sun, Moon, Monitor } from 'lucide-react';
 import { z } from 'zod';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useTheme } from '@/components/theme-provider';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface CreditTransaction {
   id: string;
@@ -29,6 +31,36 @@ const profileSchema = z.object({
   first_name: z.string().max(100, 'Vorname zu lang').optional(),
   last_name: z.string().max(100, 'Nachname zu lang').optional(),
 });
+
+const ThemeToggle = () => {
+  const { theme, setTheme } = useTheme();
+
+  return (
+    <RadioGroup value={theme} onValueChange={(value) => setTheme(value as "light" | "dark" | "system")}>
+      <div className="flex items-center space-x-2">
+        <RadioGroupItem value="light" id="light" />
+        <Label htmlFor="light" className="flex items-center gap-2 cursor-pointer font-normal">
+          <Sun className="h-4 w-4" />
+          Hell
+        </Label>
+      </div>
+      <div className="flex items-center space-x-2">
+        <RadioGroupItem value="dark" id="dark" />
+        <Label htmlFor="dark" className="flex items-center gap-2 cursor-pointer font-normal">
+          <Moon className="h-4 w-4" />
+          Dunkel
+        </Label>
+      </div>
+      <div className="flex items-center space-x-2">
+        <RadioGroupItem value="system" id="system" />
+        <Label htmlFor="system" className="flex items-center gap-2 cursor-pointer font-normal">
+          <Monitor className="h-4 w-4" />
+          System
+        </Label>
+      </div>
+    </RadioGroup>
+  );
+};
 
 const Profile = () => {
   const { user, loading: authLoading } = useAuth();
@@ -497,6 +529,16 @@ const Profile = () => {
                       )}
                     </div>
                   )}
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-4 border-t">
+                <div className="space-y-3">
+                  <Label className="text-base font-semibold">Darstellung</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Wählen Sie, wie die Anwendung angezeigt werden soll.
+                  </p>
+                  <ThemeToggle />
                 </div>
               </div>
 
