@@ -692,7 +692,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
           format={selectedCustomTemplate?.config?.format || '4:5'}
         />
       )}
-      <Card className="shadow-[var(--shadow-card)] border-border bg-card/50 backdrop-blur-sm">
+      <Card className="shadow-[var(--shadow-card)] border-border bg-card/50 backdrop-blur-sm mb-24">
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-foreground mb-4">
           Social Media Vorschau
@@ -865,15 +865,20 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
             )}
           </div>
         )}
-        
-        <Button 
-          onClick={handleDownload} 
-          className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground mt-6"
-        >
-          <Download className="h-4 w-4" />
-          Als Bild exportieren
-        </Button>
       </CardContent>
+
+      {/* Sticky Footer with Export Button */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-t border-border p-4 z-40">
+        <div className="container mx-auto max-w-4xl">
+          <Button 
+            onClick={handleDownload} 
+            className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
+          >
+            <Download className="h-4 w-4" />
+            Als Bild exportieren
+          </Button>
+        </div>
+      </div>
     </Card>
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
