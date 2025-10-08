@@ -337,6 +337,11 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
       : element.content;
   };
 
+  // Check if an API field is already in use
+  const isApiFieldUsed = (apiField: string) => {
+    return elements.some(el => el.apiField === apiField);
+  };
+
   const selectedElementData = elements.find(el => el.id === selectedElement);
 
   return (
@@ -431,36 +436,44 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                       <div>
                         <Label className="text-xs text-muted-foreground mb-2 block">Text-Felder</Label>
                         <div className="grid grid-cols-2 gap-2">
-                          {apiFields.text.map(field => (
-                            <Button
-                              key={field.value}
-                              variant="outline"
-                              size="sm"
-                              className="justify-start text-xs h-8"
-                              onClick={() => addApiTextField(field.value)}
-                            >
-                              <Type className="h-3 w-3 mr-1.5" />
-                              {field.label}
-                            </Button>
-                          ))}
+                          {apiFields.text.map(field => {
+                            const isUsed = isApiFieldUsed(field.value);
+                            return (
+                              <Button
+                                key={field.value}
+                                variant={isUsed ? "default" : "outline"}
+                                size="sm"
+                                className="justify-start text-xs h-8"
+                                onClick={() => !isUsed && addApiTextField(field.value)}
+                                disabled={isUsed}
+                              >
+                                <Type className="h-3 w-3 mr-1.5" />
+                                {field.label}
+                              </Button>
+                            );
+                          })}
                         </div>
                       </div>
                       
                       <div>
                         <Label className="text-xs text-muted-foreground mb-2 block">Bild-Felder</Label>
                         <div className="grid grid-cols-2 gap-2">
-                          {apiFields.image.map(field => (
-                            <Button
-                              key={field.value}
-                              variant="outline"
-                              size="sm"
-                              className="justify-start text-xs h-8"
-                              onClick={() => addApiImageField(field.value)}
-                            >
-                              <ImageIcon className="h-3 w-3 mr-1.5" />
-                              {field.label}
-                            </Button>
-                          ))}
+                          {apiFields.image.map(field => {
+                            const isUsed = isApiFieldUsed(field.value);
+                            return (
+                              <Button
+                                key={field.value}
+                                variant={isUsed ? "default" : "outline"}
+                                size="sm"
+                                className="justify-start text-xs h-8"
+                                onClick={() => !isUsed && addApiImageField(field.value)}
+                                disabled={isUsed}
+                              >
+                                <ImageIcon className="h-3 w-3 mr-1.5" />
+                                {field.label}
+                              </Button>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
@@ -602,6 +615,8 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                         fill={isApiElement && !previewMode ? `url(#hatch-${element.id})` : "none"}
                         stroke={isApiElement && !previewMode ? "#10b981" : "none"}
                         strokeWidth="1"
+                        style={{ cursor: previewMode ? 'default' : 'move' }}
+                        onMouseDown={previewMode ? undefined : (e) => handleMouseDown(e, element.id)}
                       />
                       {(element.type === 'image' || previewMode) && (
                         <image
@@ -660,30 +675,21 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
         <CardContent>
           {selectedElementData ? (
             <div className="space-y-4">
-              <div className="flex items-center justify-between mb-4">
-                <Badge variant="outline" className="gap-1">
-                  {selectedElementData.type === 'text' || selectedElementData.type === 'api-text' ? (
-                    <Type className="h-3 w-3" />
-                  ) : (
-                    <ImageIcon className="h-3 w-3" />
-                  )}
-                  {selectedElementData.type === 'api-text' || selectedElementData.type === 'api-image' ? (
-                    <span className="flex items-center gap-1">
-                      <Database className="h-3 w-3" />
-                      API {selectedElementData.type === 'api-text' ? 'Text' : 'Bild'}
-                    </span>
-                  ) : (
-                    selectedElementData.type === 'text' ? 'Text' : 'Bild'
-                  )}
-                </Badge>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => deleteElement(selectedElementData.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+              <Badge variant="outline" className="gap-1 mb-4">
+                {selectedElementData.type === 'text' || selectedElementData.type === 'api-text' ? (
+                  <Type className="h-3 w-3" />
+                ) : (
+                  <ImageIcon className="h-3 w-3" />
+                )}
+                {selectedElementData.type === 'api-text' || selectedElementData.type === 'api-image' ? (
+                  <span className="flex items-center gap-1">
+                    <Database className="h-3 w-3" />
+                    API {selectedElementData.type === 'api-text' ? 'Text' : 'Bild'}
+                  </span>
+                ) : (
+                  selectedElementData.type === 'text' ? 'Text' : 'Bild'
+                )}
+              </Badge>
 
               {(selectedElementData.type === 'api-text' || selectedElementData.type === 'api-image') && (
                 <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
@@ -817,6 +823,15 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                   )}
                 </>
               )}
+
+              <Button
+                className="w-full"
+                variant="destructive"
+                onClick={() => deleteElement(selectedElementData.id)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Element löschen
+              </Button>
             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
