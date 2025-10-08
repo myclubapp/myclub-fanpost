@@ -163,8 +163,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
       try {
         // Construct GraphQL query for single game
         const query = `{
-  game(id: "${gameId}") {
-    id
+  game(gameId: "${gameId}") {
     teamHome
     teamAway
     date
