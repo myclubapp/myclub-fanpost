@@ -120,7 +120,7 @@ serve(async (req) => {
             user_id: user.id,
             amount: 10,
             transaction_type: 'monthly_reset',
-            description: 'Upgrade zu Pro - Initiale Credits'
+            description: 'Pro Abo: Credits aufgefüllt +10'
           });
       } else if (roleData?.role === 'paid_user') {
         // Check if paid user has less than 10 credits and update if needed
@@ -142,14 +142,14 @@ serve(async (req) => {
             })
             .eq('user_id', user.id);
           
-          // Log the credit transaction
+          // Log the credit transaction with +10
           await supabaseClient
             .from('credit_transactions')
             .insert({
               user_id: user.id,
-              amount: 10 - creditsData.credits_remaining,
+              amount: 10,
               transaction_type: 'monthly_reset',
-              description: 'Pro Credits aufgefüllt'
+              description: 'Pro Abo: Credits aufgefüllt +10'
             });
         }
       }
