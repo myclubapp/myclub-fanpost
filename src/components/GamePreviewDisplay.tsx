@@ -815,7 +815,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
                     height={svgDimensions.height}
                     theme={selectedTheme}
                     ishomegame={isHomeGame.toString()}
-                    {...(backgroundImage && { backgroundimage: backgroundImage })}
+                    backgroundimage={backgroundImage || ''}
                     style={{ width: '100%', height: 'auto', display: 'block', maxWidth: `${svgDimensions.width}px` }}
                   />
                 </div>
@@ -841,7 +841,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
                     theme={selectedTheme}
                     ishomegame={isHomeGame.toString()}
                     showresultdetail={showResultDetail.toString()}
-                    {...(backgroundImage && { backgroundimage: backgroundImage })}
+                    backgroundimage={backgroundImage || ''}
                     style={{ width: '100%', height: 'auto', display: 'block', maxWidth: `${svgDimensions.width}px` }}
                   />
                 </div>
