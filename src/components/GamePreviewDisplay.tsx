@@ -110,6 +110,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
   const [customTemplates, setCustomTemplates] = useState<CustomTemplate[]>([]);
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [loadingGameData, setLoadingGameData] = useState(false);
+  const customTemplateRef = useRef<SVGSVGElement>(null);
 
   // Map sport type to API type
   const apiType = sportType === "unihockey" ? "swissunihockey" : sportType;
@@ -296,6 +297,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
 
     return (
       <svg
+        ref={customTemplateRef}
         width="1080"
         height="1350"
         viewBox="0 0 1080 1350"
@@ -456,15 +458,23 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
     try {
       notifyStart();
 
-      const componentSelector = activeTab === "preview" ? "game-preview" : "game-result";
-      const gameElement = targetRef.current.querySelector(componentSelector);
+      let svgElement: SVGSVGElement | null = null;
 
-      if (!gameElement) {
-        throw new Error("Komponente nicht gefunden");
+      // Check if using custom template
+      if (selectedCustomTemplate && customTemplateRef.current) {
+        svgElement = customTemplateRef.current;
+      } else {
+        // Using myclub web component
+        const componentSelector = activeTab === "preview" ? "game-preview" : "game-result";
+        const gameElement = targetRef.current.querySelector(componentSelector);
+
+        if (!gameElement) {
+          throw new Error("Komponente nicht gefunden");
+        }
+
+        const shadowRoot = (gameElement as any).shadowRoot as ShadowRoot | null;
+        svgElement = shadowRoot?.querySelector("svg") || null;
       }
-
-      const shadowRoot = (gameElement as any).shadowRoot as ShadowRoot | null;
-      const svgElement = shadowRoot?.querySelector("svg");
 
       if (!svgElement) {
         throw new Error("Kein SVG-Element gefunden");
