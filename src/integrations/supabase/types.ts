@@ -19,7 +19,9 @@ export type Database = {
           amount: number
           created_at: string
           description: string | null
+          game_url: string | null
           id: string
+          template_info: string | null
           transaction_type: Database["public"]["Enums"]["credit_transaction_type"]
           user_id: string
         }
@@ -27,7 +29,9 @@ export type Database = {
           amount: number
           created_at?: string
           description?: string | null
+          game_url?: string | null
           id?: string
+          template_info?: string | null
           transaction_type: Database["public"]["Enums"]["credit_transaction_type"]
           user_id: string
         }
@@ -35,7 +39,9 @@ export type Database = {
           amount?: number
           created_at?: string
           description?: string | null
+          game_url?: string | null
           id?: string
+          template_info?: string | null
           transaction_type?: Database["public"]["Enums"]["credit_transaction_type"]
           user_id?: string
         }
