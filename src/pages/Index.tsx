@@ -219,10 +219,6 @@ const Index = () => {
                   <Sparkles className="h-5 w-5 text-primary" />
                   <span>Eigene Templates erstellen</span>
                 </li>
-                <li className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                  <span>Unbegrenzte Post-Erstellung</span>
-                </li>
               </ul>
               <Button className="w-full" onClick={() => navigate('/auth')}>
                 Upgrade
@@ -247,10 +243,6 @@ const Index = () => {
                 <li className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-primary" />
                   <span>Alle Pro Features</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                  <span>Mehrere Teams</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-primary" />
