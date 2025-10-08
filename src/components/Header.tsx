@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -99,15 +100,6 @@ export const Header = () => {
                   </NavigationMenuLink>
                 </a>
               </NavigationMenuItem>
-              {!loading && user && (
-                <NavigationMenuItem>
-                  <Link to="/templates">
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                      Vorlagen
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-              )}
             </NavigationMenuList>
           </NavigationMenu>
 
@@ -138,12 +130,13 @@ export const Header = () => {
                         <User className="mr-2 h-4 w-4" />
                         Mein Profil
                       </DropdownMenuItem>
-                      {isPaidUser && (
-                        <DropdownMenuItem onClick={() => navigate('/templates')}>
-                          <FileText className="mr-2 h-4 w-4" />
-                          Meine Templates
-                        </DropdownMenuItem>
-                      )}
+                      <DropdownMenuItem onClick={() => navigate('/templates')}>
+                        <FileText className="mr-2 h-4 w-4" />
+                        Vorlagen
+                        {!isPaidUser && (
+                          <Badge variant="secondary" className="ml-auto">Pro</Badge>
+                        )}
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={handleSignOut}>
                         <LogOut className="mr-2 h-4 w-4" />
