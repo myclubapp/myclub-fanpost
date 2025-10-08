@@ -95,14 +95,14 @@ serve(async (req) => {
         .single();
 
       if (roleData?.role !== 'paid_user' && roleData?.role !== 'admin') {
-        logStep("Updating user role to paid_user");
+        logStep("Updating user role to paid_user (first time)");
         await supabaseClient
           .from('user_roles')
           .update({ role: 'paid_user' })
           .eq('user_id', user.id);
         
-        // Update credits immediately when upgrading to paid
-        logStep("Updating credits for new paid user");
+        // Only refill credits when upgrading to paid for the first time
+        logStep("Initial credit refill for new paid user");
         await supabaseClient
           .from('user_credits')
           .update({ 
@@ -119,38 +119,63 @@ serve(async (req) => {
           .insert({
             user_id: user.id,
             amount: 10,
-            transaction_type: 'monthly_reset',
-            description: 'Pro Abo: Credits aufgefüllt +10'
+            transaction_type: 'subscription_activated',
+            description: 'Pro Abo aktiviert: +10 Credits'
           });
       } else if (roleData?.role === 'paid_user') {
-        // Check if paid user has less than 10 credits and update if needed
+        // For existing paid users, only refill credits if it's a new billing period
+        // Check if subscription period has renewed since last credit reset
         const { data: creditsData } = await supabaseClient
           .from('user_credits')
-          .select('credits_remaining')
+          .select('last_reset_date')
           .eq('user_id', user.id)
           .single();
         
-        if (creditsData && creditsData.credits_remaining < 10) {
-          logStep("Updating credits for existing paid user with insufficient credits");
-          await supabaseClient
-            .from('user_credits')
-            .update({ 
-              credits_remaining: 10,
-              credits_purchased: 0,
-              last_reset_date: new Date().toISOString().split('T')[0],
-              updated_at: new Date().toISOString()
-            })
-            .eq('user_id', user.id);
+        if (creditsData && subscriptionEnd) {
+          const lastResetDate = new Date(creditsData.last_reset_date);
+          const subscriptionEndDate = new Date(subscriptionEnd);
+          const currentDate = new Date();
           
-          // Log the credit transaction with +10
-          await supabaseClient
-            .from('credit_transactions')
-            .insert({
-              user_id: user.id,
-              amount: 10,
-              transaction_type: 'monthly_reset',
-              description: 'Pro Abo: Credits aufgefüllt +10'
+          // Calculate subscription start (one month before end)
+          const subscriptionStartDate = new Date(subscriptionEndDate);
+          subscriptionStartDate.setMonth(subscriptionStartDate.getMonth() - 1);
+          
+          // Only refill if:
+          // 1. Last reset was before the current billing period started
+          // 2. We are currently within the billing period
+          if (lastResetDate < subscriptionStartDate && currentDate >= subscriptionStartDate) {
+            logStep("Refilling credits for new billing period", {
+              lastReset: lastResetDate.toISOString(),
+              periodStart: subscriptionStartDate.toISOString(),
+              periodEnd: subscriptionEndDate.toISOString()
             });
+            
+            await supabaseClient
+              .from('user_credits')
+              .update({ 
+                credits_remaining: 10,
+                credits_purchased: 0,
+                last_reset_date: new Date().toISOString().split('T')[0],
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', user.id);
+            
+            // Log the credit transaction
+            await supabaseClient
+              .from('credit_transactions')
+              .insert({
+                user_id: user.id,
+                amount: 10,
+                transaction_type: 'monthly_reset',
+                description: 'Pro Abo erneuert: Credits aufgefüllt +10'
+              });
+          } else {
+            logStep("No credit refill needed - not a new billing period", {
+              lastReset: lastResetDate.toISOString(),
+              periodStart: subscriptionStartDate.toISOString(),
+              currentDate: currentDate.toISOString()
+            });
+          }
         }
       }
     } else {
