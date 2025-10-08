@@ -149,19 +149,18 @@ export const GameList = ({ sportType, teamId, onGameSelect }: GameListProps) => 
   }
 
   return (
-    <Card className="shadow-[var(--shadow-card)] border-border bg-card/50 backdrop-blur-sm">
-      <CardHeader>
-        <CardTitle className="text-xl sm:text-2xl font-bold text-foreground">
-          Verfügbare Spiele
-        </CardTitle>
-        <CardDescription className="text-sm sm:text-base text-muted-foreground">
-          {selectedGameIds.length === 0 
-            ? "Wähle ein oder mehrere Spiele vom gleichen Tag aus" 
-            : `${selectedGameIds.length} Spiel${selectedGameIds.length > 1 ? 'e' : ''} ausgewählt`}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+    <>
+      <Card className="shadow-[var(--shadow-card)] border-border bg-card/50 backdrop-blur-sm mb-24">
+        <CardHeader>
+          <CardTitle className="text-xl sm:text-2xl font-bold text-foreground">
+            Verfügbare Spiele
+          </CardTitle>
+          <CardDescription className="text-sm sm:text-base text-muted-foreground">
+            Wähle ein oder mehrere Spiele vom gleichen Tag aus
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
           {Object.entries(groupedGames).map(([date, gamesOnDate]) => {
             const hasMultipleGames = gamesOnDate.length > 1;
             
@@ -231,17 +230,34 @@ export const GameList = ({ sportType, teamId, onGameSelect }: GameListProps) => 
             );
           })}
         </div>
-        <div className="mt-4 sm:mt-6 flex justify-end">
-          <Button 
-            onClick={handleContinue}
-            disabled={selectedGameIds.length === 0}
-            className="gap-2 w-full sm:w-auto"
-          >
-            Weiter
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Sticky Footer */}
+      {selectedGameIds.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border shadow-lg animate-fade-in">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between gap-4 max-w-4xl mx-auto">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
+                  {selectedGameIds.length}
+                </div>
+                <span className="text-sm sm:text-base font-medium text-foreground">
+                  {selectedGameIds.length} Spiel{selectedGameIds.length > 1 ? 'e' : ''} ausgewählt
+                </span>
+              </div>
+              <Button 
+                onClick={handleContinue}
+                className="gap-2"
+                size="lg"
+              >
+                Weiter
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </>
   );
 };
