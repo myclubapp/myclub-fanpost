@@ -2,7 +2,7 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { Zap, Image, Share2, Sparkles } from "lucide-react";
+import { Zap, Image, Share2, Sparkles, Trophy, Mail } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -259,41 +259,98 @@ const Index = () => {
 
       {/* About Section */}
       <section id="about" className="container mx-auto px-4 py-20 bg-muted/50">
-        <div className="max-w-4xl mx-auto space-y-8">
+        <div className="max-w-6xl mx-auto space-y-12">
           <div className="text-center space-y-4">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground">
               Über uns
             </h2>
-            <p className="text-xl text-muted-foreground">
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Social Media Posts für Schweizer Sportvereine
             </p>
           </div>
 
-          <Card>
-            <CardContent className="prose prose-lg dark:prose-invert max-w-none pt-6">
-              <h3 className="text-2xl font-bold">Unsere Mission</h3>
-              <p>
-                FanPost hilft Schweizer Sportvereinen, professionelle Social Media Posts 
-                für ihre Spiele zu erstellen. Wir glauben, dass jedes Team die Möglichkeit 
-                haben sollte, seine Fans mit ansprechenden Inhalten zu erreichen.
-              </p>
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card className="shadow-[var(--shadow-card)]">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Sparkles className="h-6 w-6 text-primary" />
+                  </div>
+                  Unsere Mission
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground leading-relaxed">
+                  FanPost hilft Schweizer Sportvereinen, professionelle Social Media Posts 
+                  für ihre Spiele zu erstellen. Wir glauben, dass jedes Team die Möglichkeit 
+                  haben sollte, seine Fans mit ansprechenden Inhalten zu erreichen.
+                </p>
+              </CardContent>
+            </Card>
 
-              <h3 className="text-2xl font-bold">Was wir bieten</h3>
-              <p>
-                Mit FanPost kannst du in wenigen Schritten ansprechende Social Media Posts 
-                für deine Spiele erstellen. Wähle einfach deine Sportart, deinen Club, 
-                dein Team und das Spiel aus - den Rest erledigen wir für dich.
-              </p>
+            <Card className="shadow-[var(--shadow-card)]">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Zap className="h-6 w-6 text-primary" />
+                  </div>
+                  Was wir bieten
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground leading-relaxed">
+                  Mit FanPost kannst du in wenigen Schritten ansprechende Social Media Posts 
+                  für deine Spiele erstellen. Wähle einfach deine Sportart, deinen Club, 
+                  dein Team und das Spiel aus - den Rest erledigen wir für dich.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
 
-              <h3 className="text-2xl font-bold">Unterstützte Sportarten</h3>
-              <ul>
-                <li>Unihockey</li>
-                <li>Volleyball</li>
-                <li>Handball</li>
-              </ul>
+          <Card className="shadow-[var(--shadow-card)]">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Trophy className="h-6 w-6 text-primary" />
+                </div>
+                Unterstützte Sportarten
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-lg font-bold text-primary">U</span>
+                  </div>
+                  <span className="font-medium">Unihockey</span>
+                </div>
+                <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-lg font-bold text-primary">V</span>
+                  </div>
+                  <span className="font-medium">Volleyball</span>
+                </div>
+                <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-lg font-bold text-primary">H</span>
+                  </div>
+                  <span className="font-medium">Handball</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-              <h3 className="text-2xl font-bold">Kontakt</h3>
-              <p>
+          <Card className="shadow-[var(--shadow-card)] border-2 border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Mail className="h-6 w-6 text-primary" />
+                </div>
+                Kontakt
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed">
                 Hast du Fragen oder Feedback? Wir freuen uns, von dir zu hören!
               </p>
             </CardContent>
