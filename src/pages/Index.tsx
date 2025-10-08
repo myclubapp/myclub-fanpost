@@ -26,7 +26,7 @@ const Index = () => {
             <Button size="lg" onClick={() => navigate('/wizard')}>
               Jetzt starten
             </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate('/about')}>
+            <Button size="lg" variant="outline" onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}>
               Mehr erfahren
             </Button>
           </div>
