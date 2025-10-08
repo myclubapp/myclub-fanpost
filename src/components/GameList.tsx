@@ -151,10 +151,10 @@ export const GameList = ({ sportType, teamId, onGameSelect }: GameListProps) => 
   return (
     <Card className="shadow-[var(--shadow-card)] border-border bg-card/50 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-foreground">
+        <CardTitle className="text-xl sm:text-2xl font-bold text-foreground">
           Verfügbare Spiele
         </CardTitle>
-        <CardDescription className="text-muted-foreground">
+        <CardDescription className="text-sm sm:text-base text-muted-foreground">
           {selectedGameIds.length === 0 
             ? "Wähle ein oder mehrere Spiele vom gleichen Tag aus" 
             : `${selectedGameIds.length} Spiel${selectedGameIds.length > 1 ? 'e' : ''} ausgewählt`}
@@ -185,39 +185,39 @@ export const GameList = ({ sportType, teamId, onGameSelect }: GameListProps) => 
                     return (
                       <div
                         key={game.id}
-                        className={`group p-4 rounded-lg border transition-all duration-300 cursor-pointer ${
+                        className={`group p-3 sm:p-4 rounded-lg border transition-all duration-300 cursor-pointer ${
                           isSelected 
                             ? 'border-primary bg-primary/10' 
                             : 'border-border bg-background hover:bg-muted/50 hover:border-muted-foreground/30'
                         }`}
                         onClick={() => handleGameToggle(game.id)}
                       >
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-start gap-3 sm:gap-4">
                           <Checkbox 
                             checked={isSelected}
                             onCheckedChange={() => handleGameToggle(game.id)}
-                            className="pointer-events-none"
+                            className="pointer-events-none mt-0.5"
                           />
-                          <div className="flex-1 space-y-2">
-                            <div className="flex items-center gap-3">
-                              <span className="font-semibold text-base text-foreground">{game.teamHome}</span>
-                              <span className="text-sm text-muted-foreground">vs</span>
-                              <span className="font-semibold text-base text-foreground">{game.teamAway}</span>
+                          <div className="flex-1 space-y-2 min-w-0">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                              <span className="font-semibold text-sm sm:text-base text-foreground break-words">{game.teamHome}</span>
+                              <span className="text-xs sm:text-sm text-muted-foreground">vs</span>
+                              <span className="font-semibold text-sm sm:text-base text-foreground break-words">{game.teamAway}</span>
                             </div>
                             {game.result && game.result !== "-:-" && game.result !== "" && (
-                              <div className="text-sm font-medium text-primary">
+                              <div className="text-xs sm:text-sm font-medium text-primary">
                                 Resultat: {game.result}
                               </div>
                             )}
-                            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                            <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                               {!hasMultipleGames && (
                                 <div className="flex items-center gap-1">
-                                  <Calendar className="h-4 w-4" />
+                                  <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
                                   {game.date}
                                 </div>
                               )}
                               <div className="flex items-center gap-1">
-                                <Clock className="h-4 w-4" />
+                                <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
                                 {game.time}
                               </div>
                             </div>
@@ -231,11 +231,11 @@ export const GameList = ({ sportType, teamId, onGameSelect }: GameListProps) => 
             );
           })}
         </div>
-        <div className="mt-6 flex justify-end">
+        <div className="mt-4 sm:mt-6 flex justify-end">
           <Button 
             onClick={handleContinue}
             disabled={selectedGameIds.length === 0}
-            className="gap-2"
+            className="gap-2 w-full sm:w-auto"
           >
             Weiter
             <ChevronRight className="h-4 w-4" />
