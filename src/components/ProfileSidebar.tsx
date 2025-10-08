@@ -1,16 +1,6 @@
 import { User, Crown, Coins, Settings, Trash2 } from "lucide-react";
 import { NavLink } from "react-router-dom";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
+import { Card } from "@/components/ui/card";
 
 const menuItems = [
   { title: "Profil", url: "/profile", icon: User },
@@ -21,38 +11,27 @@ const menuItems = [
 ];
 
 export function ProfileSidebar() {
-  const { state } = useSidebar();
-  const collapsed = state === "collapsed";
-
   return (
-    <Sidebar collapsible="icon" className="border-r">
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Mein Profil</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end={item.url === "/profile"}
-                      className={({ isActive }) =>
-                        isActive
-                          ? "bg-primary/10 text-primary font-medium"
-                          : "hover:bg-muted/50"
-                      }
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+    <Card className="p-4">
+      <nav className="space-y-1">
+        {menuItems.map((item) => (
+          <NavLink
+            key={item.title}
+            to={item.url}
+            end={item.url === "/profile"}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                isActive
+                  ? "bg-primary/10 text-primary font-medium"
+                  : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+              }`
+            }
+          >
+            <item.icon className="h-4 w-4" />
+            <span>{item.title}</span>
+          </NavLink>
+        ))}
+      </nav>
+    </Card>
   );
 }

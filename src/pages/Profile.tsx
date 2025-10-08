@@ -8,7 +8,6 @@ import { SubscriptionSection } from '@/components/profile/SubscriptionSection';
 import { CreditsSection } from '@/components/profile/CreditsSection';
 import { SettingsSection } from '@/components/profile/SettingsSection';
 import { DeleteAccountSection } from '@/components/profile/DeleteAccountSection';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Loader2 } from 'lucide-react';
 
 const Profile = () => {
@@ -36,17 +35,14 @@ const Profile = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <SidebarProvider defaultOpen={true}>
-        <div className="flex min-h-[calc(100vh-64px)] w-full pt-16">
-          <ProfileSidebar />
+      <div className="container mx-auto px-4 py-8 pt-24">
+        <div className="max-w-6xl mx-auto">
+          <h1 className="text-3xl font-bold mb-8">Mein Profil</h1>
           
-          <main className="flex-1 p-6 overflow-auto">
-            <div className="max-w-4xl mx-auto space-y-6">
-              {/* Mobile Trigger */}
-              <div className="md:hidden mb-4">
-                <SidebarTrigger />
-              </div>
-
+          <div className="grid md:grid-cols-[250px_1fr] gap-8">
+            <ProfileSidebar />
+            
+            <main className="min-w-0">
               <Routes>
                 <Route index element={<ProfileInfo />} />
                 <Route path="subscription" element={<SubscriptionSection />} />
@@ -55,10 +51,10 @@ const Profile = () => {
                 <Route path="delete" element={<DeleteAccountSection />} />
                 <Route path="*" element={<Navigate to="/profile" replace />} />
               </Routes>
-            </div>
-          </main>
+            </main>
+          </div>
         </div>
-      </SidebarProvider>
+      </div>
     </div>
   );
 };
