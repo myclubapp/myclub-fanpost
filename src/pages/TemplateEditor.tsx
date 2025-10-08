@@ -8,11 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Save, ArrowLeft } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { TemplateConfigEditor } from '@/components/templates/TemplateConfigEditor';
+import { TemplateDesigner } from '@/components/templates/TemplateDesigner';
 import { z } from 'zod';
 
 const templateSchema = z.object({
@@ -231,7 +230,7 @@ const TemplateEditor = () => {
             </CardContent>
           </Card>
 
-          <TemplateConfigEditor
+          <TemplateDesigner
             templateType={templateType}
             config={svgConfig}
             onChange={setSvgConfig}
