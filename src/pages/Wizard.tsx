@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import myclubLogo from "@/assets/myclub-logo.png";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export type SportType = "unihockey" | "volleyball" | "handball";
 
@@ -29,6 +31,7 @@ const Index = () => {
     gameId?: string;
   }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [selectedSport, setSelectedSport] = useState<SportType | "">(sport || "");
   const [selectedClubId, setSelectedClubId] = useState<string>(clubId || "");
@@ -42,6 +45,92 @@ const Index = () => {
     return [];
   });
   const [gamesHaveResults, setGamesHaveResults] = useState<boolean[]>([]);
+  const [rememberLastSelection, setRememberLastSelection] = useState(true);
+  const [loadedLastSelection, setLoadedLastSelection] = useState(false);
+
+  // Load last selection from profile on mount
+  useEffect(() => {
+    const loadLastSelection = async () => {
+      if (!user || loadedLastSelection || clubId || teamId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('remember_last_selection, last_club_id, last_team_id')
+          .eq('id', user.id)
+          .single();
+
+        if (error) throw error;
+
+        if (data?.remember_last_selection && data.last_club_id && sport) {
+          setRememberLastSelection(true);
+          setSelectedClubId(data.last_club_id);
+          
+          if (data.last_team_id) {
+            setSelectedTeamId(data.last_team_id);
+            navigate(`/wizard/${sport}/${data.last_club_id}/${data.last_team_id}`);
+          } else {
+            navigate(`/wizard/${sport}/${data.last_club_id}`);
+          }
+        }
+        
+        setLoadedLastSelection(true);
+      } catch (error) {
+        console.error('Error loading last selection:', error);
+        setLoadedLastSelection(true);
+      }
+    };
+
+    loadLastSelection();
+  }, [user, sport, clubId, teamId, loadedLastSelection, navigate]);
+
+  // Save last selection to profile when it changes
+  useEffect(() => {
+    const saveLastSelection = async () => {
+      if (!user || !rememberLastSelection || !selectedClubId) return;
+      
+      try {
+        await supabase
+          .from('profiles')
+          .update({
+            last_club_id: selectedClubId,
+            last_team_id: selectedTeamId || null,
+          })
+          .eq('id', user.id);
+      } catch (error) {
+        console.error('Error saving last selection:', error);
+      }
+    };
+
+    if (loadedLastSelection) {
+      saveLastSelection();
+    }
+  }, [user, rememberLastSelection, selectedClubId, selectedTeamId, loadedLastSelection]);
+
+  // Load remember setting from profile
+  useEffect(() => {
+    const loadRememberSetting = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('remember_last_selection')
+          .eq('id', user.id)
+          .single();
+
+        if (error) throw error;
+        
+        if (data) {
+          setRememberLastSelection(data.remember_last_selection ?? true);
+        }
+      } catch (error) {
+        console.error('Error loading remember setting:', error);
+      }
+    };
+
+    loadRememberSetting();
+  }, [user]);
 
   // Load club name from API when clubId is set via URL
   useEffect(() => {

@@ -15,6 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Save, User, Crown, Sparkles, Coins, CreditCard, ArrowUpCircle, ArrowDownCircle, RefreshCw, ShoppingBag, Trash2 } from 'lucide-react';
 import { z } from 'zod';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface CreditTransaction {
   id: string;
@@ -46,6 +47,7 @@ const Profile = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [rememberLastSelection, setRememberLastSelection] = useState(true);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -66,7 +68,7 @@ const Profile = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('first_name, last_name')
+        .select('first_name, last_name, remember_last_selection')
         .eq('id', user.id)
         .single();
 
@@ -74,6 +76,7 @@ const Profile = () => {
 
       setFirstName(data.first_name || '');
       setLastName(data.last_name || '');
+      setRememberLastSelection(data.remember_last_selection ?? true);
     } catch (error: any) {
       console.error('Error loading profile:', error);
     }
@@ -205,6 +208,7 @@ const Profile = () => {
         .update({
           first_name: firstName || null,
           last_name: lastName || null,
+          remember_last_selection: rememberLastSelection,
         })
         .eq('id', user.id);
 
@@ -371,6 +375,25 @@ const Profile = () => {
                   {errors.last_name && (
                     <p className="text-sm text-destructive">{errors.last_name}</p>
                   )}
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-4 border-t">
+                <div className="space-y-3">
+                  <Label className="text-base font-semibold">Wizard-Einstellungen</Label>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="remember-selection" 
+                      checked={rememberLastSelection}
+                      onCheckedChange={(checked) => setRememberLastSelection(checked as boolean)}
+                    />
+                    <Label htmlFor="remember-selection" className="text-sm cursor-pointer">
+                      Letzte Auswahl merken
+                    </Label>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Wenn aktiviert, wird Ihre letzte Club- und Teamauswahl im Wizard gespeichert.
+                  </p>
                 </div>
               </div>
 

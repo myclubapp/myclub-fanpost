@@ -674,7 +674,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
                   </div>
                   {customTemplates.map((template) => (
                     <SelectItem key={template.value} value={template.value}>
-                      {template.name}
+                      {template.name} ({template.supported_games} {template.supported_games === 1 ? 'Spiel' : 'Spiele'})
                     </SelectItem>
                   ))}
                 </>
