@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface UserCredits {
   credits_remaining: number;
@@ -10,17 +10,13 @@ interface UserCredits {
 
 export const useCredits = () => {
   const { user } = useAuth();
-  const [credits, setCredits] = useState<UserCredits | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const fetchCredits = async () => {
-    if (!user) {
-      setCredits(null);
-      setLoading(false);
-      return;
-    }
+  const { data: credits, isLoading: loading } = useQuery({
+    queryKey: ['credits', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
 
-    try {
       const { data, error } = await supabase
         .from('user_credits')
         .select('credits_remaining, credits_purchased, last_reset_date')
@@ -28,18 +24,10 @@ export const useCredits = () => {
         .single();
 
       if (error) throw error;
-      setCredits(data);
-    } catch (error) {
-      console.error('Error fetching credits:', error);
-      setCredits(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCredits();
-  }, [user]);
+      return data as UserCredits;
+    },
+    enabled: !!user,
+  });
 
   const consumeCredit = async (): Promise<boolean> => {
     if (!user) return false;
@@ -52,8 +40,8 @@ export const useCredits = () => {
       if (error) throw error;
 
       if (data) {
-        // Refresh credits after consuming
-        await fetchCredits();
+        // Invalidate and refetch credits
+        await queryClient.invalidateQueries({ queryKey: ['credits', user.id] });
         return true;
       }
 
@@ -64,6 +52,10 @@ export const useCredits = () => {
     }
   };
 
+  const refetchCredits = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['credits', user?.id] });
+  };
+
   const hasCredits = credits ? credits.credits_remaining > 0 : false;
 
   return {
@@ -71,6 +63,6 @@ export const useCredits = () => {
     loading,
     hasCredits,
     consumeCredit,
-    refetchCredits: fetchCredits
+    refetchCredits
   };
 };
