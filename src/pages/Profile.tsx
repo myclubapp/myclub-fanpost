@@ -142,7 +142,7 @@ const Profile = () => {
                     {isPaidUser ? (
                       <>
                         <Crown className="h-5 w-5 text-yellow-500" />
-                        Premium Account
+                        Pro Account
                       </>
                     ) : (
                       <>
@@ -153,7 +153,7 @@ const Profile = () => {
                   </CardTitle>
                   <CardDescription className="mt-1">
                     {isPaidUser
-                      ? 'Sie haben Zugriff auf alle Premium-Features'
+                      ? 'Sie haben Zugriff auf alle Pro-Features'
                       : 'Upgraden Sie für unbegrenzte Möglichkeiten'}
                   </CardDescription>
                 </div>
@@ -194,7 +194,7 @@ const Profile = () => {
                   <div className="flex items-start gap-3">
                     <Sparkles className="h-5 w-5 text-primary mt-0.5" />
                     <div className="flex-1">
-                      <h4 className="font-semibold mb-1">Upgrade zu Premium</h4>
+                      <h4 className="font-semibold mb-1">Upgrade zu Pro</h4>
                       <p className="text-sm text-muted-foreground mb-3">
                         Erstellen Sie eigene Templates, erhalten Sie 10 Credits pro Monat und nutzen Sie erweiterte Funktionen.
                       </p>

@@ -48,7 +48,7 @@ const Templates = () => {
                   <Lock className="h-8 w-8 text-primary" />
                 </div>
               </div>
-              <CardTitle className="text-2xl">Premium Feature</CardTitle>
+              <CardTitle className="text-2xl">Pro Feature</CardTitle>
               <CardDescription>
                 Der Template Editor ist nur für Paid Users verfügbar
               </CardDescription>
