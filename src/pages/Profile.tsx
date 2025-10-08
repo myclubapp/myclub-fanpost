@@ -199,7 +199,8 @@ const Profile = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      // Update profile in database
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           first_name: firstName || null,
@@ -207,7 +208,17 @@ const Profile = () => {
         })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Update display name in auth
+      const displayName = [firstName, lastName].filter(Boolean).join(' ');
+      const { error: authError } = await supabase.auth.updateUser({
+        data: {
+          display_name: displayName || null,
+        }
+      });
+
+      if (authError) throw authError;
 
       toast({
         title: "Profil aktualisiert",
@@ -370,7 +381,7 @@ const Profile = () => {
                   ) : (
                     <Save className="h-4 w-4" />
                   )}
-                  Änderungen speichern
+                  Profil speichern
                 </Button>
               </div>
             </CardContent>
