@@ -456,7 +456,7 @@ const Profile = () => {
               {isPaidUser && subscription?.subscribed && (
                 <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                   <div>
-                    <p className="font-semibold">Subscription verwalten</p>
+                    <p className="font-semibold">Abo verwalten</p>
                     <p className="text-sm text-muted-foreground">
                       {subscription.subscription_end && 
                         `Verlängert sich am ${new Date(subscription.subscription_end).toLocaleDateString('de-CH')}`
@@ -465,7 +465,7 @@ const Profile = () => {
                   </div>
                   <Button size="sm" variant="outline" onClick={handleManageSubscription} disabled={loading}>
                     {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
-                    Verwalten
+                    Stripe Dashboard öffnen
                   </Button>
                 </div>
               )}
