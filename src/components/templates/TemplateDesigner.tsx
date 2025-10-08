@@ -812,17 +812,6 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
 
               {(selectedElementData.type === 'image' || selectedElementData.type === 'api-image') && (
                 <>
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Checkbox 
-                      id="aspect-ratio" 
-                      checked={lockAspectRatio}
-                      onCheckedChange={(checked) => setLockAspectRatio(checked as boolean)}
-                    />
-                    <Label htmlFor="aspect-ratio" className="text-sm cursor-pointer">
-                      Seitenverhältnis beibehalten
-                    </Label>
-                  </div>
-                  
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-2">
                       <Label>Breite</Label>
@@ -840,6 +829,17 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                         onChange={(e) => updateElement(selectedElementData.id, { height: Number(e.target.value) })}
                       />
                     </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="aspect-ratio" 
+                      checked={lockAspectRatio}
+                      onCheckedChange={(checked) => setLockAspectRatio(checked as boolean)}
+                    />
+                    <Label htmlFor="aspect-ratio" className="text-sm cursor-pointer">
+                      Seitenverhältnis beibehalten
+                    </Label>
                   </div>
 
                   {selectedElementData.type === 'image' && (
