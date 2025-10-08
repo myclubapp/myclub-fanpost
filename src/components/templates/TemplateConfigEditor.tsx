@@ -4,7 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Palette, Type, Layout } from 'lucide-react';
+import { Palette, Type, Layout, Layers } from 'lucide-react';
+import { TemplateDesigner } from './TemplateDesigner';
 
 interface TemplateConfigEditorProps {
   templateType: 'game-preview' | 'game-result';
@@ -26,8 +27,12 @@ export const TemplateConfigEditor = ({ templateType, config, onChange }: Templat
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="colors" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="designer" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="designer" className="gap-2">
+              <Layers className="h-4 w-4" />
+              Designer
+            </TabsTrigger>
             <TabsTrigger value="colors" className="gap-2">
               <Palette className="h-4 w-4" />
               Farben
@@ -41,6 +46,14 @@ export const TemplateConfigEditor = ({ templateType, config, onChange }: Templat
               Layout
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="designer" className="mt-4">
+            <TemplateDesigner
+              templateType={templateType}
+              config={config}
+              onChange={onChange}
+            />
+          </TabsContent>
 
           <TabsContent value="colors" className="space-y-4 mt-4">
             <div className="space-y-2">
