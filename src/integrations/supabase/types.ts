@@ -177,7 +177,9 @@ export type Database = {
         Returns: undefined
       }
       consume_credit: {
-        Args: { p_user_id: string }
+        Args:
+          | { p_game_url?: string; p_template_info?: string; p_user_id: string }
+          | { p_user_id: string }
         Returns: boolean
       }
       has_role: {

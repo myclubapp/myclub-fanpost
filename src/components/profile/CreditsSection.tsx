@@ -12,6 +12,8 @@ interface CreditTransaction {
   transaction_type: string;
   description: string;
   created_at: string;
+  game_url: string | null;
+  template_info: string | null;
 }
 
 export const CreditsSection = () => {
@@ -34,7 +36,7 @@ export const CreditsSection = () => {
       setTransactionsLoading(true);
       const { data, error } = await supabase
         .from('credit_transactions')
-        .select('id, amount, transaction_type, description, created_at')
+        .select('id, amount, transaction_type, description, created_at, game_url, template_info')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(20);
@@ -143,32 +145,59 @@ export const CreditsSection = () => {
               {transactions.map((transaction) => (
                 <div
                   key={transaction.id}
-                  className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                  className="flex flex-col p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors gap-2"
                 >
-                  <div className="flex items-center gap-3 flex-1">
-                    {getTransactionIcon(transaction.transaction_type)}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {transaction.description}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDate(transaction.created_at)}
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 flex-1">
+                      {getTransactionIcon(transaction.transaction_type)}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {transaction.description}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDate(transaction.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`text-sm font-semibold ${
+                          transaction.amount > 0
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-red-600 dark:text-red-400'
+                        }`}
+                      >
+                        {transaction.amount > 0 ? '+' : ''}
+                        {transaction.amount}
+                      </span>
+                      <Coins className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`text-sm font-semibold ${
-                        transaction.amount > 0
-                          ? 'text-green-600 dark:text-green-400'
-                          : 'text-red-600 dark:text-red-400'
-                      }`}
-                    >
-                      {transaction.amount > 0 ? '+' : ''}
-                      {transaction.amount}
-                    </span>
-                    <Coins className="h-4 w-4 text-muted-foreground" />
-                  </div>
+                  
+                  {/* Show game URL and template info for consumption transactions */}
+                  {transaction.transaction_type === 'consumption' && (transaction.game_url || transaction.template_info) && (
+                    <div className="pl-7 space-y-1 text-xs text-muted-foreground border-t pt-2">
+                      {transaction.game_url && (
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">Spiel:</span>
+                          <a 
+                            href={transaction.game_url} 
+                            className="text-primary hover:underline"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {transaction.game_url}
+                          </a>
+                        </div>
+                      )}
+                      {transaction.template_info && (
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">Template:</span>
+                          <span className="font-mono">{transaction.template_info}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

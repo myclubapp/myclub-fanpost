@@ -620,7 +620,13 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
           });
 
           // Consume credit after successful share
-          const creditConsumed = await consumeCredit();
+          // Build game URL and template info
+          const gameUrl = window.location.pathname; // Current wizard URL
+          const templateInfo = selectedCustomTemplate 
+            ? `template=${selectedCustomTemplate.id}` 
+            : `theme=${selectedTheme}`;
+          
+          const creditConsumed = await consumeCredit(gameUrl, templateInfo);
           if (!creditConsumed) {
             toast({
               title: "Warnung",
@@ -647,7 +653,13 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
           });
           
           // Consume credit after successful share
-          const creditConsumed = await consumeCredit();
+          // Build game URL and template info
+          const gameUrl = window.location.pathname;
+          const templateInfo = selectedCustomTemplate 
+            ? `template=${selectedCustomTemplate.id}` 
+            : `theme=${selectedTheme}`;
+          
+          const creditConsumed = await consumeCredit(gameUrl, templateInfo);
           if (!creditConsumed) {
             toast({
               title: "Warnung",
@@ -664,7 +676,13 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
           link.click();
           
           // Consume credit after successful download
-          const creditConsumed = await consumeCredit();
+          // Build game URL and template info
+          const gameUrl = window.location.pathname;
+          const templateInfo = selectedCustomTemplate 
+            ? `template=${selectedCustomTemplate.id}` 
+            : `theme=${selectedTheme}`;
+          
+          const creditConsumed = await consumeCredit(gameUrl, templateInfo);
           if (!creditConsumed) {
             toast({
               title: "Warnung",

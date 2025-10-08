@@ -29,12 +29,14 @@ export const useCredits = () => {
     enabled: !!user,
   });
 
-  const consumeCredit = async (): Promise<boolean> => {
+  const consumeCredit = async (gameUrl?: string, templateInfo?: string): Promise<boolean> => {
     if (!user) return false;
 
     try {
       const { data, error } = await supabase.rpc('consume_credit', {
-        p_user_id: user.id
+        p_user_id: user.id,
+        p_game_url: gameUrl || null,
+        p_template_info: templateInfo || null
       });
 
       if (error) throw error;
