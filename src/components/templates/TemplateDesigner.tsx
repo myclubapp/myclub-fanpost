@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Trash2, Move, Type, ImageIcon, Database, Upload, Eye, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trash2, Move, Type, ImageIcon, Database, Upload, Eye, ChevronDown, ChevronUp, RectangleHorizontal, Square } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ImageCropper } from '@/components/ImageCropper';
@@ -71,11 +71,17 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   const [previewData, setPreviewData] = useState<any>(null);
   const [lockAspectRatio, setLockAspectRatio] = useState(true);
   const [expandedGame, setExpandedGame] = useState<number | null>(1);
+  const [format, setFormat] = useState<'4:5' | '1:1'>(config.format || '4:5');
 
-  // Sync elements with config
+  // Canvas dimensions based on format
+  const canvasDimensions = format === '4:5' 
+    ? { width: 1080, height: 1350 } 
+    : { width: 1080, height: 1080 };
+
+  // Sync elements and format with config
   useEffect(() => {
-    onChange({ ...config, elements });
-  }, [elements]);
+    onChange({ ...config, elements, format });
+  }, [elements, format]);
 
   const handleMouseDown = (e: React.MouseEvent, elementId: string) => {
     e.stopPropagation();
@@ -153,7 +159,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
     const newElement: SVGElement = {
       id: `text-${Date.now()}`,
       type: 'text',
-      x: 540,
+      x: canvasDimensions.width / 2,
       y: 200,
       content: 'Neuer Text',
       fontSize: 48,
@@ -170,7 +176,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
     const newElement: SVGElement = {
       id: `api-text-${Date.now()}`,
       type: 'api-text',
-      x: 540,
+      x: canvasDimensions.width / 2,
       y: 300,
       content: `{${apiField}}`,
       apiField,
@@ -464,19 +470,46 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
             })}
           </div>
 
+          <div className="flex items-center gap-3 mb-4">
+            <Label className="text-sm font-medium">Format:</Label>
+            <div className="flex gap-2">
+              <Button
+                variant={format === '4:5' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFormat('4:5')}
+                className="gap-2"
+              >
+                <RectangleHorizontal className="h-4 w-4" />
+                4:5 (Instagram)
+              </Button>
+              <Button
+                variant={format === '1:1' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFormat('1:1')}
+                className="gap-2"
+              >
+                <Square className="h-4 w-4" />
+                1:1 (Quadratisch)
+              </Button>
+            </div>
+            <span className="text-sm text-muted-foreground ml-2">
+              {canvasDimensions.width}x{canvasDimensions.height}px
+            </span>
+          </div>
+
           <div className="border rounded-none overflow-auto bg-muted/10">
             <svg
               ref={svgRef}
-              width="1080"
-              height="1350"
-              viewBox="0 0 1080 1350"
+              width={canvasDimensions.width}
+              height={canvasDimensions.height}
+              viewBox={`0 0 ${canvasDimensions.width} ${canvasDimensions.height}`}
               className="max-w-full h-auto"
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
             >
               {/* Background */}
-              <rect width="1080" height="1350" fill={config.backgroundColor || '#1a1a1a'} />
+              <rect width={canvasDimensions.width} height={canvasDimensions.height} fill={config.backgroundColor || '#1a1a1a'} />
               
               {/* Grid for reference */}
               <defs>
@@ -484,7 +517,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                   <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#ffffff" strokeWidth="0.5" opacity="0.1" />
                 </pattern>
               </defs>
-              <rect width="1080" height="1350" fill="url(#grid)" />
+              <rect width={canvasDimensions.width} height={canvasDimensions.height} fill="url(#grid)" />
 
               {/* Render elements */}
               {elements.map(element => {
