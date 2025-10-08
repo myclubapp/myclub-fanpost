@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Pencil, Trash2, FileText, Image } from 'lucide-react';
+import { Loader2, Pencil, Trash2, FileText, Image, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -90,6 +90,49 @@ export const TemplateList = () => {
     }
   };
 
+  const handleCopy = async (template: Template) => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('templates')
+        .insert({
+          user_id: user.id,
+          name: `${template.name} (Kopie)`,
+          template_type: template.template_type,
+          svg_config: template.svg_config,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Template kopiert",
+        description: "Das Template wurde erfolgreich kopiert.",
+      });
+
+      setTemplates([data as Template, ...templates]);
+    } catch (error: any) {
+      toast({
+        title: "Fehler beim Kopieren",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('de-CH', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -124,8 +167,9 @@ export const TemplateList = () => {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <CardTitle className="text-lg">{template.name}</CardTitle>
-                  <CardDescription className="mt-1">
-                    {new Date(template.updated_at).toLocaleDateString('de-CH')}
+                  <CardDescription className="mt-2 space-y-1 text-xs">
+                    <div>Erstellt: {formatDateTime(template.created_at)}</div>
+                    <div>Geändert: {formatDateTime(template.updated_at)}</div>
                   </CardDescription>
                 </div>
                 <Badge variant={template.template_type === 'game-preview' ? 'default' : 'secondary'}>
@@ -151,8 +195,17 @@ export const TemplateList = () => {
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={() => handleCopy(template)}
+                  title="Template kopieren"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setDeleteId(template.id)}
                   className="hover:bg-destructive hover:text-destructive-foreground hover:border-destructive"
+                  title="Template löschen"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
