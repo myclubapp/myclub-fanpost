@@ -26,6 +26,7 @@ interface SVGElement {
   fontWeight?: string;
   textAnchor?: string;
   href?: string;
+  zIndex?: number;
 }
 
 // API Fields per game
@@ -73,6 +74,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   const [previewData, setPreviewData] = useState<any>(null);
   const [lockAspectRatio, setLockAspectRatio] = useState(true);
   const [expandedGame, setExpandedGame] = useState<number | null>(1);
+  const [cropperFormat, setCropperFormat] = useState<'4:5' | '1:1'>(format);
 
   // Canvas dimensions based on format
   const canvasDimensions = format === '4:5' 
@@ -157,6 +159,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   };
 
   const addTextElement = () => {
+    const maxZIndex = Math.max(0, ...elements.map(el => el.zIndex ?? 0));
     const newElement: SVGElement = {
       id: `text-${Date.now()}`,
       type: 'text',
@@ -167,13 +170,15 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
       fontFamily: 'Bebas Neue, sans-serif',
       fill: '#ffffff',
       fontWeight: '900',
-      textAnchor: 'middle'
+      textAnchor: 'middle',
+      zIndex: maxZIndex + 1
     };
     setElements(prev => [...prev, newElement]);
     setSelectedElement(newElement.id);
   };
 
   const addApiTextField = (apiField: string) => {
+    const maxZIndex = Math.max(0, ...elements.map(el => el.zIndex ?? 0));
     const newElement: SVGElement = {
       id: `api-text-${Date.now()}`,
       type: 'api-text',
@@ -185,7 +190,8 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
       fontFamily: 'Bebas Neue, sans-serif',
       fill: '#ffffff',
       fontWeight: '900',
-      textAnchor: 'middle'
+      textAnchor: 'middle',
+      zIndex: maxZIndex + 1
     };
     setElements(prev => [...prev, newElement]);
     setSelectedElement(newElement.id);
@@ -193,6 +199,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
 
 
   const addApiImageField = (apiField: string) => {
+    const maxZIndex = Math.max(0, ...elements.map(el => el.zIndex ?? 0));
     const newElement: SVGElement = {
       id: `api-image-${Date.now()}`,
       type: 'api-image',
@@ -201,7 +208,8 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
       width: 189,
       height: 189,
       apiField,
-      href: 'https://via.placeholder.com/189' // Placeholder
+      href: 'https://via.placeholder.com/189', // Placeholder
+      zIndex: maxZIndex + 1
     };
     setElements(prev => [...prev, newElement]);
     setSelectedElement(newElement.id);
@@ -263,6 +271,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
         .from('template-images')
         .getPublicUrl(filePath);
 
+      const maxZIndex = Math.max(0, ...elements.map(el => el.zIndex ?? 0));
       const newElement: SVGElement = {
         id: `image-${Date.now()}`,
         type: 'image',
@@ -270,7 +279,8 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
         y: 400,
         width: 189,
         height: 189,
-        href: publicUrl
+        href: publicUrl,
+        zIndex: maxZIndex + 1
       };
       setElements(prev => [...prev, newElement]);
       setSelectedElement(newElement.id);
@@ -354,6 +364,42 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
     return elements.some(el => el.apiField === apiField);
   };
 
+  const moveElementForward = (id: string) => {
+    const element = elements.find(el => el.id === id);
+    if (!element) return;
+    
+    const currentZ = element.zIndex ?? 0;
+    const higherElements = elements.filter(el => (el.zIndex ?? 0) > currentZ);
+    
+    if (higherElements.length > 0) {
+      const nextZ = Math.min(...higherElements.map(el => el.zIndex ?? 0));
+      updateElement(id, { zIndex: nextZ + 0.5 });
+      // Normalize z-indices
+      normalizeZIndices();
+    }
+  };
+
+  const moveElementBackward = (id: string) => {
+    const element = elements.find(el => el.id === id);
+    if (!element) return;
+    
+    const currentZ = element.zIndex ?? 0;
+    const lowerElements = elements.filter(el => (el.zIndex ?? 0) < currentZ);
+    
+    if (lowerElements.length > 0) {
+      const prevZ = Math.max(...lowerElements.map(el => el.zIndex ?? 0));
+      updateElement(id, { zIndex: prevZ - 0.5 });
+      // Normalize z-indices
+      normalizeZIndices();
+    }
+  };
+
+  const normalizeZIndices = () => {
+    const sorted = [...elements].sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
+    const normalized = sorted.map((el, index) => ({ ...el, zIndex: index }));
+    setElements(normalized);
+  };
+
   const selectedElementData = elements.find(el => el.id === selectedElement);
 
   return (
@@ -370,6 +416,8 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
             }
           }}
           onCropComplete={handleCropComplete}
+          format={cropperFormat}
+          onFormatChange={setCropperFormat}
         />
       )}
       <div className="grid lg:grid-cols-[1fr_350px] gap-6">
@@ -542,7 +590,9 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
               <rect width={canvasDimensions.width} height={canvasDimensions.height} fill="url(#grid)" />
 
               {/* Render elements */}
-              {elements.map(element => {
+              {[...elements]
+                .sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0))
+                .map(element => {
                 const isSelected = selectedElement === element.id && !previewMode;
                 const isApiElement = element.type === 'api-text' || element.type === 'api-image';
                 const displayContent = getElementContent(element);
@@ -852,8 +902,33 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                       />
                     </div>
                   )}
-                </>
-              )}
+                 </>
+               )}
+
+               <div className="space-y-2">
+                 <Label>Ebene (Z-Index)</Label>
+                 <div className="flex gap-2">
+                   <Button
+                     size="sm"
+                     variant="outline"
+                     onClick={() => moveElementBackward(selectedElementData.id)}
+                     className="flex-1"
+                   >
+                     Nach hinten
+                   </Button>
+                   <Button
+                     size="sm"
+                     variant="outline"
+                     onClick={() => moveElementForward(selectedElementData.id)}
+                     className="flex-1"
+                   >
+                     Nach vorne
+                   </Button>
+                 </div>
+                 <p className="text-xs text-muted-foreground">
+                   Aktuell: {selectedElementData.zIndex ?? 0}
+                 </p>
+               </div>
 
               <Button
                 className="w-full"

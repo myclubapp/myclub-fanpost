@@ -10,6 +10,8 @@ interface ImageCropperProps {
   open: boolean;
   onClose: () => void;
   onCropComplete: (croppedImage: string) => void;
+  format?: '4:5' | '1:1';
+  onFormatChange?: (format: '4:5' | '1:1') => void;
 }
 
 const createImage = (url: string): Promise<HTMLImageElement> =>
@@ -47,10 +49,12 @@ const getCroppedImg = async (imageSrc: string, pixelCrop: Area): Promise<string>
   return canvas.toDataURL("image/jpeg", 0.95);
 };
 
-export const ImageCropper = ({ image, open, onClose, onCropComplete }: ImageCropperProps) => {
+export const ImageCropper = ({ image, open, onClose, onCropComplete, format = '4:5', onFormatChange }: ImageCropperProps) => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  
+  const aspectRatio = format === '4:5' ? 1080 / 1350 : 1;
 
   const onCropChange = useCallback((crop: { x: number; y: number }) => {
     setCrop(crop);
@@ -82,12 +86,39 @@ export const ImageCropper = ({ image, open, onClose, onCropComplete }: ImageCrop
         <DialogHeader>
           <DialogTitle className="text-foreground">Bild zuschneiden</DialogTitle>
         </DialogHeader>
+        
+        {onFormatChange && (
+          <div className="space-y-2">
+            <Label className="text-sm text-muted-foreground">Format</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={format === '4:5' ? 'default' : 'outline'}
+                onClick={() => onFormatChange('4:5')}
+                className="flex-1"
+              >
+                4:5 (1080x1350)
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={format === '1:1' ? 'default' : 'outline'}
+                onClick={() => onFormatChange('1:1')}
+                className="flex-1"
+              >
+                1:1 (1080x1080)
+              </Button>
+            </div>
+          </div>
+        )}
+        
         <div className="relative w-full h-[400px] bg-muted/10 rounded-lg overflow-hidden">
           <Cropper
             image={image}
             crop={crop}
             zoom={zoom}
-            aspect={1080 / 1350}
+            aspect={aspectRatio}
             onCropChange={onCropChange}
             onCropComplete={onCropCompleteCallback}
             onZoomChange={onZoomChange}
