@@ -472,6 +472,64 @@ const Profile = () => {
             </CardContent>
           </Card>
 
+          {/* Credit Transactions Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Coins className="h-5 w-5" />
+                Credit-Historie
+              </CardTitle>
+              <CardDescription>
+                Ihre letzten Credit-Transaktionen
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {transactionsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : transactions.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  Noch keine Transaktionen vorhanden
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {transactions.map((transaction) => (
+                    <div
+                      key={transaction.id}
+                      className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 flex-1">
+                        {getTransactionIcon(transaction.transaction_type)}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {transaction.description}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDate(transaction.created_at)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`text-sm font-semibold ${
+                            transaction.amount > 0
+                              ? 'text-green-600 dark:text-green-400'
+                              : 'text-red-600 dark:text-red-400'
+                          }`}
+                        >
+                          {transaction.amount > 0 ? '+' : ''}
+                          {transaction.amount}
+                        </span>
+                        <Coins className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Danger Zone Card */}
           <Card className="border-destructive">
             <CardHeader>
@@ -543,64 +601,6 @@ const Profile = () => {
                   </AlertDialogContent>
                 </AlertDialog>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Credit Transactions Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Coins className="h-5 w-5" />
-                Credit-Historie
-              </CardTitle>
-              <CardDescription>
-                Ihre letzten Credit-Transaktionen
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {transactionsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : transactions.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  Noch keine Transaktionen vorhanden
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {transactions.map((transaction) => (
-                    <div
-                      key={transaction.id}
-                      className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3 flex-1">
-                        {getTransactionIcon(transaction.transaction_type)}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">
-                            {transaction.description}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatDate(transaction.created_at)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`text-sm font-semibold ${
-                            transaction.amount > 0
-                              ? 'text-green-600 dark:text-green-400'
-                              : 'text-red-600 dark:text-red-400'
-                          }`}
-                        >
-                          {transaction.amount > 0 ? '+' : ''}
-                          {transaction.amount}
-                        </span>
-                        <Coins className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>
