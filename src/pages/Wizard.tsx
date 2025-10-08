@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { ClubSearch } from "@/components/ClubSearch";
 import { TeamSearch } from "@/components/TeamSearch";
@@ -31,7 +31,9 @@ const Index = () => {
     gameId?: string;
   }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
+  const editSelection = new URLSearchParams(location.search).get('editSelection') === '1';
 
   const [selectedSport, setSelectedSport] = useState<SportType | "">(sport || "");
   const [selectedClubId, setSelectedClubId] = useState<string>(clubId || "");
@@ -221,10 +223,6 @@ const Index = () => {
     if (gameId) {
       const gameIdsFromUrl = gameId.split(',').map(id => id.trim()).filter(id => id);
       setSelectedGameIds(gameIdsFromUrl);
-    } else {
-      if (selectedGameIds.length > 0) {
-        setSelectedGameIds([]);
-      }
     }
   }, [gameId]);
 
@@ -415,8 +413,8 @@ const Index = () => {
             </Card>
           )}
 
-          {/* Step 4: Game Selection - Show only if team selected but no game */}
-          {selectedSport && selectedClubId && selectedTeamId && selectedGameIds.length === 0 && (
+          {/* Step 4: Game Selection - Show only if team selected or when editing selection */}
+          {selectedSport && selectedClubId && selectedTeamId && (selectedGameIds.length === 0 || editSelection) && (
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between mb-2">
@@ -455,14 +453,14 @@ const Index = () => {
             </Card>
           )}
 
-          {/* Game Preview Display - Show only if game selected */}
-          {selectedSport && selectedClubId && selectedTeamId && selectedGameIds.length > 0 && (
+          {/* Game Preview Display - Show only if game selected and not editing selection */}
+          {selectedSport && selectedClubId && selectedTeamId && selectedGameIds.length > 0 && !editSelection && (
             <div className="space-y-4">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  navigate(`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}`);
+                  navigate(`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}?editSelection=1`);
                 }}
                 className="gap-1"
               >
