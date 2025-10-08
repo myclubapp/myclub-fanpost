@@ -295,23 +295,28 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
     const config = selectedCustomTemplate.config;
     if (!config || !config.elements) return null;
 
+    // Get dimensions based on template format
+    const templateFormat = config.format || '4:5';
+    const canvasWidth = 1080;
+    const canvasHeight = templateFormat === '4:5' ? 1350 : 1080;
+
     return (
       <svg
         ref={customTemplateRef}
-        width="1080"
-        height="1350"
-        viewBox="0 0 1080 1350"
+        width={canvasWidth}
+        height={canvasHeight}
+        viewBox={`0 0 ${canvasWidth} ${canvasHeight}`}
         className="max-w-full h-auto"
       >
         {/* Background */}
-        <rect width="1080" height="1350" fill={config.backgroundColor || '#1a1a1a'} />
+        <rect width={canvasWidth} height={canvasHeight} fill={config.backgroundColor || '#1a1a1a'} />
         
         {/* Background image if set */}
         {backgroundImage && (
           <image
             href={backgroundImage}
-            width="1080"
-            height="1350"
+            width={canvasWidth}
+            height={canvasHeight}
             preserveAspectRatio="xMidYMid slice"
           />
         )}
@@ -509,7 +514,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
       // Inline external images (team logos, etc.)
       await inlineExternalImages(svgElement);
 
-      // Get SVG dimensions from viewBox or attributes - Instagram format 1080x1350
+      // Get SVG dimensions from viewBox or attributes
       let width = 1080;
       let height = 1350;
 
@@ -644,6 +649,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
             }
           }}
           onCropComplete={handleCropComplete}
+          format={selectedCustomTemplate?.config?.format || '4:5'}
         />
       )}
       <Card className="shadow-[var(--shadow-card)] border-border bg-card/50 backdrop-blur-sm">
