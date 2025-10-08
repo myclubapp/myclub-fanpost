@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useCredits } from '@/hooks/useCredits';
-import { LogOut, User, FileText, Coins } from 'lucide-react';
+import { LogOut, User, FileText, Coins, Menu, X } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +21,13 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import logo from '@/assets/myclub-logo.png';
 
 export const Header = () => {
@@ -29,6 +36,7 @@ export const Header = () => {
   const { credits } = useCredits();
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,6 +61,23 @@ export const Header = () => {
     navigate('/');
   };
 
+  const handleNavigate = (path: string) => {
+    setMobileMenuOpen(false);
+    if (path.startsWith('/#')) {
+      const section = path.split('#')[1];
+      if (window.location.pathname === '/') {
+        document.getElementById(section)?.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        navigate('/');
+        setTimeout(() => {
+          document.getElementById(section)?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    } else {
+      navigate(path);
+    }
+  };
+
   return (
     <header 
       className={`fixed top-0 left-0 right-0 z-50 border-b transition-all duration-300 ${
@@ -67,7 +92,8 @@ export const Header = () => {
           <span className="font-bold text-xl">Fanpost</span>
         </button>
 
-        <nav className="flex items-center space-x-4">
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center space-x-4">
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
@@ -112,7 +138,6 @@ export const Header = () => {
             <>
               {user ? (
                 <>
-                  {/* Credits Display */}
                   {credits && (
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary">
                       <Coins className="h-4 w-4" />
@@ -158,6 +183,103 @@ export const Header = () => {
             </>
           )}
         </nav>
+
+        {/* Mobile Navigation */}
+        <div className="flex md:hidden items-center gap-2">
+          {!loading && user && credits && (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 text-primary">
+              <Coins className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium">{credits.credits_remaining}</span>
+            </div>
+          )}
+          
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[280px]">
+              <SheetHeader>
+                <SheetTitle className="text-left">Navigation</SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col gap-4 mt-6">
+                <Button
+                  variant="ghost"
+                  className="justify-start"
+                  onClick={() => handleNavigate('/wizard')}
+                >
+                  Wizard
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-start"
+                  onClick={() => handleNavigate('/#pricing')}
+                >
+                  Preise
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-start"
+                  onClick={() => handleNavigate('/#about')}
+                >
+                  Über uns
+                </Button>
+                
+                {!loading && (
+                  <>
+                    {user ? (
+                      <>
+                        <div className="border-t pt-4 space-y-2">
+                          <div className="px-4 py-2 text-sm text-muted-foreground">
+                            {user.email}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            className="justify-start w-full"
+                            onClick={() => handleNavigate('/profile')}
+                          >
+                            <User className="mr-2 h-4 w-4" />
+                            Mein Profil
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            className="justify-start w-full"
+                            onClick={() => handleNavigate('/templates')}
+                          >
+                            <FileText className="mr-2 h-4 w-4" />
+                            Vorlagen
+                            {!isPaidUser && (
+                              <Badge variant="secondary" className="ml-auto">Pro</Badge>
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            className="justify-start w-full text-destructive"
+                            onClick={() => {
+                              setMobileMenuOpen(false);
+                              handleSignOut();
+                            }}
+                          >
+                            <LogOut className="mr-2 h-4 w-4" />
+                            Abmelden
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <Button
+                        className="w-full"
+                        onClick={() => handleNavigate('/auth')}
+                      >
+                        Login
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </header>
   );
