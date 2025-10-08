@@ -24,7 +24,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/*" element={<Profile />} />
             <Route path="/templates" element={<Templates />} />
             <Route path="/templates/new" element={<TemplateEditor />} />
             <Route path="/templates/edit/:id" element={<TemplateEditor />} />
