@@ -1,328 +1,173 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
-import { ClubSearch } from "@/components/ClubSearch";
-import { TeamSearch } from "@/components/TeamSearch";
-import { GameList } from "@/components/GameList";
-import { GamePreviewDisplay } from "@/components/GamePreviewDisplay";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import myclubLogo from "@/assets/myclub-logo.png";
-
-export type SportType = "unihockey" | "volleyball" | "handball";
+import { useNavigate } from "react-router-dom";
+import { Zap, Image, Share2, Sparkles } from "lucide-react";
 
 const Index = () => {
-  const { sport, clubId, teamId, gameId } = useParams<{
-    sport?: SportType;
-    clubId?: string;
-    teamId?: string;
-    gameId?: string;
-  }>();
   const navigate = useNavigate();
-
-  const [selectedSport, setSelectedSport] = useState<SportType | "">(sport || "");
-  const [selectedClubId, setSelectedClubId] = useState<string>(clubId || "");
-  const [selectedClubName, setSelectedClubName] = useState<string>("");
-  const [selectedTeamId, setSelectedTeamId] = useState<string>(teamId || "");
-  const [selectedTeamName, setSelectedTeamName] = useState<string>("");
-  const [selectedGameIds, setSelectedGameIds] = useState<string[]>(() => {
-    if (gameId) {
-      return gameId.split(',').map(id => id.trim()).filter(id => id);
-    }
-    return [];
-  });
-  const [gamesHaveResults, setGamesHaveResults] = useState<boolean[]>([]);
-
-  // Sync URL params with state
-  useEffect(() => {
-    if (sport) setSelectedSport(sport);
-    if (clubId) setSelectedClubId(clubId);
-    if (teamId) setSelectedTeamId(teamId);
-    if (gameId) {
-      // Split comma-separated game IDs
-      const gameIdsFromUrl = gameId.split(',').map(id => id.trim()).filter(id => id);
-      setSelectedGameIds(gameIdsFromUrl);
-    } else {
-      // Reset game IDs if no gameId in URL
-      if (selectedGameIds.length > 0) {
-        setSelectedGameIds([]);
-      }
-    }
-  }, [sport, clubId, teamId, gameId]);
-
-  // Load club name from API when clubId is set via URL
-  useEffect(() => {
-    const fetchClubName = async () => {
-      if (!selectedClubId || selectedClubName || !selectedSport) return;
-      
-      const apiUrls: Record<SportType, string> = {
-        unihockey: "https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissunihockey?query={%0A%20%20clubs{%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20}%20%0A}",
-        volleyball: "",
-        handball: "",
-      };
-
-      const apiUrl = apiUrls[selectedSport as SportType];
-      if (!apiUrl) return;
-
-      try {
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        const clubs = data.data?.clubs || [];
-        const club = clubs.find((c: { id: string, name: string }) => c.id === selectedClubId);
-        if (club) {
-          setSelectedClubName(club.name);
-        }
-      } catch (error) {
-        console.error("Error fetching club name:", error);
-      }
-    };
-
-    fetchClubName();
-  }, [selectedClubId, selectedClubName, selectedSport]);
-
-  // Load team name from API when teamId is set via URL
-  useEffect(() => {
-    const fetchTeamName = async () => {
-      if (!selectedTeamId || selectedTeamName || !selectedSport || !selectedClubId) return;
-      
-      const apiUrls: Record<SportType, (clubId: string) => string> = {
-        unihockey: (clubId: string) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissunihockey?query={%0A%20%20teams(clubId%3A%20%22${clubId}%22)%20{%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20}%0A}%0A`,
-        volleyball: () => "",
-        handball: () => "",
-      };
-
-      const apiUrl = apiUrls[selectedSport as SportType](selectedClubId);
-      if (!apiUrl) return;
-
-      try {
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        const teams = data.data?.teams || [];
-        const team = teams.find((t: { id: string, name: string }) => t.id === selectedTeamId);
-        if (team) {
-          setSelectedTeamName(team.name);
-        }
-      } catch (error) {
-        console.error("Error fetching team name:", error);
-      }
-    };
-
-    fetchTeamName();
-  }, [selectedTeamId, selectedTeamName, selectedSport, selectedClubId]);
-
-  const handleSportSelect = (sport: SportType) => {
-    setSelectedSport(sport);
-    setSelectedClubId("");
-    setSelectedClubName("");
-    setSelectedTeamId("");
-    setSelectedTeamName("");
-    setSelectedGameIds([]);
-    navigate(`/${sport}`);
-  };
-
-  const handleClubSelect = (clubId: string, clubName: string) => {
-    setSelectedClubId(clubId);
-    setSelectedClubName(clubName);
-    setSelectedTeamId("");
-    setSelectedTeamName("");
-    setSelectedGameIds([]);
-    navigate(`/${selectedSport}/${clubId}`);
-  };
-
-  const handleTeamSelect = (teamId: string, teamName: string) => {
-    setSelectedTeamId(teamId);
-    setSelectedTeamName(teamName);
-    setSelectedGameIds([]);
-    navigate(`/${selectedSport}/${selectedClubId}/${teamId}`);
-  };
-
-  const handleGameSelect = (gameIds: string[], hasResults: boolean[]) => {
-    setSelectedGameIds(gameIds);
-    setGamesHaveResults(hasResults);
-    // Join multiple game IDs with comma for URL
-    const gameIdsParam = gameIds.join(',');
-    navigate(`/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIdsParam}`);
-  };
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-12">
-        <div className="max-w-7xl mx-auto space-y-12">
-          {/* Welcome Section */}
-          {!selectedSport && (
-            <div className="text-center py-16 space-y-6">
-              <h2 className="text-5xl md:text-6xl font-bold text-foreground leading-tight">
-                Spielvorschauen,{" "}
-                <span className="text-primary">die begeistern</span>
-              </h2>
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                Erstelle professionelle Social-Media-Bilder für deine Spiele.
-                <br />
-                Einfach. Schnell. Beeindruckend.
-              </p>
-            </div>
-          )}
-
-          {/* Sport Selection */}
-          {!selectedSport && (
-            <div className="max-w-2xl mx-auto">
-              <Card className="shadow-[var(--shadow-card)] border-border hover:shadow-[var(--shadow-glow)] transition-all duration-300 bg-card/50 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-2xl font-bold text-foreground">
-                    Sportart auswählen
-                  </CardTitle>
-                  <CardDescription className="text-muted-foreground">
-                    Wähle zuerst die Sportart deines Vereins
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <RadioGroup onValueChange={(value) => handleSportSelect(value as SportType)} className="space-y-4">
-                    <div className="flex items-center space-x-3 p-4 rounded-lg border border-border hover:border-primary transition-colors cursor-pointer bg-background">
-                      <RadioGroupItem value="unihockey" id="unihockey" />
-                      <Label htmlFor="unihockey" className="text-base font-medium cursor-pointer flex-1">
-                        Unihockey
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-3 p-4 rounded-lg border border-border hover:border-primary transition-colors cursor-pointer bg-background">
-                      <RadioGroupItem value="volleyball" id="volleyball" />
-                      <Label htmlFor="volleyball" className="text-base font-medium cursor-pointer flex-1">
-                        Volleyball
-                      </Label>
-                      <Badge variant="secondary" className="ml-auto">Coming soon</Badge>
-                    </div>
-                    <div className="flex items-center space-x-3 p-4 rounded-lg border border-border hover:border-primary transition-colors cursor-pointer bg-background">
-                      <RadioGroupItem value="handball" id="handball" />
-                      <Label htmlFor="handball" className="text-base font-medium cursor-pointer flex-1">
-                        Handball
-                      </Label>
-                      <Badge variant="secondary" className="ml-auto">Coming soon</Badge>
-                    </div>
-                  </RadioGroup>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Club Search */}
-          {selectedSport && !selectedClubId && (
-            <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="mb-6">
-                <button
-                  onClick={() => {
-                    setSelectedSport("");
-                    navigate("/");
-                  }}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors mb-3"
-                >
-                  ← Andere Sportart wählen
-                </button>
-              </div>
-              <ClubSearch sportType={selectedSport} onClubSelect={handleClubSelect} />
-            </div>
-          )}
-
-          {/* Team Search */}
-          {selectedClubId && !selectedTeamId && (
-            <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="mb-6">
-                <button
-                  onClick={() => {
-                    setSelectedClubId("");
-                    navigate(`/${selectedSport}`);
-                  }}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors mb-3"
-                >
-                  ← Anderen Club wählen
-                </button>
-                {selectedClubName && (
-                  <h3 className="text-2xl font-bold text-foreground">
-                    {selectedClubName}
-                  </h3>
-                )}
-              </div>
-              <TeamSearch 
-                sportType={selectedSport as SportType}
-                clubId={selectedClubId}
-                clubName={selectedClubName}
-                onTeamSelect={handleTeamSelect} 
-              />
-            </div>
-          )}
-
-          {/* Game List */}
-          {selectedTeamId && selectedGameIds.length === 0 && (
-            <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="mb-6">
-                <button
-                  onClick={() => {
-                    setSelectedTeamId("");
-                    setSelectedGameIds([]);
-                    navigate(`/${selectedSport}/${selectedClubId}`);
-                  }}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors mb-3"
-                >
-                  ← Anderes Team wählen
-                </button>
-                {selectedTeamName && (
-                  <h3 className="text-2xl font-bold text-foreground">
-                    {selectedClubName} - {selectedTeamName}
-                  </h3>
-                )}
-              </div>
-              <GameList 
-                sportType={selectedSport as SportType}
-                teamId={selectedTeamId} 
-                onGameSelect={handleGameSelect}
-              />
-            </div>
-          )}
-
-          {/* Game Preview Display */}
-          {selectedTeamId && selectedGameIds.length > 0 && (
-            <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="mb-6">
-                <button
-                  onClick={() => {
-                    setSelectedGameIds([]);
-                    navigate(`/${selectedSport}/${selectedClubId}/${selectedTeamId}`);
-                  }}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  ← Zurück zur Spielauswahl
-                </button>
-              </div>
-              <GamePreviewDisplay 
-                sportType={selectedSport as SportType}
-                clubId={selectedClubId} 
-                gameIds={selectedGameIds}
-                gamesHaveResults={gamesHaveResults}
-              />
-            </div>
-          )}
+      {/* Hero Section */}
+      <section className="container mx-auto px-4 py-20">
+        <div className="text-center space-y-6 max-w-4xl mx-auto">
+          <h1 className="text-5xl md:text-6xl font-bold text-foreground">
+            Social Media Posts für dein Team in Sekunden
+          </h1>
+          <p className="text-xl text-muted-foreground">
+            Erstelle professionelle Social Media Posts für deine Spiele mit nur wenigen Klicks. 
+            Perfekt für Schweizer Sportvereine.
+          </p>
+          <div className="flex gap-4 justify-center">
+            <Button size="lg" onClick={() => navigate('/wizard')}>
+              Jetzt starten
+            </Button>
+            <Button size="lg" variant="outline" onClick={() => navigate('/about')}>
+              Mehr erfahren
+            </Button>
+          </div>
         </div>
-      </main>
+      </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border/50 mt-20">
-        <div className="container mx-auto px-4 py-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            FanPost - Powered by{" "}
-            <a 
-              href="https://my-club.app" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              myclub
-            </a>
+      {/* Features Section */}
+      <section className="container mx-auto px-4 py-20 bg-muted/50">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            Warum FanPost?
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            Alles was du brauchst, um deine Fans zu begeistern
           </p>
         </div>
-      </footer>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          <Card>
+            <CardHeader>
+              <Zap className="h-10 w-10 text-primary mb-2" />
+              <CardTitle>Blitzschnell</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>
+                Erstelle Posts in wenigen Sekunden. Wähle dein Spiel und lade den fertigen Post herunter.
+              </CardDescription>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <Image className="h-10 w-10 text-primary mb-2" />
+              <CardTitle>Professionell</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>
+                Hochwertige Templates, die speziell für Sportvereine entwickelt wurden.
+              </CardDescription>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <Sparkles className="h-10 w-10 text-primary mb-2" />
+              <CardTitle>Anpassbar</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>
+                Erstelle eigene Templates und passe sie an dein Team-Branding an.
+              </CardDescription>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <Share2 className="h-10 w-10 text-primary mb-2" />
+              <CardTitle>Direkt teilen</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>
+                Exportiere deine Posts und teile sie direkt auf Social Media.
+              </CardDescription>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="container mx-auto px-4 py-20">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            So einfach geht's
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            In 4 Schritten zu deinem perfekten Social Media Post
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-4 gap-8 max-w-6xl mx-auto">
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold mx-auto">
+              1
+            </div>
+            <h3 className="text-xl font-semibold">Sportart wählen</h3>
+            <p className="text-muted-foreground">
+              Wähle zwischen Unihockey, Volleyball und Handball
+            </p>
+          </div>
+
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold mx-auto">
+              2
+            </div>
+            <h3 className="text-xl font-semibold">Club auswählen</h3>
+            <p className="text-muted-foreground">
+              Finde deinen Club in unserer Datenbank
+            </p>
+          </div>
+
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold mx-auto">
+              3
+            </div>
+            <h3 className="text-xl font-semibold">Team wählen</h3>
+            <p className="text-muted-foreground">
+              Wähle dein Team aus der Liste
+            </p>
+          </div>
+
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold mx-auto">
+              4
+            </div>
+            <h3 className="text-xl font-semibold">Post erstellen</h3>
+            <p className="text-muted-foreground">
+              Wähle ein Spiel und erstelle deinen Post
+            </p>
+          </div>
+        </div>
+
+        <div className="text-center mt-12">
+          <Button size="lg" onClick={() => navigate('/wizard')}>
+            Jetzt loslegen
+          </Button>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="container mx-auto px-4 py-20 bg-muted/50">
+        <div className="text-center space-y-6 max-w-3xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+            Bereit für professionelle Social Media Posts?
+          </h2>
+          <p className="text-xl text-muted-foreground">
+            Starte jetzt kostenlos und erstelle deinen ersten Post in Sekunden
+          </p>
+          <Button size="lg" onClick={() => navigate('/wizard')}>
+            Kostenlos starten
+          </Button>
+        </div>
+      </section>
     </div>
   );
 };

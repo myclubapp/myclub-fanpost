@@ -11,6 +11,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
 import logo from '@/assets/myclub-logo.png';
 
 export const Header = () => {
@@ -32,6 +39,41 @@ export const Header = () => {
         </Link>
 
         <nav className="flex items-center space-x-4">
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <Link to="/wizard">
+                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                    Wizard
+                  </NavigationMenuLink>
+                </Link>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <Link to="/pricing">
+                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                    Preise
+                  </NavigationMenuLink>
+                </Link>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <Link to="/about">
+                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                    Über uns
+                  </NavigationMenuLink>
+                </Link>
+              </NavigationMenuItem>
+              {!loading && user && (
+                <NavigationMenuItem>
+                  <Link to="/templates">
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                      Vorlagen
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+              )}
+            </NavigationMenuList>
+          </NavigationMenu>
+
           {!loading && (
             <>
               {user ? (

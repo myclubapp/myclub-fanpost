@@ -9,6 +9,9 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import Templates from "./pages/Templates";
 import TemplateEditor from "./pages/TemplateEditor";
+import Wizard from "./pages/Wizard";
+import Pricing from "./pages/Pricing";
+import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,10 +30,13 @@ const App = () => (
             <Route path="/templates" element={<Templates />} />
             <Route path="/templates/new" element={<TemplateEditor />} />
             <Route path="/templates/edit/:id" element={<TemplateEditor />} />
-            <Route path="/:sport" element={<Index />} />
-            <Route path="/:sport/:clubId" element={<Index />} />
-            <Route path="/:sport/:clubId/:teamId" element={<Index />} />
-            <Route path="/:sport/:clubId/:teamId/:gameId" element={<Index />} />
+            <Route path="/wizard" element={<Wizard />} />
+            <Route path="/wizard/:sport" element={<Wizard />} />
+            <Route path="/wizard/:sport/:clubId" element={<Wizard />} />
+            <Route path="/wizard/:sport/:clubId/:teamId" element={<Wizard />} />
+            <Route path="/wizard/:sport/:clubId/:teamId/:gameId" element={<Wizard />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/about" element={<About />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
