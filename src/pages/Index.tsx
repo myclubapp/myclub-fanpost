@@ -1,6 +1,7 @@
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { Zap, Image, Share2, Sparkles, Trophy, Mail } from "lucide-react";
 
@@ -318,23 +319,38 @@ const Index = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-lg font-bold text-primary">U</span>
+                <div className="flex flex-col gap-2 p-4 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-lg font-bold text-primary">U</span>
+                    </div>
+                    <span className="font-medium">Unihockey</span>
                   </div>
-                  <span className="font-medium">Unihockey</span>
+                  <span className="text-sm text-muted-foreground">Swiss Unihockey</span>
                 </div>
-                <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-lg font-bold text-primary">V</span>
+                <div className="flex flex-col gap-2 p-4 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-lg font-bold text-primary">V</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-medium">Volleyball</span>
+                      <Badge variant="secondary" className="text-xs w-fit mt-1">Coming soon</Badge>
+                    </div>
                   </div>
-                  <span className="font-medium">Volleyball</span>
+                  <span className="text-sm text-muted-foreground">Swiss Volley</span>
                 </div>
-                <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-lg font-bold text-primary">H</span>
+                <div className="flex flex-col gap-2 p-4 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-lg font-bold text-primary">H</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-medium">Handball</span>
+                      <Badge variant="secondary" className="text-xs w-fit mt-1">Coming soon</Badge>
+                    </div>
                   </div>
-                  <span className="font-medium">Handball</span>
+                  <span className="text-sm text-muted-foreground">Swiss Handball</span>
                 </div>
               </div>
             </CardContent>

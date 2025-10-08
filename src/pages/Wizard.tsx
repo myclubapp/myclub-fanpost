@@ -223,8 +223,18 @@ const Index = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="unihockey">Unihockey</SelectItem>
-                      <SelectItem value="volleyball">Volleyball</SelectItem>
-                      <SelectItem value="handball">Handball</SelectItem>
+                      <SelectItem value="volleyball" disabled>
+                        <div className="flex items-center gap-2">
+                          Volleyball
+                          <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="handball" disabled>
+                        <div className="flex items-center gap-2">
+                          Handball
+                          <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
