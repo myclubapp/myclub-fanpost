@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useCredits } from "@/hooks/useCredits";
+import { useUserRole } from "@/hooks/useUserRole";
 import * as svg from "save-svg-as-png";
 import { Share } from "@capacitor/share";
 import { Filesystem, Directory } from "@capacitor/filesystem";
@@ -31,6 +32,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ImageCropper } from "./ImageCropper";
+import { supabase } from "@/integrations/supabase/client";
 
 type SportType = "unihockey" | "volleyball" | "handball";
 
@@ -41,13 +43,19 @@ interface GamePreviewDisplayProps {
   gamesHaveResults?: boolean[];
 }
 
-const AVAILABLE_THEMES = [
-  { value: "kadetten-unihockey", label: "Kadetten Unihockey" },
-  { value: "myclub-light", label: "MyClub Light" },
-  { value: "myclub-dark", label: "MyClub Dark" },
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
+const STANDARD_THEMES = [
+  { value: "standard", label: "Standard Theme" },
+  { value: "myclub", label: "myclub" },
+  { value: "myclub-dark", label: "myclub dark" },
+  { value: "myclub-light", label: "myclub light" },
 ];
+
+interface CustomTemplate {
+  id: string;
+  name: string;
+  value: string; // Will be template ID
+  isCustom: true;
+}
 
 // Declare the custom web components
 declare global {
@@ -69,12 +77,13 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
   const { toast } = useToast();
   const { user } = useAuth();
   const { credits, hasCredits, consumeCredit, loading: creditsLoading } = useCredits();
+  const { isPaidUser } = useUserRole();
   
   // Set initial tab based on whether games have results
   const hasAnyResult = gamesHaveResults.some(hasResult => hasResult);
   const [activeTab, setActiveTab] = useState<string>(hasAnyResult ? "result" : "preview");
   
-  const [selectedTheme, setSelectedTheme] = useState("myclub-light");
+  const [selectedTheme, setSelectedTheme] = useState("standard");
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
@@ -82,9 +91,44 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
   const [showResultDetail, setShowResultDetail] = useState(false);
   const [svgDimensions, setSvgDimensions] = useState({ width: "500", height: "625" });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [customTemplates, setCustomTemplates] = useState<CustomTemplate[]>([]);
 
   // Map sport type to API type
   const apiType = sportType === "unihockey" ? "swissunihockey" : sportType;
+
+  // Load custom templates for paid users
+  useEffect(() => {
+    const loadCustomTemplates = async () => {
+      if (!user || !isPaidUser) {
+        setCustomTemplates([]);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('templates')
+          .select('id, name, template_type')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (data) {
+          const templates: CustomTemplate[] = data.map(template => ({
+            id: template.id,
+            name: template.name,
+            value: template.id,
+            isCustom: true as const,
+          }));
+          setCustomTemplates(templates);
+        }
+      } catch (error) {
+        console.error('Error loading custom templates:', error);
+      }
+    };
+
+    loadCustomTemplates();
+  }, [user, isPaidUser]);
 
   // Update tab when gamesHaveResults changes
   useEffect(() => {
@@ -459,15 +503,27 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
                 <Palette className="h-4 w-4 text-muted-foreground" />
                 <Label htmlFor="theme-select" className="text-sm text-muted-foreground">Theme:</Label>
                 <Select value={selectedTheme} onValueChange={setSelectedTheme}>
-                  <SelectTrigger id="theme-select" className="w-[180px] border-border">
+                  <SelectTrigger id="theme-select" className="w-[220px] border-border">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border">
-                    {AVAILABLE_THEMES.map((theme) => (
+                    {STANDARD_THEMES.map((theme) => (
                       <SelectItem key={theme.value} value={theme.value}>
                         {theme.label}
                       </SelectItem>
                     ))}
+                    {isPaidUser && customTemplates.length > 0 && (
+                      <>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                          Eigene Vorlagen
+                        </div>
+                        {customTemplates.map((template) => (
+                          <SelectItem key={template.value} value={template.value}>
+                            {template.name}
+                          </SelectItem>
+                        ))}
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
