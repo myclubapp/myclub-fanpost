@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useCredits } from '@/hooks/useCredits';
-import { LogOut, User, FileText, Coins, Menu, X } from 'lucide-react';
+import { useTheme } from '@/components/theme-provider';
+import { LogOut, User, FileText, Coins, Menu, X, Sun, Moon } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +35,7 @@ export const Header = () => {
   const { user, signOut, loading } = useAuth();
   const { isPaidUser } = useUserRole();
   const { credits } = useCredits();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -176,9 +178,22 @@ export const Header = () => {
                   </DropdownMenu>
                 </>
               ) : (
-                <Button asChild variant="default">
-                  <Link to="/auth">Login</Link>
-                </Button>
+                <>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  >
+                    {theme === 'dark' ? (
+                      <Sun className="h-5 w-5" />
+                    ) : (
+                      <Moon className="h-5 w-5" />
+                    )}
+                  </Button>
+                  <Button asChild variant="default">
+                    <Link to="/auth">Login</Link>
+                  </Button>
+                </>
               )}
             </>
           )}
@@ -267,12 +282,31 @@ export const Header = () => {
                         </div>
                       </>
                     ) : (
-                      <Button
-                        className="w-full"
-                        onClick={() => handleNavigate('/auth')}
-                      >
-                        Login
-                      </Button>
+                      <>
+                        <Button
+                          variant="ghost"
+                          className="justify-start w-full"
+                          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                        >
+                          {theme === 'dark' ? (
+                            <>
+                              <Sun className="mr-2 h-4 w-4" />
+                              Hell
+                            </>
+                          ) : (
+                            <>
+                              <Moon className="mr-2 h-4 w-4" />
+                              Dunkel
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          className="w-full"
+                          onClick={() => handleNavigate('/auth')}
+                        >
+                          Login
+                        </Button>
+                      </>
                     )}
                   </>
                 )}
