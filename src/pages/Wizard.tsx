@@ -339,119 +339,119 @@ const Index = () => {
 
           {/* Step 2: Club Selection - Show only if sport selected but no club */}
           {selectedSport && !selectedClubId && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between mb-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedSport("");
-                      navigate('/wizard');
-                    }}
-                    className="gap-1"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    Zurück
-                  </Button>
-                </div>
-                <CardTitle className="flex items-center gap-2">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold">
-                    2
-                  </span>
-                  Club auswählen
-                </CardTitle>
-                <CardDescription>
-                  Wähle deinen Club aus
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ClubSearch 
-                  sportType={selectedSport} 
-                  onClubSelect={handleClubSelect}
-                />
-              </CardContent>
-            </Card>
+            <div className="space-y-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSelectedSport("");
+                  navigate('/wizard');
+                }}
+                className="gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Zurück
+              </Button>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold">
+                      2
+                    </span>
+                    Club auswählen
+                  </CardTitle>
+                  <CardDescription>
+                    Wähle deinen Club aus
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ClubSearch 
+                    sportType={selectedSport} 
+                    onClubSelect={handleClubSelect}
+                  />
+                </CardContent>
+              </Card>
+            </div>
           )}
 
           {/* Step 3: Team Selection - Show only if club selected but no team */}
           {selectedSport && selectedClubId && !selectedTeamId && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between mb-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedClubId("");
-                      setSelectedClubName("");
-                      navigate(`/wizard/${selectedSport}`);
-                    }}
-                    className="gap-1"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    Zurück
-                  </Button>
-                </div>
-                <CardTitle className="flex items-center gap-2">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold">
-                    3
-                  </span>
-                  Team auswählen
-                </CardTitle>
-                <CardDescription>
-                  Wähle dein Team aus
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <TeamSearch 
-                  sportType={selectedSport}
-                  clubId={selectedClubId}
-                  clubName={selectedClubName}
-                  onTeamSelect={handleTeamSelect}
-                />
-              </CardContent>
-            </Card>
+            <div className="space-y-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSelectedClubId("");
+                  setSelectedClubName("");
+                  navigate(`/wizard/${selectedSport}`);
+                }}
+                className="gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Zurück
+              </Button>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold">
+                      3
+                    </span>
+                    Team auswählen
+                  </CardTitle>
+                  <CardDescription>
+                    Wähle dein Team aus
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <TeamSearch 
+                    sportType={selectedSport}
+                    clubId={selectedClubId}
+                    clubName={selectedClubName}
+                    onTeamSelect={handleTeamSelect}
+                  />
+                </CardContent>
+              </Card>
+            </div>
           )}
 
           {/* Step 4: Game Selection - Show only if team selected or when editing selection */}
           {selectedSport && selectedClubId && selectedTeamId && (selectedGameIds.length === 0 || editSelection) && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between mb-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedTeamId("");
-                      setSelectedTeamName("");
-                      navigate(`/wizard/${selectedSport}/${selectedClubId}`);
-                    }}
-                    className="gap-1"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    Zurück
-                  </Button>
-                </div>
-                <CardTitle className="flex items-center gap-2">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold">
-                    4
-                  </span>
-                  Spiel auswählen
-                </CardTitle>
-                <CardDescription>
-                  Wähle das Spiel aus und erstelle deinen Post
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <GameList
-                  sportType={selectedSport}
-                  teamId={selectedTeamId}
-                  onGameSelect={handleGameSelect}
-                  initialSelectedGameIds={selectedGameIds}
-                />
-              </CardContent>
-            </Card>
+            <div className="space-y-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSelectedTeamId("");
+                  setSelectedTeamName("");
+                  navigate(`/wizard/${selectedSport}/${selectedClubId}`);
+                }}
+                className="gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Zurück
+              </Button>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold">
+                      4
+                    </span>
+                    Spiel auswählen
+                  </CardTitle>
+                  <CardDescription>
+                    Wähle das Spiel aus und erstelle deinen Post
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <GameList
+                    sportType={selectedSport}
+                    teamId={selectedTeamId}
+                    onGameSelect={handleGameSelect}
+                    initialSelectedGameIds={selectedGameIds}
+                  />
+                </CardContent>
+              </Card>
+            </div>
           )}
 
           {/* Game Preview Display - Show only if game selected and not editing selection */}
