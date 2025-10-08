@@ -10,8 +10,6 @@ import Profile from "./pages/Profile";
 import Templates from "./pages/Templates";
 import TemplateEditor from "./pages/TemplateEditor";
 import Wizard from "./pages/Wizard";
-import Pricing from "./pages/Pricing";
-import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,8 +33,6 @@ const App = () => (
             <Route path="/wizard/:sport/:clubId" element={<Wizard />} />
             <Route path="/wizard/:sport/:clubId/:teamId" element={<Wizard />} />
             <Route path="/wizard/:sport/:clubId/:teamId/:gameId" element={<Wizard />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/about" element={<About />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -49,18 +49,32 @@ export const Header = () => {
                 </Link>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link to="/pricing">
+                <a href="/#pricing" onClick={(e) => {
+                  e.preventDefault();
+                  if (window.location.pathname === '/') {
+                    document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+                  } else {
+                    navigate('/#pricing');
+                  }
+                }}>
                   <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                     Preise
                   </NavigationMenuLink>
-                </Link>
+                </a>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link to="/about">
+                <a href="/#about" onClick={(e) => {
+                  e.preventDefault();
+                  if (window.location.pathname === '/') {
+                    document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
+                  } else {
+                    navigate('/#about');
+                  }
+                }}>
                   <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                     Über uns
                   </NavigationMenuLink>
-                </Link>
+                </a>
               </NavigationMenuItem>
               {!loading && user && (
                 <NavigationMenuItem>

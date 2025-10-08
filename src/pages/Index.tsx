@@ -33,7 +33,7 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section className="container mx-auto px-4 py-20 bg-muted/50">
+      <section id="features" className="container mx-auto px-4 py-20 bg-muted/50">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
             Warum FanPost?
@@ -154,8 +154,151 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section id="pricing" className="container mx-auto px-4 py-20">
+        <div className="text-center mb-12 space-y-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+            Preise
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            Wähle das passende Paket für dein Team
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <Card>
+            <CardHeader>
+              <CardTitle>Free</CardTitle>
+              <CardDescription>Für Einsteiger</CardDescription>
+              <div className="mt-4">
+                <span className="text-4xl font-bold">CHF 0</span>
+                <span className="text-muted-foreground">/Monat</span>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ul className="space-y-2">
+                <li className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  <span>Basis Posts erstellen</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  <span>Standard Templates</span>
+                </li>
+              </ul>
+              <Button className="w-full" variant="outline" onClick={() => navigate('/wizard')}>
+                Starten
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="border-primary">
+            <CardHeader>
+              <CardTitle>Pro</CardTitle>
+              <CardDescription>Für aktive Teams</CardDescription>
+              <div className="mt-4">
+                <span className="text-4xl font-bold">CHF 9</span>
+                <span className="text-muted-foreground">/Monat</span>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ul className="space-y-2">
+                <li className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  <span>Alle Free Features</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  <span>Eigene Templates erstellen</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  <span>Unbegrenzte Posts</span>
+                </li>
+              </ul>
+              <Button className="w-full" onClick={() => navigate('/auth')}>
+                Upgrade
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Enterprise</CardTitle>
+              <CardDescription>Für Vereine</CardDescription>
+              <div className="mt-4">
+                <span className="text-4xl font-bold">Custom</span>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ul className="space-y-2">
+                <li className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  <span>Alle Pro Features</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  <span>Mehrere Teams</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  <span>Priority Support</span>
+                </li>
+              </ul>
+              <Button className="w-full" variant="outline">
+                Kontakt
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* About Section */}
+      <section id="about" className="container mx-auto px-4 py-20 bg-muted/50">
+        <div className="max-w-4xl mx-auto space-y-8">
+          <div className="text-center space-y-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+              Über uns
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              Social Media Posts für Schweizer Sportvereine
+            </p>
+          </div>
+
+          <Card>
+            <CardContent className="prose prose-lg dark:prose-invert max-w-none pt-6">
+              <h3 className="text-2xl font-bold">Unsere Mission</h3>
+              <p>
+                FanPost hilft Schweizer Sportvereinen, professionelle Social Media Posts 
+                für ihre Spiele zu erstellen. Wir glauben, dass jedes Team die Möglichkeit 
+                haben sollte, seine Fans mit ansprechenden Inhalten zu erreichen.
+              </p>
+
+              <h3 className="text-2xl font-bold">Was wir bieten</h3>
+              <p>
+                Mit FanPost kannst du in wenigen Schritten ansprechende Social Media Posts 
+                für deine Spiele erstellen. Wähle einfach deine Sportart, deinen Club, 
+                dein Team und das Spiel aus - den Rest erledigen wir für dich.
+              </p>
+
+              <h3 className="text-2xl font-bold">Unterstützte Sportarten</h3>
+              <ul>
+                <li>Unihockey</li>
+                <li>Volleyball</li>
+                <li>Handball</li>
+              </ul>
+
+              <h3 className="text-2xl font-bold">Kontakt</h3>
+              <p>
+                Hast du Fragen oder Feedback? Wir freuen uns, von dir zu hören!
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
       {/* CTA Section */}
-      <section className="container mx-auto px-4 py-20 bg-muted/50">
+      <section className="container mx-auto px-4 py-20">
         <div className="text-center space-y-6 max-w-3xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground">
             Bereit für professionelle Social Media Posts?
