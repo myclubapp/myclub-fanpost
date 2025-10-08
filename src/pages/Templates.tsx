@@ -2,18 +2,23 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useSubscription } from '@/hooks/useSubscription';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Loader2, Lock } from 'lucide-react';
+import { Plus, Loader2, Lock, Sparkles } from 'lucide-react';
 import { TemplateList } from '@/components/templates/TemplateList';
+import { useToast } from '@/hooks/use-toast';
 
 const Templates = () => {
   const { user, loading: authLoading } = useAuth();
   const { isPaidUser, loading: roleLoading } = useUserRole();
+  const { createCheckout } = useSubscription();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -24,6 +29,30 @@ const Templates = () => {
       navigate('/auth');
     }
   }, [mounted, authLoading, user, navigate]);
+
+  const handleUpgrade = async () => {
+    setLoading(true);
+    try {
+      const url = await createCheckout();
+      if (url) {
+        window.open(url, '_blank');
+        toast({
+          title: "Checkout geöffnet",
+          description: "Schließen Sie den Kaufvorgang ab, um zu Pro zu upgraden.",
+        });
+      } else {
+        throw new Error('Checkout URL konnte nicht erstellt werden');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Fehler",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (authLoading || roleLoading || !mounted) {
     return (
@@ -57,16 +86,28 @@ const Templates = () => {
               <p className="text-center text-muted-foreground">
                 Upgrade Sie Ihren Account, um eigene Templates zu erstellen und zu verwalten.
               </p>
-              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-                <h3 className="font-semibold">Mit Paid Features erhalten Sie:</h3>
-                <ul className="space-y-1 text-sm text-muted-foreground ml-4">
-                  <li>• Unbegrenzte Custom Templates</li>
-                  <li>• WYSIWYG Template Editor</li>
-                  <li>• Bildgenerierung per AI</li>
-                  <li>• Erweiterte Anpassungsoptionen</li>
-                </ul>
+              <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <Sparkles className="h-5 w-5 text-primary mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold mb-2">Mit Pro Features erhalten Sie:</h3>
+                    <ul className="space-y-1 text-sm text-muted-foreground ml-4 mb-3">
+                      <li>• Unbegrenzte Custom Templates</li>
+                      <li>• WYSIWYG Template Editor</li>
+                      <li>• 10 Credits pro Monat</li>
+                      <li>• Erweiterte Anpassungsoptionen</li>
+                    </ul>
+                    <p className="text-lg font-bold text-primary">
+                      Nur CHF 9.- / Monat
+                    </p>
+                  </div>
+                </div>
               </div>
-              <Button className="w-full" onClick={() => navigate('/')}>
+              <Button className="w-full" onClick={handleUpgrade} disabled={loading}>
+                {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Jetzt zu Pro upgraden
+              </Button>
+              <Button variant="outline" className="w-full" onClick={() => navigate('/')}>
                 Zurück zur Startseite
               </Button>
             </CardContent>

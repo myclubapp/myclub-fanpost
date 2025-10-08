@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useCredits } from '@/hooks/useCredits';
+import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save, User, Crown, Sparkles, Coins } from 'lucide-react';
+import { Loader2, Save, User, Crown, Sparkles, Coins, CreditCard } from 'lucide-react';
 import { z } from 'zod';
 
 const profileSchema = z.object({
@@ -23,6 +24,7 @@ const Profile = () => {
   const { user, loading: authLoading } = useAuth();
   const { role, loading: roleLoading, isPaidUser } = useUserRole();
   const { credits, loading: creditsLoading } = useCredits();
+  const { subscription, loading: subscriptionLoading, createCheckout, openCustomerPortal, checkSubscription } = useSubscription();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -109,6 +111,69 @@ const Profile = () => {
       setLoading(false);
     }
   };
+
+  const handleUpgrade = async () => {
+    setLoading(true);
+    try {
+      const url = await createCheckout();
+      if (url) {
+        window.open(url, '_blank');
+        toast({
+          title: "Checkout geöffnet",
+          description: "Schließen Sie den Kaufvorgang ab, um zu Pro zu upgraden.",
+        });
+      } else {
+        throw new Error('Checkout URL konnte nicht erstellt werden');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Fehler",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    setLoading(true);
+    try {
+      const url = await openCustomerPortal();
+      if (url) {
+        window.open(url, '_blank');
+      } else {
+        throw new Error('Portal URL konnte nicht erstellt werden');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Fehler",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('success') === 'true') {
+      toast({
+        title: "Zahlung erfolgreich",
+        description: "Willkommen bei Pro! Ihre Subscription wird in Kürze aktiviert.",
+      });
+      checkSubscription();
+      window.history.replaceState({}, '', '/profile');
+    } else if (params.get('canceled') === 'true') {
+      toast({
+        title: "Zahlung abgebrochen",
+        description: "Sie können jederzeit upgraden.",
+        variant: "destructive",
+      });
+      window.history.replaceState({}, '', '/profile');
+    }
+  }, []);
 
   if (authLoading || roleLoading || !user) {
     return (
@@ -264,11 +329,32 @@ const Profile = () => {
                       <p className="text-sm text-muted-foreground mb-3">
                         Erstellen Sie eigene Templates, erhalten Sie 10 Credits pro Monat und nutzen Sie erweiterte Funktionen.
                       </p>
-                      <Button size="sm">
+                      <p className="text-lg font-bold text-primary mb-3">
+                        Nur CHF 9.- / Monat
+                      </p>
+                      <Button size="sm" onClick={handleUpgrade} disabled={loading}>
+                        {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                         Jetzt upgraden
                       </Button>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {isPaidUser && subscription?.subscribed && (
+                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                  <div>
+                    <p className="font-semibold">Subscription verwalten</p>
+                    <p className="text-sm text-muted-foreground">
+                      {subscription.subscription_end && 
+                        `Verlängert sich am ${new Date(subscription.subscription_end).toLocaleDateString('de-CH')}`
+                      }
+                    </p>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={handleManageSubscription} disabled={loading}>
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
+                    Verwalten
+                  </Button>
                 </div>
               )}
             </CardContent>
