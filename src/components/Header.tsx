@@ -41,15 +41,17 @@ export const Header = () => {
                       {user.email}
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate('/profile')}>
+                      <User className="mr-2 h-4 w-4" />
+                      Mein Profil
+                    </DropdownMenuItem>
                     {isPaidUser && (
-                      <>
-                        <DropdownMenuItem onClick={() => navigate('/templates')}>
-                          <FileText className="mr-2 h-4 w-4" />
-                          Meine Templates
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                      </>
+                      <DropdownMenuItem onClick={() => navigate('/templates')}>
+                        <FileText className="mr-2 h-4 w-4" />
+                        Meine Templates
+                      </DropdownMenuItem>
                     )}
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={signOut}>
                       <LogOut className="mr-2 h-4 w-4" />
                       Abmelden
