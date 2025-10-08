@@ -161,7 +161,7 @@ const Profile = () => {
 
       // Sign out and redirect
       await supabase.auth.signOut();
-      navigate('/auth');
+      navigate('/');
     } catch (error: any) {
       console.error('Error deleting account:', error);
       toast({
