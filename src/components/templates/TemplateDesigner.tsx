@@ -5,7 +5,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Move, Type, ImageIcon, Database, Upload } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Trash2, Move, Type, ImageIcon, Database, Upload, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ImageCropper } from '@/components/ImageCropper';
@@ -86,6 +87,9 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
   const [uploading, setUploading] = useState(false);
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
+  const [previewMode, setPreviewMode] = useState(false);
+  const [previewData, setPreviewData] = useState<any>(null);
+  const [lockAspectRatio, setLockAspectRatio] = useState(true);
 
   // Sync elements with config
   useEffect(() => {
@@ -136,9 +140,25 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
   };
 
   const updateElement = (id: string, updates: Partial<SVGElement>) => {
-    setElements(prev => prev.map(el => 
-      el.id === id ? { ...el, ...updates } : el
-    ));
+    setElements(prev => prev.map(el => {
+      if (el.id === id) {
+        const updated = { ...el, ...updates };
+        
+        // If updating width/height of image and lockAspectRatio is true
+        if ((el.type === 'image' || el.type === 'api-image') && lockAspectRatio && el.width && el.height) {
+          const aspectRatio = el.width / el.height;
+          
+          if (updates.width !== undefined && updates.height === undefined) {
+            updated.height = Math.round(updates.width / aspectRatio);
+          } else if (updates.height !== undefined && updates.width === undefined) {
+            updated.width = Math.round(updates.height * aspectRatio);
+          }
+        }
+        
+        return updated;
+      }
+      return el;
+    }));
   };
 
   const deleteElement = (id: string) => {
@@ -300,6 +320,38 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
     }
   };
 
+  const loadPreviewData = async () => {
+    try {
+      const response = await fetch('https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissunihockey?query=%7B%0A%20%20game(gameId%3A%20%221073721%22)%20%7B%0A%20%20%20%20teamHome%0A%20%20%20%20teamAway%0A%20%20%20%20date%0A%20%20%20%20time%0A%20%20%20%20location%0A%20%20%20%20city%0A%20%20%20%20result%0A%20%20%20%20resultDetail%0A%20%20%20%20teamHomeLogo%0A%20%20%20%20teamAwayLogo%0A%20%20%7D%0A%7D%0A');
+      const data = await response.json();
+      setPreviewData(data.data.game);
+      setPreviewMode(true);
+      toast({
+        title: "Vorschau geladen",
+        description: "Template wird mit Beispieldaten angezeigt",
+      });
+    } catch (error) {
+      toast({
+        title: "Fehler beim Laden",
+        description: "Vorschaudaten konnten nicht geladen werden",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getElementContent = (element: SVGElement) => {
+    if (previewMode && (element.type === 'api-text' || element.type === 'api-image')) {
+      if (!previewData) return element.content || element.href;
+      
+      const fieldValue = previewData[element.apiField || ''];
+      return fieldValue || element.content || element.href;
+    }
+    
+    return element.type === 'image' || element.type === 'api-image' 
+      ? element.href 
+      : element.content;
+  };
+
   const selectedElementData = elements.find(el => el.id === selectedElement);
 
   return (
@@ -346,6 +398,15 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
             >
               <Upload className="h-4 w-4" />
               {uploading ? 'Lädt hoch...' : 'Bild hochladen'}
+            </Button>
+            <Button 
+              onClick={() => previewMode ? setPreviewMode(false) : loadPreviewData()} 
+              size="sm" 
+              variant={previewMode ? "default" : "outline"}
+              className="gap-2"
+            >
+              <Eye className="h-4 w-4" />
+              {previewMode ? 'Editor-Modus' : 'Vorschau'}
             </Button>
             <input
               ref={fileInputRef}
@@ -409,8 +470,9 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
 
               {/* Render elements */}
               {elements.map(element => {
-                const isSelected = selectedElement === element.id;
+                const isSelected = selectedElement === element.id && !previewMode;
                 const isApiElement = element.type === 'api-text' || element.type === 'api-image';
+                const displayContent = getElementContent(element);
                 
                 if (element.type === 'text' || element.type === 'api-text') {
                   return (
@@ -435,12 +497,12 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
                         fill={element.fill}
                         fontWeight={element.fontWeight}
                         textAnchor={element.textAnchor}
-                        style={{ cursor: 'move', userSelect: 'none' }}
-                        onMouseDown={(e) => handleMouseDown(e, element.id)}
+                        style={{ cursor: previewMode ? 'default' : 'move', userSelect: 'none' }}
+                        onMouseDown={previewMode ? undefined : (e) => handleMouseDown(e, element.id)}
                       >
-                        {element.content}
+                        {displayContent}
                       </text>
-                      {isApiElement && (
+                      {isApiElement && !previewMode && (
                         <text
                           x={element.x}
                           y={element.y - (element.fontSize || 24) - 5}
@@ -471,16 +533,37 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
                           strokeDasharray="5,5"
                         />
                       )}
-                      <image
+                      {isApiElement && !previewMode && (
+                        <defs>
+                          <pattern id={`hatch-${element.id}`} patternUnits="userSpaceOnUse" width="8" height="8">
+                            <path d="M-2,2 l4,-4 M0,8 l8,-8 M6,10 l4,-4" 
+                              stroke="#10b981" 
+                              strokeWidth="1" 
+                              opacity="0.3" />
+                          </pattern>
+                        </defs>
+                      )}
+                      <rect
                         x={element.x}
                         y={element.y}
                         width={element.width}
                         height={element.height}
-                        href={element.href}
-                        style={{ cursor: 'move' }}
-                        onMouseDown={(e) => handleMouseDown(e, element.id)}
+                        fill={isApiElement && !previewMode ? `url(#hatch-${element.id})` : "none"}
+                        stroke={isApiElement && !previewMode ? "#10b981" : "none"}
+                        strokeWidth="1"
                       />
-                      {isApiElement && (
+                      {(element.type === 'image' || previewMode) && (
+                        <image
+                          x={element.x}
+                          y={element.y}
+                          width={element.width}
+                          height={element.height}
+                          href={displayContent}
+                          style={{ cursor: previewMode ? 'default' : 'move' }}
+                          onMouseDown={previewMode ? undefined : (e) => handleMouseDown(e, element.id)}
+                        />
+                      )}
+                      {isApiElement && !previewMode && (
                         <>
                           <rect
                             x={element.x}
@@ -641,6 +724,17 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
 
               {(selectedElementData.type === 'image' || selectedElementData.type === 'api-image') && (
                 <>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Checkbox 
+                      id="aspect-ratio" 
+                      checked={lockAspectRatio}
+                      onCheckedChange={(checked) => setLockAspectRatio(checked as boolean)}
+                    />
+                    <Label htmlFor="aspect-ratio" className="text-sm cursor-pointer">
+                      Seitenverhältnis beibehalten
+                    </Label>
+                  </div>
+                  
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-2">
                       <Label>Breite</Label>
