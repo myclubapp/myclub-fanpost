@@ -4,16 +4,18 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Move, Type, ImageIcon } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Trash2, Move, Type, ImageIcon, Database } from 'lucide-react';
 
 interface SVGElement {
   id: string;
-  type: 'text' | 'image';
+  type: 'text' | 'image' | 'api-text' | 'api-image';
   x: number;
   y: number;
   width?: number;
   height?: number;
   content?: string;
+  apiField?: string;
   fontSize?: number;
   fontFamily?: string;
   fill?: string;
@@ -21,6 +23,48 @@ interface SVGElement {
   textAnchor?: string;
   href?: string;
 }
+
+// API Fields per template type
+const API_FIELDS = {
+  'game-preview': {
+    text: [
+      { value: 'teamHome', label: 'Heim Team Name' },
+      { value: 'teamAway', label: 'Auswärts Team Name' },
+      { value: 'date', label: 'Datum' },
+      { value: 'time', label: 'Uhrzeit' },
+      { value: 'location', label: 'Spielort' },
+      { value: 'city', label: 'Stadt' },
+    ],
+    image: [
+      { value: 'teamHomeLogo', label: 'Heim Team Logo' },
+      { value: 'teamAwayLogo', label: 'Auswärts Team Logo' },
+      { value: 'teamHomeLogo2', label: 'Heim Team Logo (Spiel 2)' },
+      { value: 'teamAwayLogo2', label: 'Auswärts Team Logo (Spiel 2)' },
+      { value: 'teamHomeLogo3', label: 'Heim Team Logo (Spiel 3)' },
+      { value: 'teamAwayLogo3', label: 'Auswärts Team Logo (Spiel 3)' },
+    ]
+  },
+  'game-result': {
+    text: [
+      { value: 'teamHome', label: 'Heim Team Name' },
+      { value: 'teamAway', label: 'Auswärts Team Name' },
+      { value: 'result', label: 'Resultat' },
+      { value: 'resultDetail', label: 'Resultat Detail' },
+      { value: 'date', label: 'Datum' },
+      { value: 'time', label: 'Uhrzeit' },
+      { value: 'location', label: 'Spielort' },
+      { value: 'city', label: 'Stadt' },
+      { value: 'result2', label: 'Resultat (Spiel 2)' },
+      { value: 'resultDetail2', label: 'Resultat Detail (Spiel 2)' },
+    ],
+    image: [
+      { value: 'teamHomeLogo', label: 'Heim Team Logo' },
+      { value: 'teamAwayLogo', label: 'Auswärts Team Logo' },
+      { value: 'teamHomeLogo2', label: 'Heim Team Logo (Spiel 2)' },
+      { value: 'teamAwayLogo2', label: 'Auswärts Team Logo (Spiel 2)' },
+    ]
+  }
+};
 
 interface TemplateDesignerProps {
   templateType: 'game-preview' | 'game-result';
@@ -113,6 +157,25 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
     setSelectedElement(newElement.id);
   };
 
+  const addApiTextField = (apiField: string) => {
+    const fieldLabel = API_FIELDS[templateType].text.find(f => f.value === apiField)?.label || apiField;
+    const newElement: SVGElement = {
+      id: `api-text-${Date.now()}`,
+      type: 'api-text',
+      x: 540,
+      y: 300,
+      content: `{${apiField}}`,
+      apiField,
+      fontSize: 48,
+      fontFamily: 'Bebas Neue, sans-serif',
+      fill: '#ffffff',
+      fontWeight: '900',
+      textAnchor: 'middle'
+    };
+    setElements(prev => [...prev, newElement]);
+    setSelectedElement(newElement.id);
+  };
+
   const addImageElement = () => {
     const newElement: SVGElement = {
       id: `image-${Date.now()}`,
@@ -122,6 +185,22 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
       width: 189,
       height: 189,
       href: 'https://via.placeholder.com/189'
+    };
+    setElements(prev => [...prev, newElement]);
+    setSelectedElement(newElement.id);
+  };
+
+  const addApiImageField = (apiField: string) => {
+    const fieldLabel = API_FIELDS[templateType].image.find(f => f.value === apiField)?.label || apiField;
+    const newElement: SVGElement = {
+      id: `api-image-${Date.now()}`,
+      type: 'api-image',
+      x: 400,
+      y: 500,
+      width: 189,
+      height: 189,
+      apiField,
+      href: 'https://via.placeholder.com/189' // Placeholder
     };
     setElements(prev => [...prev, newElement]);
     setSelectedElement(newElement.id);
@@ -140,15 +219,44 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-4">
             <Button onClick={addTextElement} size="sm" variant="outline" className="gap-2">
               <Type className="h-4 w-4" />
-              Text hinzufügen
+              Statischer Text
             </Button>
             <Button onClick={addImageElement} size="sm" variant="outline" className="gap-2">
               <ImageIcon className="h-4 w-4" />
-              Bild hinzufügen
+              Statisches Bild
             </Button>
+            
+            <div className="flex gap-2 items-center ml-auto">
+              <Database className="h-4 w-4 text-muted-foreground" />
+              <Select onValueChange={addApiTextField}>
+                <SelectTrigger className="w-[200px] h-8">
+                  <SelectValue placeholder="API Text-Feld..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {API_FIELDS[templateType].text.map(field => (
+                    <SelectItem key={field.value} value={field.value}>
+                      {field.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <Select onValueChange={addApiImageField}>
+                <SelectTrigger className="w-[200px] h-8">
+                  <SelectValue placeholder="API Bild-Feld..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {API_FIELDS[templateType].image.map(field => (
+                    <SelectItem key={field.value} value={field.value}>
+                      {field.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="border rounded-lg overflow-auto bg-muted/10">
@@ -176,8 +284,9 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
               {/* Render elements */}
               {elements.map(element => {
                 const isSelected = selectedElement === element.id;
+                const isApiElement = element.type === 'api-text' || element.type === 'api-image';
                 
-                if (element.type === 'text') {
+                if (element.type === 'text' || element.type === 'api-text') {
                   return (
                     <g key={element.id}>
                       {isSelected && (
@@ -187,7 +296,7 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
                           width={element.textAnchor === 'middle' ? 200 : 300}
                           height={(element.fontSize || 24) + 10}
                           fill="none"
-                          stroke="#3b82f6"
+                          stroke={isApiElement ? "#10b981" : "#3b82f6"}
                           strokeWidth="2"
                           strokeDasharray="5,5"
                         />
@@ -205,11 +314,23 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
                       >
                         {element.content}
                       </text>
+                      {isApiElement && (
+                        <text
+                          x={element.x}
+                          y={element.y - (element.fontSize || 24) - 5}
+                          fontSize={12}
+                          fill="#10b981"
+                          textAnchor={element.textAnchor}
+                          style={{ pointerEvents: 'none' }}
+                        >
+                          API: {element.apiField}
+                        </text>
+                      )}
                     </g>
                   );
                 }
                 
-                if (element.type === 'image') {
+                if (element.type === 'image' || element.type === 'api-image') {
                   return (
                     <g key={element.id}>
                       {isSelected && (
@@ -219,7 +340,7 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
                           width={(element.width || 100) + 4}
                           height={(element.height || 100) + 4}
                           fill="none"
-                          stroke="#3b82f6"
+                          stroke={isApiElement ? "#10b981" : "#3b82f6"}
                           strokeWidth="2"
                           strokeDasharray="5,5"
                         />
@@ -233,6 +354,28 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
                         style={{ cursor: 'move' }}
                         onMouseDown={(e) => handleMouseDown(e, element.id)}
                       />
+                      {isApiElement && (
+                        <>
+                          <rect
+                            x={element.x}
+                            y={element.y - 20}
+                            width={element.width || 100}
+                            height={18}
+                            fill="#10b981"
+                            opacity={0.9}
+                          />
+                          <text
+                            x={element.x + (element.width || 100) / 2}
+                            y={element.y - 6}
+                            fontSize={12}
+                            fill="#ffffff"
+                            textAnchor="middle"
+                            style={{ pointerEvents: 'none' }}
+                          >
+                            API: {element.apiField}
+                          </text>
+                        </>
+                      )}
                     </g>
                   );
                 }
@@ -259,8 +402,19 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-4">
                 <Badge variant="outline" className="gap-1">
-                  {selectedElementData.type === 'text' ? <Type className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
-                  {selectedElementData.type === 'text' ? 'Text' : 'Bild'}
+                  {selectedElementData.type === 'text' || selectedElementData.type === 'api-text' ? (
+                    <Type className="h-3 w-3" />
+                  ) : (
+                    <ImageIcon className="h-3 w-3" />
+                  )}
+                  {selectedElementData.type === 'api-text' || selectedElementData.type === 'api-image' ? (
+                    <span className="flex items-center gap-1">
+                      <Database className="h-3 w-3" />
+                      API {selectedElementData.type === 'api-text' ? 'Text' : 'Bild'}
+                    </span>
+                  ) : (
+                    selectedElementData.type === 'text' ? 'Text' : 'Bild'
+                  )}
                 </Badge>
                 <Button
                   size="sm"
@@ -270,6 +424,18 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
+
+              {(selectedElementData.type === 'api-text' || selectedElementData.type === 'api-image') && (
+                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                  <div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400">
+                    <Database className="h-4 w-4" />
+                    <span className="font-medium">API Feld: {selectedElementData.apiField}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Wird automatisch mit Daten aus der API befüllt
+                  </p>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-2">
@@ -290,15 +456,17 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
                 </div>
               </div>
 
-              {selectedElementData.type === 'text' && (
+              {(selectedElementData.type === 'text' || selectedElementData.type === 'api-text') && (
                 <>
-                  <div className="space-y-2">
-                    <Label>Text</Label>
-                    <Input
-                      value={selectedElementData.content}
-                      onChange={(e) => updateElement(selectedElementData.id, { content: e.target.value })}
-                    />
-                  </div>
+                  {selectedElementData.type === 'text' && (
+                    <div className="space-y-2">
+                      <Label>Text</Label>
+                      <Input
+                        value={selectedElementData.content}
+                        onChange={(e) => updateElement(selectedElementData.id, { content: e.target.value })}
+                      />
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <Label>Schriftgröße</Label>
@@ -345,7 +513,7 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
                 </>
               )}
 
-              {selectedElementData.type === 'image' && (
+              {(selectedElementData.type === 'image' || selectedElementData.type === 'api-image') && (
                 <>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-2">
@@ -366,14 +534,16 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Bild URL</Label>
-                    <Input
-                      value={selectedElementData.href}
-                      onChange={(e) => updateElement(selectedElementData.id, { href: e.target.value })}
-                      placeholder="https://..."
-                    />
-                  </div>
+                  {selectedElementData.type === 'image' && (
+                    <div className="space-y-2">
+                      <Label>Bild URL</Label>
+                      <Input
+                        value={selectedElementData.href}
+                        onChange={(e) => updateElement(selectedElementData.id, { href: e.target.value })}
+                        placeholder="https://..."
+                      />
+                    </div>
+                  )}
                 </>
               )}
             </div>
