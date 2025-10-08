@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { Header } from '@/components/Header';
 import { z } from 'zod';
 
 const emailSchema = z.string().email({ message: "Ungültige E-Mail-Adresse" });
@@ -54,46 +55,49 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Willkommen bei Fanpost</CardTitle>
-          <CardDescription className="text-center">
-            Melden Sie sich mit Ihrer E-Mail-Adresse an
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Input
-                type="email"
-                placeholder="ihre.email@beispiel.ch"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setEmailError('');
-                }}
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20">
+      <Header />
+      <div className="pt-16 min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-center">Willkommen bei Fanpost</CardTitle>
+            <CardDescription className="text-center">
+              Melden Sie sich mit Ihrer E-Mail-Adresse an
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Input
+                  type="email"
+                  placeholder="ihre.email@beispiel.ch"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setEmailError('');
+                  }}
+                  disabled={isLoading}
+                  className={emailError ? "border-destructive" : ""}
+                  required
+                />
+                {emailError && (
+                  <p className="text-sm text-destructive">{emailError}</p>
+                )}
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full" 
                 disabled={isLoading}
-                className={emailError ? "border-destructive" : ""}
-                required
-              />
-              {emailError && (
-                <p className="text-sm text-destructive">{emailError}</p>
-              )}
-            </div>
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isLoading}
-            >
-              {isLoading ? 'Wird gesendet...' : 'Magic Link senden'}
-            </Button>
-          </form>
-          <p className="text-sm text-muted-foreground text-center mt-4">
-            Sie erhalten eine E-Mail mit einem Login-Link
-          </p>
-        </CardContent>
-      </Card>
+              >
+                {isLoading ? 'Wird gesendet...' : 'Magic Link senden'}
+              </Button>
+            </form>
+            <p className="text-sm text-muted-foreground text-center mt-4">
+              Sie erhalten eine E-Mail mit einem Login-Link
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

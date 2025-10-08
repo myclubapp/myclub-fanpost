@@ -43,6 +43,11 @@ export const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const handleLogoClick = () => {
+    navigate('/');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
@@ -57,10 +62,10 @@ export const Header = () => {
       }`}
     >
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <Link to="/" className="flex items-center space-x-2">
+        <button onClick={handleLogoClick} className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
           <img src={logo} alt="MyClub Logo" className="h-8 w-auto" />
           <span className="font-bold text-xl">Fanpost</span>
-        </Link>
+        </button>
 
         <nav className="flex items-center space-x-4">
           <NavigationMenu>
