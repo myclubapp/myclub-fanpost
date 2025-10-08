@@ -48,7 +48,7 @@ const Auth = () => {
       });
     } else {
       toast({
-        title: "Magic Link gesendet!",
+        title: "Login-Link gesendet!",
         description: "Überprüfen Sie Ihr E-Mail-Postfach für den Login-Link.",
       });
     }
@@ -89,7 +89,7 @@ const Auth = () => {
                 className="w-full" 
                 disabled={isLoading}
               >
-                {isLoading ? 'Wird gesendet...' : 'Magic Link senden'}
+                {isLoading ? 'Wird gesendet...' : 'Login-Link senden'}
               </Button>
             </form>
             <p className="text-sm text-muted-foreground text-center mt-4">
