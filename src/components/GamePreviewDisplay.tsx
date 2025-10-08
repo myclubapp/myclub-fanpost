@@ -80,7 +80,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
   const [showCropper, setShowCropper] = useState(false);
   const [isHomeGame, setIsHomeGame] = useState(false);
   const [showResultDetail, setShowResultDetail] = useState(false);
-  const [svgDimensions, setSvgDimensions] = useState({ width: "400", height: "500" });
+  const [svgDimensions, setSvgDimensions] = useState({ width: "500", height: "625" });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // Map sport type to API type
@@ -96,15 +96,18 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
   useEffect(() => {
     const updateDimensions = () => {
       const screenWidth = window.innerWidth;
-      if (screenWidth < 400) {
-        // Mobile: maintain 1080x1350 aspect ratio (4:5)
-        setSvgDimensions({ width: "300", height: "375" });
+      if (screenWidth < 480) {
+        // Mobile: 330-350px
+        setSvgDimensions({ width: "340", height: "425" });
       } else if (screenWidth < 768) {
-        // Tablet
-        setSvgDimensions({ width: "360", height: "450" });
-      } else {
-        // Desktop: larger preview but not full size
+        // Small tablet
         setSvgDimensions({ width: "400", height: "500" });
+      } else if (screenWidth < 1024) {
+        // Tablet
+        setSvgDimensions({ width: "480", height: "600" });
+      } else {
+        // Desktop: larger preview
+        setSvgDimensions({ width: "560", height: "700" });
       }
     };
 
@@ -504,7 +507,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
               className="w-full bg-muted/10 rounded-lg border border-border overflow-hidden"
             >
               <div className="w-full p-4 sm:p-8 flex justify-center">
-                <div className={`${gameId3 ? 'max-w-[1200px]' : gameId2 ? 'max-w-[800px]' : 'max-w-[400px]'} w-full`}>
+                <div className={`w-full flex justify-center`}>
                   <game-preview
                     key={`${gameId}-${gameId2 || 'single'}-${gameId3 || 'single'}`}
                     type={apiType}
@@ -516,7 +519,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
                     theme={selectedTheme}
                     ishomegame={isHomeGame.toString()}
                     {...(backgroundImage && { backgroundimage: backgroundImage })}
-                    style={{ width: '100%', height: 'auto', display: 'block', maxWidth: '100%' }}
+                    style={{ width: '100%', height: 'auto', display: 'block', maxWidth: `${svgDimensions.width}px` }}
                   />
                 </div>
               </div>
@@ -529,7 +532,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
               className="w-full bg-muted/10 rounded-lg border border-border overflow-hidden"
             >
               <div className="w-full p-4 sm:p-8 flex justify-center">
-                <div className={`${gameId3 ? 'max-w-[1200px]' : gameId2 ? 'max-w-[800px]' : 'max-w-[400px]'} w-full`}>
+                <div className={`w-full flex justify-center`}>
                   <game-result
                     key={`${gameId}-${gameId2 || 'single'}-${gameId3 || 'single'}`}
                     type={apiType}
@@ -542,7 +545,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
                     ishomegame={isHomeGame.toString()}
                     showresultdetail={showResultDetail.toString()}
                     {...(backgroundImage && { backgroundimage: backgroundImage })}
-                    style={{ width: '100%', height: 'auto', display: 'block', maxWidth: '100%' }}
+                    style={{ width: '100%', height: 'auto', display: 'block', maxWidth: `${svgDimensions.width}px` }}
                   />
                 </div>
               </div>
