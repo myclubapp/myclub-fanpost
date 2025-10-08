@@ -491,8 +491,13 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
       let svgElement: SVGSVGElement | null = null;
 
       // Check if using custom template
-      if (selectedCustomTemplate && customTemplateRef.current) {
+      if (selectedCustomTemplate) {
+        if (!customTemplateRef.current) {
+          console.error("Custom template ref not available");
+          throw new Error("Template nicht geladen");
+        }
         svgElement = customTemplateRef.current;
+        console.log("Using custom template SVG", svgElement);
       } else {
         // Using myclub web component
         const targetRef = activeTab === "preview" ? previewRef : resultRef;
@@ -508,11 +513,43 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
       }
 
       if (!svgElement) {
+        console.error("No SVG element found");
         throw new Error("Kein SVG-Element gefunden");
       }
 
+      console.log("SVG element dimensions:", {
+        width: svgElement.getAttribute('width'),
+        height: svgElement.getAttribute('height'),
+        viewBox: svgElement.getAttribute('viewBox')
+      });
+
+      // Wait for images to load if using custom template
+      if (selectedCustomTemplate) {
+        console.log("Waiting for images to load in custom template...");
+        const images = svgElement.querySelectorAll('image');
+        await Promise.all(
+          Array.from(images).map(img => {
+            const href = img.getAttribute('href') || img.getAttribute('xlink:href');
+            if (!href || href.startsWith('data:')) return Promise.resolve();
+            
+            return new Promise((resolve) => {
+              const testImg = new Image();
+              testImg.onload = () => resolve(undefined);
+              testImg.onerror = () => {
+                console.warn('Failed to preload image:', href);
+                resolve(undefined);
+              };
+              testImg.src = href;
+            });
+          })
+        );
+        console.log("All images loaded");
+      }
+
       // Inline external images (team logos, etc.)
+      console.log("Inlining external images...");
       await inlineExternalImages(svgElement);
+      console.log("Images inlined successfully");
 
       // Get SVG dimensions from viewBox or attributes
       let width = 1080;
@@ -526,6 +563,8 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
         height = parseFloat(svgElement.getAttribute('height') || '1350');
       }
 
+      console.log("Export dimensions:", { width, height });
+
       const options = {
         scale: 2,
         backgroundColor: "white",
@@ -533,8 +572,10 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
         height,
       };
 
+      console.log("Converting SVG to PNG...");
       // Convert SVG to PNG URI
       const pngUri = await svg.svgAsPngUri(svgElement, options);
+      console.log("SVG converted to PNG successfully");
 
       // Convert URI to Blob
       const response = await fetch(pngUri);
