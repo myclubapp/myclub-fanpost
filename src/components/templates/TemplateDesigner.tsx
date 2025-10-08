@@ -5,7 +5,9 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Move, Type, ImageIcon, Database } from 'lucide-react';
+import { Trash2, Move, Type, ImageIcon, Database, Upload } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface SVGElement {
   id: string;
@@ -74,10 +76,13 @@ interface TemplateDesignerProps {
 
 export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDesignerProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
   const [elements, setElements] = useState<SVGElement[]>(config.elements || []);
   const [selectedElement, setSelectedElement] = useState<string | null>(null);
   const [draggingElement, setDraggingElement] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [uploading, setUploading] = useState(false);
 
   // Sync elements with config
   useEffect(() => {
@@ -206,6 +211,65 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
     setSelectedElement(newElement.id);
   };
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Ungültiger Dateityp",
+        description: "Bitte wählen Sie eine Bilddatei aus.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError, data } = await supabase.storage
+        .from('template-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('template-images')
+        .getPublicUrl(filePath);
+
+      const newElement: SVGElement = {
+        id: `image-${Date.now()}`,
+        type: 'image',
+        x: 400,
+        y: 400,
+        width: 189,
+        height: 189,
+        href: publicUrl
+      };
+      setElements(prev => [...prev, newElement]);
+      setSelectedElement(newElement.id);
+
+      toast({
+        title: "Bild hochgeladen",
+        description: "Das Bild wurde erfolgreich hochgeladen.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Upload-Fehler",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   const selectedElementData = elements.find(el => el.id === selectedElement);
 
   return (
@@ -226,8 +290,25 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
             </Button>
             <Button onClick={addImageElement} size="sm" variant="outline" className="gap-2">
               <ImageIcon className="h-4 w-4" />
-              Statisches Bild
+              Bild-URL
             </Button>
+            <Button 
+              onClick={() => fileInputRef.current?.click()} 
+              size="sm" 
+              variant="outline" 
+              className="gap-2"
+              disabled={uploading}
+            >
+              <Upload className="h-4 w-4" />
+              {uploading ? 'Lädt hoch...' : 'Bild hochladen'}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
             
             <div className="flex gap-2 items-center ml-auto">
               <Database className="h-4 w-4 text-muted-foreground" />
