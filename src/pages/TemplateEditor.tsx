@@ -144,7 +144,7 @@ const TemplateEditor = () => {
 
   if (authLoading || roleLoading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pt-16">
         <Header />
         <div className="flex items-center justify-center h-[calc(100vh-80px)]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -154,7 +154,7 @@ const TemplateEditor = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-16">
       <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto space-y-6">

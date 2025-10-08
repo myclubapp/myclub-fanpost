@@ -8,7 +8,7 @@ const Index = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-16">{/* pt-16 für fixed header */}
       <Header />
 
       {/* Hero Section */}

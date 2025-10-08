@@ -147,7 +147,7 @@ const Index = () => {
   const breadcrumbs = getBreadcrumbs();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-16">{/* pt-16 für fixed header */}
       <Header />
 
       {/* Main Content */}

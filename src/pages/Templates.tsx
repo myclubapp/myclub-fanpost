@@ -27,7 +27,7 @@ const Templates = () => {
 
   if (authLoading || roleLoading || !mounted) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pt-16">
         <Header />
         <div className="flex items-center justify-center h-[calc(100vh-80px)]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -38,7 +38,7 @@ const Templates = () => {
 
   if (!isPaidUser) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pt-16">
         <Header />
         <div className="container mx-auto px-4 py-12">
           <Card className="max-w-2xl mx-auto">
@@ -77,7 +77,7 @@ const Templates = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-16">
       <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto space-y-6">
