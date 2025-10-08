@@ -275,10 +275,10 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
       const newElement: SVGElement = {
         id: `image-${Date.now()}`,
         type: 'image',
-        x: 400,
-        y: 400,
-        width: 189,
-        height: 189,
+        x: 0,
+        y: 0,
+        width: canvasDimensions.width,
+        height: canvasDimensions.height,
         href: publicUrl,
         zIndex: maxZIndex + 1
       };
@@ -530,32 +530,6 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
             })}
           </div>
 
-          <div className="flex items-center gap-3 mb-4">
-            <Label className="text-sm font-medium">Format:</Label>
-            <div className="flex gap-2">
-              <Button
-                variant={format === '4:5' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => onFormatChange('4:5')}
-                className="gap-2"
-              >
-                <RectangleHorizontal className="h-4 w-4" />
-                4:5 (Instagram)
-              </Button>
-              <Button
-                variant={format === '1:1' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => onFormatChange('1:1')}
-                className="gap-2"
-              >
-                <Square className="h-4 w-4" />
-                1:1 (Quadratisch)
-              </Button>
-            </div>
-            <span className="text-sm text-muted-foreground ml-2">
-              {canvasDimensions.width}x{canvasDimensions.height}px
-            </span>
-          </div>
 
           <div className="border rounded-none overflow-auto bg-muted/10">
             <svg
