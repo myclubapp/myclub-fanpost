@@ -133,6 +133,72 @@ const Profile = () => {
             </p>
           </div>
 
+          {/* Profile Information Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Persönliche Informationen</CardTitle>
+              <CardDescription>
+                Aktualisieren Sie Ihre persönlichen Daten
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">E-Mail</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={user.email || ''}
+                  disabled
+                  className="bg-muted"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Die E-Mail-Adresse kann nicht geändert werden
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">Vorname</Label>
+                  <Input
+                    id="firstName"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="Max"
+                    className={errors.first_name ? 'border-destructive' : ''}
+                  />
+                  {errors.first_name && (
+                    <p className="text-sm text-destructive">{errors.first_name}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Nachname</Label>
+                  <Input
+                    id="lastName"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Mustermann"
+                    className={errors.last_name ? 'border-destructive' : ''}
+                  />
+                  {errors.last_name && (
+                    <p className="text-sm text-destructive">{errors.last_name}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <Button onClick={handleSave} disabled={loading} className="gap-2">
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Änderungen speichern
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Account Status Card */}
           <Card className="border-2">
             <CardHeader>
@@ -205,72 +271,6 @@ const Profile = () => {
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Profile Information Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Persönliche Informationen</CardTitle>
-              <CardDescription>
-                Aktualisieren Sie Ihre persönlichen Daten
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">E-Mail</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={user.email || ''}
-                  disabled
-                  className="bg-muted"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Die E-Mail-Adresse kann nicht geändert werden
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">Vorname</Label>
-                  <Input
-                    id="firstName"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Max"
-                    className={errors.first_name ? 'border-destructive' : ''}
-                  />
-                  {errors.first_name && (
-                    <p className="text-sm text-destructive">{errors.first_name}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Nachname</Label>
-                  <Input
-                    id="lastName"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Mustermann"
-                    className={errors.last_name ? 'border-destructive' : ''}
-                  />
-                  {errors.last_name && (
-                    <p className="text-sm text-destructive">{errors.last_name}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="pt-4">
-                <Button onClick={handleSave} disabled={loading} className="gap-2">
-                  {loading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4" />
-                  )}
-                  Änderungen speichern
-                </Button>
-              </div>
             </CardContent>
           </Card>
         </div>
