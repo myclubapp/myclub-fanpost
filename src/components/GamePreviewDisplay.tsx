@@ -54,7 +54,7 @@ interface CustomTemplate {
   id: string;
   name: string;
   value: string; // Will be template ID
-  template_type: 'game-preview' | 'game-result';
+  supported_games: number;
   isCustom: true;
   config?: any;
 }
@@ -130,7 +130,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
       try {
         const { data, error } = await supabase
           .from('templates')
-          .select('id, name, template_type, svg_config')
+          .select('id, name, supported_games, svg_config')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
@@ -141,7 +141,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
             id: template.id,
             name: template.name,
             value: template.id,
-            template_type: template.template_type as 'game-preview' | 'game-result',
+            supported_games: template.supported_games,
             config: template.svg_config,
             isCustom: true as const,
           }));

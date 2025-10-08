@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Trash2, Move, Type, ImageIcon, Database, Upload, Eye } from 'lucide-react';
+import { Trash2, Move, Type, ImageIcon, Database, Upload, Eye, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ImageCropper } from '@/components/ImageCropper';
@@ -28,55 +28,35 @@ interface SVGElement {
   href?: string;
 }
 
-// API Fields per template type
-const API_FIELDS = {
-  'game-preview': {
+// API Fields per game
+const getAPIFieldsForGame = (gameNumber: number) => {
+  const suffix = gameNumber === 1 ? '' : gameNumber.toString();
+  return {
     text: [
-      { value: 'teamHome', label: 'Heim Team Name' },
-      { value: 'teamAway', label: 'Auswärts Team Name' },
-      { value: 'date', label: 'Datum' },
-      { value: 'time', label: 'Uhrzeit' },
-      { value: 'location', label: 'Spielort' },
-      { value: 'city', label: 'Stadt' },
+      { value: `teamHome${suffix}`, label: `Heim Team Name${gameNumber > 1 ? ` (Spiel ${gameNumber})` : ''}` },
+      { value: `teamAway${suffix}`, label: `Auswärts Team Name${gameNumber > 1 ? ` (Spiel ${gameNumber})` : ''}` },
+      { value: `date${suffix}`, label: `Datum${gameNumber > 1 ? ` (Spiel ${gameNumber})` : ''}` },
+      { value: `time${suffix}`, label: `Uhrzeit${gameNumber > 1 ? ` (Spiel ${gameNumber})` : ''}` },
+      { value: `location${suffix}`, label: `Spielort${gameNumber > 1 ? ` (Spiel ${gameNumber})` : ''}` },
+      { value: `city${suffix}`, label: `Stadt${gameNumber > 1 ? ` (Spiel ${gameNumber})` : ''}` },
+      { value: `result${suffix}`, label: `Resultat${gameNumber > 1 ? ` (Spiel ${gameNumber})` : ''}` },
+      { value: `resultDetail${suffix}`, label: `Resultat Detail${gameNumber > 1 ? ` (Spiel ${gameNumber})` : ''}` },
     ],
     image: [
-      { value: 'teamHomeLogo', label: 'Heim Team Logo' },
-      { value: 'teamAwayLogo', label: 'Auswärts Team Logo' },
-      { value: 'teamHomeLogo2', label: 'Heim Team Logo (Spiel 2)' },
-      { value: 'teamAwayLogo2', label: 'Auswärts Team Logo (Spiel 2)' },
-      { value: 'teamHomeLogo3', label: 'Heim Team Logo (Spiel 3)' },
-      { value: 'teamAwayLogo3', label: 'Auswärts Team Logo (Spiel 3)' },
+      { value: `teamHomeLogo${suffix}`, label: `Heim Team Logo${gameNumber > 1 ? ` (Spiel ${gameNumber})` : ''}` },
+      { value: `teamAwayLogo${suffix}`, label: `Auswärts Team Logo${gameNumber > 1 ? ` (Spiel ${gameNumber})` : ''}` },
     ]
-  },
-  'game-result': {
-    text: [
-      { value: 'teamHome', label: 'Heim Team Name' },
-      { value: 'teamAway', label: 'Auswärts Team Name' },
-      { value: 'result', label: 'Resultat' },
-      { value: 'resultDetail', label: 'Resultat Detail' },
-      { value: 'date', label: 'Datum' },
-      { value: 'time', label: 'Uhrzeit' },
-      { value: 'location', label: 'Spielort' },
-      { value: 'city', label: 'Stadt' },
-      { value: 'result2', label: 'Resultat (Spiel 2)' },
-      { value: 'resultDetail2', label: 'Resultat Detail (Spiel 2)' },
-    ],
-    image: [
-      { value: 'teamHomeLogo', label: 'Heim Team Logo' },
-      { value: 'teamAwayLogo', label: 'Auswärts Team Logo' },
-      { value: 'teamHomeLogo2', label: 'Heim Team Logo (Spiel 2)' },
-      { value: 'teamAwayLogo2', label: 'Auswärts Team Logo (Spiel 2)' },
-    ]
-  }
+  };
 };
 
 interface TemplateDesignerProps {
-  templateType: 'game-preview' | 'game-result';
+  supportedGames: number;
   config: any;
   onChange: (config: any) => void;
+  onSupportedGamesChange: (games: number) => void;
 }
 
-export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDesignerProps) => {
+export const TemplateDesigner = ({ supportedGames, config, onChange, onSupportedGamesChange }: TemplateDesignerProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -90,6 +70,7 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
   const [previewMode, setPreviewMode] = useState(false);
   const [previewData, setPreviewData] = useState<any>(null);
   const [lockAspectRatio, setLockAspectRatio] = useState(true);
+  const [expandedGame, setExpandedGame] = useState<number | null>(1);
 
   // Sync elements with config
   useEffect(() => {
@@ -186,7 +167,6 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
   };
 
   const addApiTextField = (apiField: string) => {
-    const fieldLabel = API_FIELDS[templateType].text.find(f => f.value === apiField)?.label || apiField;
     const newElement: SVGElement = {
       id: `api-text-${Date.now()}`,
       type: 'api-text',
@@ -219,7 +199,6 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
   };
 
   const addApiImageField = (apiField: string) => {
-    const fieldLabel = API_FIELDS[templateType].image.find(f => f.value === apiField)?.label || apiField;
     const newElement: SVGElement = {
       id: `api-image-${Date.now()}`,
       type: 'api-image',
@@ -418,32 +397,71 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
             
             <div className="flex gap-2 items-center ml-auto">
               <Database className="h-4 w-4 text-muted-foreground" />
-              <Select onValueChange={addApiTextField}>
-                <SelectTrigger className="w-[200px] h-8">
-                  <SelectValue placeholder="API Text-Feld..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {API_FIELDS[templateType].text.map(field => (
-                    <SelectItem key={field.value} value={field.value}>
-                      {field.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
-              <Select onValueChange={addApiImageField}>
-                <SelectTrigger className="w-[200px] h-8">
-                  <SelectValue placeholder="API Bild-Feld..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {API_FIELDS[templateType].image.map(field => (
-                    <SelectItem key={field.value} value={field.value}>
-                      {field.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <span className="text-sm text-muted-foreground">API-Felder per Drag & Drop</span>
             </div>
+          </div>
+
+          {/* Drag & Drop API Fields per Game */}
+          <div className="mb-4 space-y-2">
+            {Array.from({ length: supportedGames }, (_, i) => i + 1).map(gameNumber => {
+              const apiFields = getAPIFieldsForGame(gameNumber);
+              const isExpanded = expandedGame === gameNumber;
+              
+              return (
+                <Card key={gameNumber} className="overflow-hidden">
+                  <div 
+                    className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50"
+                    onClick={() => setExpandedGame(isExpanded ? null : gameNumber)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Database className="h-4 w-4 text-primary" />
+                      <span className="font-medium">Spiel {gameNumber}</span>
+                    </div>
+                    {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </div>
+                  
+                  {isExpanded && (
+                    <div className="p-3 pt-0 space-y-3 border-t">
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-2 block">Text-Felder</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {apiFields.text.map(field => (
+                            <Button
+                              key={field.value}
+                              variant="outline"
+                              size="sm"
+                              className="justify-start text-xs h-8"
+                              onClick={() => addApiTextField(field.value)}
+                            >
+                              <Type className="h-3 w-3 mr-1.5" />
+                              {field.label}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-2 block">Bild-Felder</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {apiFields.image.map(field => (
+                            <Button
+                              key={field.value}
+                              variant="outline"
+                              size="sm"
+                              className="justify-start text-xs h-8"
+                              onClick={() => addApiImageField(field.value)}
+                            >
+                              <ImageIcon className="h-3 w-3 mr-1.5" />
+                              {field.label}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
           </div>
 
           <div className="border rounded-none overflow-auto bg-muted/10">

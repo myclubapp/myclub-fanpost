@@ -73,8 +73,8 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          supported_games: number
           svg_config: Json
-          template_type: string
           updated_at: string
           user_id: string
         }
@@ -82,8 +82,8 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          supported_games?: number
           svg_config: Json
-          template_type: string
           updated_at?: string
           user_id: string
         }
@@ -91,8 +91,8 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          supported_games?: number
           svg_config?: Json
-          template_type?: string
           updated_at?: string
           user_id?: string
         }

@@ -21,7 +21,7 @@ import {
 interface Template {
   id: string;
   name: string;
-  template_type: 'game-preview' | 'game-result';
+  supported_games: number;
   svg_config: any;
   created_at: string;
   updated_at: string;
@@ -99,7 +99,7 @@ export const TemplateList = () => {
         .insert({
           user_id: user.id,
           name: `${template.name} (Kopie)`,
-          template_type: template.template_type,
+          supported_games: template.supported_games,
           svg_config: template.svg_config,
         })
         .select()
@@ -172,12 +172,9 @@ export const TemplateList = () => {
                     <div>Geändert: {formatDateTime(template.updated_at)}</div>
                   </CardDescription>
                 </div>
-                <Badge variant={template.template_type === 'game-preview' ? 'default' : 'secondary'}>
-                  {template.template_type === 'game-preview' ? (
-                    <><Image className="h-3 w-3 mr-1" /> Preview</>
-                  ) : (
-                    <><FileText className="h-3 w-3 mr-1" /> Result</>
-                  )}
+                <Badge variant="default">
+                  <FileText className="h-3 w-3 mr-1" />
+                  {template.supported_games} {template.supported_games === 1 ? 'Spiel' : 'Spiele'}
                 </Badge>
               </div>
             </CardHeader>

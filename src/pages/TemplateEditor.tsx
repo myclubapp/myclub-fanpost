@@ -8,15 +8,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Save, ArrowLeft } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { TemplateDesigner } from '@/components/templates/TemplateDesigner';
 import { z } from 'zod';
 
 const templateSchema = z.object({
   name: z.string().min(1, 'Name ist erforderlich').max(100, 'Name zu lang'),
-  template_type: z.enum(['game-preview', 'game-result']),
+  supported_games: z.number().min(1).max(3),
 });
 
 const TemplateEditor = () => {
@@ -28,7 +28,7 @@ const TemplateEditor = () => {
 
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
-  const [templateType, setTemplateType] = useState<'game-preview' | 'game-result'>('game-preview');
+  const [supportedGames, setSupportedGames] = useState<number>(1);
   const [svgConfig, setSvgConfig] = useState<any>({});
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
@@ -64,7 +64,7 @@ const TemplateEditor = () => {
       if (error) throw error;
 
       setName(data.name);
-      setTemplateType(data.template_type as 'game-preview' | 'game-result');
+      setSupportedGames(data.supported_games || 1);
       setSvgConfig(data.svg_config || {});
     } catch (error: any) {
       toast({
@@ -83,7 +83,7 @@ const TemplateEditor = () => {
 
     // Validate
     setErrors({});
-    const validation = templateSchema.safeParse({ name, template_type: templateType });
+    const validation = templateSchema.safeParse({ name, supported_games: supportedGames });
     if (!validation.success) {
       const newErrors: { [key: string]: string } = {};
       validation.error.errors.forEach(err => {
@@ -100,7 +100,7 @@ const TemplateEditor = () => {
       const templateData = {
         user_id: user.id,
         name,
-        template_type: templateType,
+        supported_games: supportedGames,
         svg_config: svgConfig,
       };
 
@@ -189,7 +189,7 @@ const TemplateEditor = () => {
             <CardHeader>
               <CardTitle>Grundeinstellungen</CardTitle>
               <CardDescription>
-                Geben Sie Ihrem Template einen Namen und wählen Sie den Typ
+                Geben Sie Ihrem Template einen Namen und wählen Sie die Anzahl unterstützter Spiele
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -208,32 +208,32 @@ const TemplateEditor = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>Template Typ</Label>
-                <RadioGroup
-                  value={templateType}
-                  onValueChange={(value) => setTemplateType(value as 'game-preview' | 'game-result')}
+                <Label htmlFor="games">Anzahl Spiele</Label>
+                <Select
+                  value={supportedGames.toString()}
+                  onValueChange={(value) => setSupportedGames(parseInt(value))}
                 >
-                  <div className="flex items-center space-x-2 p-3 border rounded-lg">
-                    <RadioGroupItem value="game-preview" id="preview" />
-                    <Label htmlFor="preview" className="cursor-pointer flex-1">
-                      Spielvorschau
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2 p-3 border rounded-lg">
-                    <RadioGroupItem value="game-result" id="result" />
-                    <Label htmlFor="result" className="cursor-pointer flex-1">
-                      Spielresultat
-                    </Label>
-                  </div>
-                </RadioGroup>
+                  <SelectTrigger id="games">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 Spiel</SelectItem>
+                    <SelectItem value="2">2 Spiele</SelectItem>
+                    <SelectItem value="3">3 Spiele</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.supported_games && (
+                  <p className="text-sm text-destructive">{errors.supported_games}</p>
+                )}
               </div>
             </CardContent>
           </Card>
 
           <TemplateDesigner
-            templateType={templateType}
+            supportedGames={supportedGames}
             config={svgConfig}
             onChange={setSvgConfig}
+            onSupportedGamesChange={setSupportedGames}
           />
         </div>
       </div>
