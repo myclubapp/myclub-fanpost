@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import { ClubSearch } from "@/components/ClubSearch";
 import { TeamSearch } from "@/components/TeamSearch";
 import { GameList } from "@/components/GameList";
+import { GamePreviewDisplay } from "@/components/GamePreviewDisplay";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -32,7 +33,13 @@ const Index = () => {
   const [selectedClubName, setSelectedClubName] = useState<string>("");
   const [selectedTeamId, setSelectedTeamId] = useState<string>(teamId || "");
   const [selectedTeamName, setSelectedTeamName] = useState<string>("");
-  const [selectedGameIds, setSelectedGameIds] = useState<string[]>(gameId ? [gameId] : []);
+  const [selectedGameIds, setSelectedGameIds] = useState<string[]>(() => {
+    if (gameId) {
+      return gameId.split(',').map(id => id.trim()).filter(id => id);
+    }
+    return [];
+  });
+  const [gamesHaveResults, setGamesHaveResults] = useState<boolean[]>([]);
 
   useEffect(() => {
     if (sport && sport !== selectedSport) {
@@ -53,8 +60,13 @@ const Index = () => {
   }, [teamId]);
 
   useEffect(() => {
-    if (gameId && !selectedGameIds.includes(gameId)) {
-      setSelectedGameIds([gameId]);
+    if (gameId) {
+      const gameIdsFromUrl = gameId.split(',').map(id => id.trim()).filter(id => id);
+      setSelectedGameIds(gameIdsFromUrl);
+    } else {
+      if (selectedGameIds.length > 0) {
+        setSelectedGameIds([]);
+      }
     }
   }, [gameId]);
 
@@ -89,11 +101,11 @@ const Index = () => {
     }
   };
 
-  const handleGameSelect = (gameIds: string[]) => {
+  const handleGameSelect = (gameIds: string[], hasResults: boolean[]) => {
     setSelectedGameIds(gameIds);
-    if (gameIds.length === 1 && selectedSport && selectedClubId && selectedTeamId) {
-      navigate(`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIds[0]}`);
-    }
+    setGamesHaveResults(hasResults);
+    const gameIdsParam = gameIds.join(',');
+    navigate(`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIdsParam}`);
   };
 
   const sportLabels: Record<SportType, string> = {
@@ -244,8 +256,8 @@ const Index = () => {
             </Card>
           )}
 
-          {/* Step 4: Game Selection and Preview */}
-          {selectedSport && selectedClubId && selectedTeamId && (
+          {/* Step 4: Game Selection */}
+          {selectedSport && selectedClubId && selectedTeamId && selectedGameIds.length === 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -266,6 +278,27 @@ const Index = () => {
                 />
               </CardContent>
             </Card>
+          )}
+
+          {/* Game Preview Display */}
+          {selectedSport && selectedClubId && selectedTeamId && selectedGameIds.length > 0 && (
+            <div className="space-y-4">
+              <button
+                onClick={() => {
+                  setSelectedGameIds([]);
+                  navigate(`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}`);
+                }}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                ← Zurück zur Spielauswahl
+              </button>
+              <GamePreviewDisplay 
+                sportType={selectedSport}
+                clubId={selectedClubId}
+                gameIds={selectedGameIds}
+                gamesHaveResults={gamesHaveResults}
+              />
+            </div>
           )}
         </div>
       </main>
