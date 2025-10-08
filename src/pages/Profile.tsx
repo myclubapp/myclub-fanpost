@@ -48,6 +48,10 @@ const Profile = () => {
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [rememberLastSelection, setRememberLastSelection] = useState(true);
+  const [lastSport, setLastSport] = useState<string>('');
+  const [lastClubName, setLastClubName] = useState<string>('');
+  const [lastTeamName, setLastTeamName] = useState<string>('');
+  const [loadingLastSelection, setLoadingLastSelection] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -68,17 +72,83 @@ const Profile = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('first_name, last_name, remember_last_selection')
+        .select('first_name, last_name, remember_last_selection, last_sport, last_club_id, last_team_id')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
-      setFirstName(data.first_name || '');
-      setLastName(data.last_name || '');
-      setRememberLastSelection(data.remember_last_selection ?? true);
+      if (data) {
+        setFirstName(data.first_name || '');
+        setLastName(data.last_name || '');
+        setRememberLastSelection(data.remember_last_selection ?? true);
+        
+        // Load last selection details
+        if (data.last_sport) {
+          const sportLabels: Record<string, string> = {
+            unihockey: 'Unihockey',
+            volleyball: 'Volleyball',
+            handball: 'Handball'
+          };
+          setLastSport(sportLabels[data.last_sport] || data.last_sport);
+        }
+        
+        // Load club and team names
+        if (data.last_club_id || data.last_team_id) {
+          loadLastSelectionNames(data.last_sport, data.last_club_id, data.last_team_id);
+        }
+      }
     } catch (error: any) {
       console.error('Error loading profile:', error);
+    }
+  };
+
+  const loadLastSelectionNames = async (sport: string | null, clubId: string | null, teamId: string | null) => {
+    if (!sport || !clubId) return;
+    
+    setLoadingLastSelection(true);
+    try {
+      // Load club name
+      const apiUrls: Record<string, string> = {
+        unihockey: "https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissunihockey?query={%0A%20%20clubs{%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20}%20%0A}",
+        volleyball: "",
+        handball: "",
+      };
+
+      const clubApiUrl = apiUrls[sport];
+      if (clubApiUrl) {
+        const response = await fetch(clubApiUrl);
+        const data = await response.json();
+        const clubs = data.data?.clubs || [];
+        const club = clubs.find((c: { id: string, name: string }) => c.id === clubId);
+        if (club) {
+          setLastClubName(club.name);
+        }
+      }
+
+      // Load team name if available
+      if (teamId) {
+        const teamApiUrls: Record<string, (clubId: string) => string> = {
+          unihockey: (clubId: string) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissunihockey?query={%0A%20%20teams(clubId%3A%20%22${clubId}%22)%20{%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20}%0A}%0A`,
+          volleyball: () => "",
+          handball: () => "",
+        };
+
+        const teamApiUrl = teamApiUrls[sport]?.(clubId);
+        if (teamApiUrl) {
+          const response = await fetch(teamApiUrl);
+          const data = await response.json();
+          const teams = data.data?.teams || [];
+          const team = teams.find((t: { id: string, name: string }) => t.id === teamId);
+          if (team) {
+            setLastTeamName(team.name);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading last selection names:', error);
+    } finally {
+      setLoadingLastSelection(false);
     }
   };
 
@@ -394,6 +464,39 @@ const Profile = () => {
                   <p className="text-xs text-muted-foreground">
                     Wenn aktiviert, wird Ihre letzte Club- und Teamauswahl im Wizard gespeichert.
                   </p>
+                  
+                  {rememberLastSelection && (lastSport || lastClubName || lastTeamName) && (
+                    <div className="mt-4 p-3 bg-muted/50 rounded-lg space-y-2">
+                      <p className="text-sm font-medium">Gespeicherte Auswahl:</p>
+                      {loadingLastSelection ? (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Lade...
+                        </div>
+                      ) : (
+                        <div className="space-y-1 text-sm">
+                          {lastSport && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-muted-foreground">Sportart:</span>
+                              <span className="font-medium">{lastSport}</span>
+                            </div>
+                          )}
+                          {lastClubName && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-muted-foreground">Club:</span>
+                              <span className="font-medium">{lastClubName}</span>
+                            </div>
+                          )}
+                          {lastTeamName && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-muted-foreground">Team:</span>
+                              <span className="font-medium">{lastTeamName}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 

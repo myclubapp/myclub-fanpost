@@ -365,39 +365,49 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   };
 
   const moveElementForward = (id: string) => {
-    const element = elements.find(el => el.id === id);
-    if (!element) return;
-    
-    const currentZ = element.zIndex ?? 0;
-    const higherElements = elements.filter(el => (el.zIndex ?? 0) > currentZ);
-    
-    if (higherElements.length > 0) {
+    setElements(prev => {
+      const element = prev.find(el => el.id === id);
+      if (!element) return prev;
+      
+      const currentZ = element.zIndex ?? 0;
+      const higherElements = prev.filter(el => (el.zIndex ?? 0) > currentZ);
+      
+      if (higherElements.length === 0) return prev; // Already at top
+      
       const nextZ = Math.min(...higherElements.map(el => el.zIndex ?? 0));
-      updateElement(id, { zIndex: nextZ + 0.5 });
-      // Normalize z-indices
-      normalizeZIndices();
-    }
+      
+      // Swap z-indices
+      const updated = prev.map(el => {
+        if (el.id === id) return { ...el, zIndex: nextZ };
+        if (el.zIndex === nextZ) return { ...el, zIndex: currentZ };
+        return el;
+      });
+      
+      return updated;
+    });
   };
 
   const moveElementBackward = (id: string) => {
-    const element = elements.find(el => el.id === id);
-    if (!element) return;
-    
-    const currentZ = element.zIndex ?? 0;
-    const lowerElements = elements.filter(el => (el.zIndex ?? 0) < currentZ);
-    
-    if (lowerElements.length > 0) {
+    setElements(prev => {
+      const element = prev.find(el => el.id === id);
+      if (!element) return prev;
+      
+      const currentZ = element.zIndex ?? 0;
+      const lowerElements = prev.filter(el => (el.zIndex ?? 0) < currentZ);
+      
+      if (lowerElements.length === 0) return prev; // Already at bottom
+      
       const prevZ = Math.max(...lowerElements.map(el => el.zIndex ?? 0));
-      updateElement(id, { zIndex: prevZ - 0.5 });
-      // Normalize z-indices
-      normalizeZIndices();
-    }
-  };
-
-  const normalizeZIndices = () => {
-    const sorted = [...elements].sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
-    const normalized = sorted.map((el, index) => ({ ...el, zIndex: index }));
-    setElements(normalized);
+      
+      // Swap z-indices
+      const updated = prev.map(el => {
+        if (el.id === id) return { ...el, zIndex: prevZ };
+        if (el.zIndex === prevZ) return { ...el, zIndex: currentZ };
+        return el;
+      });
+      
+      return updated;
+    });
   };
 
   const selectedElementData = elements.find(el => el.id === selectedElement);

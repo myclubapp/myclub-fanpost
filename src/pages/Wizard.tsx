@@ -56,21 +56,27 @@ const Index = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('remember_last_selection, last_club_id, last_team_id')
+          .select('remember_last_selection, last_sport, last_club_id, last_team_id')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
 
-        if (data?.remember_last_selection && data.last_club_id && sport) {
+        if (data?.remember_last_selection && data.last_sport && data.last_club_id) {
           setRememberLastSelection(true);
+          const lastSport = data.last_sport as SportType;
+          
+          // Use last saved sport if no sport in URL
+          const targetSport = sport || lastSport;
+          
+          setSelectedSport(targetSport);
           setSelectedClubId(data.last_club_id);
           
           if (data.last_team_id) {
             setSelectedTeamId(data.last_team_id);
-            navigate(`/wizard/${sport}/${data.last_club_id}/${data.last_team_id}`);
+            navigate(`/wizard/${targetSport}/${data.last_club_id}/${data.last_team_id}`);
           } else {
-            navigate(`/wizard/${sport}/${data.last_club_id}`);
+            navigate(`/wizard/${targetSport}/${data.last_club_id}`);
           }
         }
         
@@ -87,12 +93,13 @@ const Index = () => {
   // Save last selection to profile when it changes
   useEffect(() => {
     const saveLastSelection = async () => {
-      if (!user || !rememberLastSelection || !selectedClubId) return;
+      if (!user || !rememberLastSelection || !selectedSport || !selectedClubId) return;
       
       try {
         await supabase
           .from('profiles')
           .update({
+            last_sport: selectedSport,
             last_club_id: selectedClubId,
             last_team_id: selectedTeamId || null,
           })
@@ -105,7 +112,7 @@ const Index = () => {
     if (loadedLastSelection) {
       saveLastSelection();
     }
-  }, [user, rememberLastSelection, selectedClubId, selectedTeamId, loadedLastSelection]);
+  }, [user, rememberLastSelection, selectedSport, selectedClubId, selectedTeamId, loadedLastSelection]);
 
   // Load remember setting from profile
   useEffect(() => {
@@ -117,7 +124,7 @@ const Index = () => {
           .from('profiles')
           .select('remember_last_selection')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
         

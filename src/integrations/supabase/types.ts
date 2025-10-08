@@ -49,6 +49,7 @@ export type Database = {
           id: string
           last_club_id: string | null
           last_name: string | null
+          last_sport: string | null
           last_team_id: string | null
           remember_last_selection: boolean | null
           updated_at: string
@@ -60,6 +61,7 @@ export type Database = {
           id: string
           last_club_id?: string | null
           last_name?: string | null
+          last_sport?: string | null
           last_team_id?: string | null
           remember_last_selection?: boolean | null
           updated_at?: string
@@ -71,6 +73,7 @@ export type Database = {
           id?: string
           last_club_id?: string | null
           last_name?: string | null
+          last_sport?: string | null
           last_team_id?: string | null
           remember_last_selection?: boolean | null
           updated_at?: string
