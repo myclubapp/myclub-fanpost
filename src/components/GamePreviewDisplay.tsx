@@ -44,10 +44,10 @@ interface GamePreviewDisplayProps {
 }
 
 const STANDARD_THEMES = [
-  { value: "standard", label: "Standard Theme" },
   { value: "myclub", label: "myclub" },
-  { value: "myclub-dark", label: "myclub dark" },
+  { value: "kadetten-unihockey", label: "Kadetten Unihockey" },
   { value: "myclub-light", label: "myclub light" },
+  { value: "myclub-dark", label: "myclub dark" },
 ];
 
 interface CustomTemplate {
@@ -99,7 +99,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
   const hasAnyResult = gamesHaveResults.some(hasResult => hasResult);
   const [activeTab, setActiveTab] = useState<string>(hasAnyResult ? "result" : "preview");
   
-  const [selectedTheme, setSelectedTheme] = useState("standard");
+  const [selectedTheme, setSelectedTheme] = useState("myclub");
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
@@ -243,7 +243,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
     // Load the web component script
     const script = document.createElement('script');
     script.type = 'module';
-    script.src = 'https://unpkg.com/myclub-game-preview@latest/dist/myclub-game-preview/myclub-game-preview.esm.js';
+    script.src = 'https://unpkg.com/myclub-game-preview@1.3.4/dist/myclub-game-preview/myclub-game-preview.esm.js';
     document.head.appendChild(script);
 
     return () => {
