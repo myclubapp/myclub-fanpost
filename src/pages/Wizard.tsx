@@ -462,7 +462,6 @@ const Index = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  setSelectedGameIds([]);
                   navigate(`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}`);
                 }}
                 className="gap-1"
