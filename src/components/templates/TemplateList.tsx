@@ -152,6 +152,7 @@ export const TemplateList = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => setDeleteId(template.id)}
+                  className="hover:bg-destructive hover:text-destructive-foreground hover:border-destructive"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
