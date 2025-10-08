@@ -161,13 +161,35 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
       
       setLoadingGameData(true);
       try {
-        const apiUrl = `https://europe-west6-myclubmanagement.cloudfunctions.net/api/${apiType}?query=%7B%0A%20%20game(id%3A%20%22${gameId}%22)%20%7B%0A%20%20%20%20id%0A%20%20%20%20teamHome%0A%20%20%20%20teamAway%0A%20%20%20%20date%0A%20%20%20%20time%0A%20%20%20%20location%0A%20%20%20%20city%0A%20%20%20%20result%0A%20%20%20%20resultDetail%0A%20%20%20%20teamHomeLogo%0A%20%20%20%20teamAwayLogo%0A%20%20%7D%0A%7D%0A`;
+        // Construct GraphQL query for single game
+        const query = `{
+  game(id: "${gameId}") {
+    id
+    teamHome
+    teamAway
+    date
+    time
+    location
+    city
+    result
+    resultDetail
+    teamHomeLogo
+    teamAwayLogo
+  }
+}`;
+        
+        const apiUrl = `https://europe-west6-myclubmanagement.cloudfunctions.net/api/${apiType}?query=${encodeURIComponent(query)}`;
         
         const response = await fetch(apiUrl);
         if (!response.ok) throw new Error('Failed to fetch game data');
         
         const result = await response.json();
-        setGameData(result.data?.game || null);
+        
+        if (result.data?.game) {
+          setGameData(result.data.game);
+        } else {
+          throw new Error('No game data received');
+        }
       } catch (error) {
         console.error('Error fetching game data:', error);
         toast({
@@ -175,6 +197,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
           description: "Spieldaten konnten nicht geladen werden",
           variant: "destructive",
         });
+        setGameData(null);
       } finally {
         setLoadingGameData(false);
       }
