@@ -68,9 +68,17 @@ serve(async (req) => {
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
-      subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      // Guard against missing current_period_end to avoid Invalid Date errors
+      if (subscription.current_period_end) {
+        subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      } else {
+        subscriptionEnd = null;
+      }
       logStep("Active subscription found", { subscriptionId: subscription.id, endDate: subscriptionEnd });
-      productId = subscription.items.data[0].price.product;
+      const firstItem = subscription.items.data[0];
+      const price = firstItem?.price as any;
+      const prod = price?.product;
+      productId = typeof prod === 'string' ? prod : (prod?.id ?? null);
       logStep("Determined subscription product", { productId });
 
       // Update user role to paid_user if they have active subscription
