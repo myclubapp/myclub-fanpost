@@ -80,7 +80,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
   const [showCropper, setShowCropper] = useState(false);
   const [isHomeGame, setIsHomeGame] = useState(false);
   const [showResultDetail, setShowResultDetail] = useState(false);
-  const [svgDimensions, setSvgDimensions] = useState({ width: "400", height: "400" });
+  const [svgDimensions, setSvgDimensions] = useState({ width: "1080", height: "1350" });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // Map sport type to API type
@@ -97,9 +97,11 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
     const updateDimensions = () => {
       const screenWidth = window.innerWidth;
       if (screenWidth < 400) {
-        setSvgDimensions({ width: "300", height: "300" });
+        // Mobile: maintain 1080x1350 aspect ratio (4:5)
+        setSvgDimensions({ width: "320", height: "400" });
       } else {
-        setSvgDimensions({ width: "400", height: "400" });
+        // Desktop: full Instagram post size
+        setSvgDimensions({ width: "1080", height: "1350" });
       }
     };
 
@@ -265,16 +267,16 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
       // Inline external images (team logos, etc.)
       await inlineExternalImages(svgElement);
 
-      // Get SVG dimensions from viewBox or attributes
-      let width = 600;
-      let height = 600;
+      // Get SVG dimensions from viewBox or attributes - Instagram format 1080x1350
+      let width = 1080;
+      let height = 1350;
 
       if (svgElement.viewBox && svgElement.viewBox.baseVal) {
         width = svgElement.viewBox.baseVal.width;
         height = svgElement.viewBox.baseVal.height;
       } else if (svgElement.getAttribute('width') && svgElement.getAttribute('height')) {
-        width = parseFloat(svgElement.getAttribute('width') || '600');
-        height = parseFloat(svgElement.getAttribute('height') || '600');
+        width = parseFloat(svgElement.getAttribute('width') || '1080');
+        height = parseFloat(svgElement.getAttribute('height') || '1350');
       }
 
       const options = {
