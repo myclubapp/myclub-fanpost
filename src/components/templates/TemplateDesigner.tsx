@@ -224,6 +224,17 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
       return;
     }
 
+    // Check file size (10MB limit)
+    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+    if (file.size > maxSize) {
+      toast({
+        title: "Datei zu groß",
+        description: "Die maximale Dateigröße beträgt 10 MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
