@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { ClubSearch } from "@/components/ClubSearch";
@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Download } from "lucide-react";
 import myclubLogo from "@/assets/myclub-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,6 +49,7 @@ const Index = () => {
   const [gamesHaveResults, setGamesHaveResults] = useState<boolean[]>([]);
   const [rememberLastSelection, setRememberLastSelection] = useState(true);
   const [loadedLastSelection, setLoadedLastSelection] = useState(false);
+  const gamePreviewRef = useRef<{ triggerDownload: () => void } | null>(null);
 
   // Load last selection from profile on mount
   useEffect(() => {
@@ -472,11 +473,30 @@ const Index = () => {
                 clubId={selectedClubId}
                 gameIds={selectedGameIds}
                 gamesHaveResults={gamesHaveResults}
+                ref={gamePreviewRef}
               />
             </div>
           )}
         </div>
       </div>
+
+      {/* Sticky Footer for Export - Show when preview is displayed */}
+      {selectedSport && selectedClubId && selectedTeamId && selectedGameIds.length > 0 && !editSelection && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border shadow-lg animate-fade-in">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between gap-4 max-w-4xl mx-auto">
+              <Button 
+                onClick={() => gamePreviewRef.current?.triggerDownload()}
+                className="w-full gap-2"
+                size="lg"
+              >
+                <Download className="h-4 w-4" />
+                Als Bild exportieren
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Image as ImageIcon, FileText, Palette, Upload, X } from "lucide-react";
@@ -43,6 +43,10 @@ interface GamePreviewDisplayProps {
   gamesHaveResults?: boolean[];
 }
 
+export interface GamePreviewDisplayRef {
+  triggerDownload: () => void;
+}
+
 const STANDARD_THEMES = [
   { value: "myclub", label: "myclub" },
   { value: "kadetten-unihockey", label: "Kadetten Unihockey" },
@@ -83,7 +87,8 @@ declare global {
   }
 }
 
-export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResults = [] }: GamePreviewDisplayProps) => {
+export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewDisplayProps>(
+  ({ sportType, clubId, gameIds, gamesHaveResults = [] }, ref) => {
   const gameId = gameIds[0];
   const gameId2 = gameIds.length > 1 ? gameIds[1] : undefined;
   const gameId3 = gameIds.length > 2 ? gameIds[2] : undefined;
@@ -112,6 +117,10 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
   const [loadingGameData, setLoadingGameData] = useState(false);
   const customTemplateRef = useRef<SVGSVGElement>(null);
 
+  // Expose the handleDownload function to parent via ref
+  useImperativeHandle(ref, () => ({
+    triggerDownload: handleDownload
+  }));
   // Map sport type to API type
   const apiType = sportType === "unihockey" ? "swissunihockey" : sportType;
   
@@ -867,21 +876,6 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
         )}
       </CardContent>
 
-      {/* Sticky Footer with Export Button */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border shadow-lg animate-fade-in">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between gap-4 max-w-4xl mx-auto">
-            <Button 
-              onClick={handleDownload} 
-              className="w-full gap-2"
-              size="lg"
-            >
-              <Download className="h-4 w-4" />
-              Als Bild exportieren
-            </Button>
-          </div>
-        </div>
-      </div>
     </Card>
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
@@ -907,4 +901,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
       </AlertDialog>
     </>
   );
-};
+  }
+);
+
+GamePreviewDisplay.displayName = "GamePreviewDisplay";
