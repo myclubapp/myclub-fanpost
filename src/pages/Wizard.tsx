@@ -449,6 +449,7 @@ const Index = () => {
                   sportType={selectedSport}
                   teamId={selectedTeamId}
                   onGameSelect={handleGameSelect}
+                  initialSelectedGameIds={selectedGameIds}
                 />
               </CardContent>
             </Card>
@@ -461,8 +462,7 @@ const Index = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  setSelectedGameIds([]);
-                  navigate(`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}`);
+                  navigate(`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${selectedGameIds.join(',')}`);
                 }}
                 className="gap-1"
               >
