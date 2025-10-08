@@ -238,14 +238,9 @@ export const GameList = ({ sportType, teamId, onGameSelect }: GameListProps) => 
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border shadow-lg animate-fade-in">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between gap-4 max-w-4xl mx-auto">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
-                  {selectedGameIds.length}
-                </div>
-                <span className="text-sm sm:text-base font-medium text-foreground">
-                  {selectedGameIds.length} Spiel{selectedGameIds.length > 1 ? 'e' : ''} ausgewählt
-                </span>
-              </div>
+              <span className="text-sm sm:text-base font-medium text-foreground">
+                {selectedGameIds.length} Spiel{selectedGameIds.length > 1 ? 'e' : ''} ausgewählt
+              </span>
               <Button 
                 onClick={handleContinue}
                 className="gap-2"
