@@ -81,6 +81,13 @@ export const GameList = ({ sportType, teamId, onGameSelect, initialSelectedGameI
     onGameSelect(selectedGameIds, hasResults);
   };
 
+  // Update selected games when games are loaded and initialSelectedGameIds are present
+  useEffect(() => {
+    if (games.length > 0 && initialSelectedGameIds.length > 0) {
+      setSelectedGameIds(initialSelectedGameIds);
+    }
+  }, [games.length, initialSelectedGameIds]);
+
   useEffect(() => {
     const fetchGames = async () => {
       setLoading(true);
