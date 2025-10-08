@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "lucide-react";
 import myclubLogo from "@/assets/myclub-logo.png";
 
 export type SportType = "unihockey" | "volleyball" | "handball";
@@ -234,6 +236,20 @@ const Index = () => {
           {selectedSport && !selectedClubId && (
             <Card>
               <CardHeader>
+                <div className="flex items-center justify-between mb-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedSport("");
+                      navigate('/wizard');
+                    }}
+                    className="gap-1"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Zurück
+                  </Button>
+                </div>
                 <CardTitle className="flex items-center gap-2">
                   <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold">
                     2
@@ -257,6 +273,21 @@ const Index = () => {
           {selectedSport && selectedClubId && !selectedTeamId && (
             <Card>
               <CardHeader>
+                <div className="flex items-center justify-between mb-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedClubId("");
+                      setSelectedClubName("");
+                      navigate(`/wizard/${selectedSport}`);
+                    }}
+                    className="gap-1"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Zurück
+                  </Button>
+                </div>
                 <CardTitle className="flex items-center gap-2">
                   <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold">
                     3
@@ -282,6 +313,21 @@ const Index = () => {
           {selectedSport && selectedClubId && selectedTeamId && selectedGameIds.length === 0 && (
             <Card>
               <CardHeader>
+                <div className="flex items-center justify-between mb-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedTeamId("");
+                      setSelectedTeamName("");
+                      navigate(`/wizard/${selectedSport}/${selectedClubId}`);
+                    }}
+                    className="gap-1"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Zurück
+                  </Button>
+                </div>
                 <CardTitle className="flex items-center gap-2">
                   <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold">
                     4
@@ -305,15 +351,18 @@ const Index = () => {
           {/* Game Preview Display - Show only if game selected */}
           {selectedSport && selectedClubId && selectedTeamId && selectedGameIds.length > 0 && (
             <div className="space-y-4">
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setSelectedGameIds([]);
                   navigate(`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}`);
                 }}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                className="gap-1"
               >
-                ← Zurück zur Spielauswahl
-              </button>
+                <ChevronLeft className="h-4 w-4" />
+                Zurück zur Spielauswahl
+              </Button>
               <GamePreviewDisplay 
                 sportType={selectedSport}
                 clubId={selectedClubId}
