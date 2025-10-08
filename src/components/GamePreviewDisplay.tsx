@@ -465,8 +465,9 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
         svgElement = customTemplateRef.current;
       } else {
         // Using myclub web component
+        const targetRef = activeTab === "preview" ? previewRef : resultRef;
         const componentSelector = activeTab === "preview" ? "game-preview" : "game-result";
-        const gameElement = targetRef.current.querySelector(componentSelector);
+        const gameElement = targetRef.current?.querySelector(componentSelector);
 
         if (!gameElement) {
           throw new Error("Komponente nicht gefunden");
