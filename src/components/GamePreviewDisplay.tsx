@@ -80,7 +80,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
   const [showCropper, setShowCropper] = useState(false);
   const [isHomeGame, setIsHomeGame] = useState(false);
   const [showResultDetail, setShowResultDetail] = useState(false);
-  const [svgDimensions, setSvgDimensions] = useState({ width: "1080", height: "1350" });
+  const [svgDimensions, setSvgDimensions] = useState({ width: "400", height: "500" });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // Map sport type to API type
@@ -92,16 +92,19 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
     setActiveTab(hasAnyResult ? "result" : "preview");
   }, [gamesHaveResults]);
 
-  // Update SVG dimensions based on screen size
+  // Update SVG dimensions based on screen size (for display only)
   useEffect(() => {
     const updateDimensions = () => {
       const screenWidth = window.innerWidth;
       if (screenWidth < 400) {
         // Mobile: maintain 1080x1350 aspect ratio (4:5)
-        setSvgDimensions({ width: "320", height: "400" });
+        setSvgDimensions({ width: "300", height: "375" });
+      } else if (screenWidth < 768) {
+        // Tablet
+        setSvgDimensions({ width: "360", height: "450" });
       } else {
-        // Desktop: full Instagram post size
-        setSvgDimensions({ width: "1080", height: "1350" });
+        // Desktop: larger preview but not full size
+        setSvgDimensions({ width: "400", height: "500" });
       }
     };
 
@@ -500,8 +503,8 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
               ref={previewRef}
               className="w-full bg-muted/10 rounded-lg border border-border overflow-hidden"
             >
-              <div className="w-full p-4 sm:p-8">
-                <div className={`w-full mx-auto ${gameId3 ? 'max-w-[1800px]' : gameId2 ? 'max-w-[1200px]' : 'max-w-[600px]'}`}>
+              <div className="w-full p-4 sm:p-8 flex justify-center">
+                <div className={`${gameId3 ? 'max-w-[1200px]' : gameId2 ? 'max-w-[800px]' : 'max-w-[400px]'} w-full`}>
                   <game-preview
                     key={`${gameId}-${gameId2 || 'single'}-${gameId3 || 'single'}`}
                     type={apiType}
@@ -513,7 +516,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
                     theme={selectedTheme}
                     ishomegame={isHomeGame.toString()}
                     {...(backgroundImage && { backgroundimage: backgroundImage })}
-                    style={{ width: '100%', height: 'auto', display: 'block' }}
+                    style={{ width: '100%', height: 'auto', display: 'block', maxWidth: '100%' }}
                   />
                 </div>
               </div>
@@ -525,8 +528,8 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
               ref={resultRef}
               className="w-full bg-muted/10 rounded-lg border border-border overflow-hidden"
             >
-              <div className="w-full p-4 sm:p-8">
-                <div className={`w-full mx-auto ${gameId3 ? 'max-w-[1800px]' : gameId2 ? 'max-w-[1200px]' : 'max-w-[600px]'}`}>
+              <div className="w-full p-4 sm:p-8 flex justify-center">
+                <div className={`${gameId3 ? 'max-w-[1200px]' : gameId2 ? 'max-w-[800px]' : 'max-w-[400px]'} w-full`}>
                   <game-result
                     key={`${gameId}-${gameId2 || 'single'}-${gameId3 || 'single'}`}
                     type={apiType}
@@ -539,7 +542,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
                     ishomegame={isHomeGame.toString()}
                     showresultdetail={showResultDetail.toString()}
                     {...(backgroundImage && { backgroundimage: backgroundImage })}
-                    style={{ width: '100%', height: 'auto', display: 'block' }}
+                    style={{ width: '100%', height: 'auto', display: 'block', maxWidth: '100%' }}
                   />
                 </div>
               </div>
