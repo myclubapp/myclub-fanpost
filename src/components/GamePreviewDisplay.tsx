@@ -462,8 +462,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
   const confirmDownload = async () => {
     setShowConfirmDialog(false);
 
-    const targetRef = activeTab === "preview" ? previewRef : resultRef;
-    if (!targetRef.current) return;
+
 
     const notifyStart = () =>
       toast({
