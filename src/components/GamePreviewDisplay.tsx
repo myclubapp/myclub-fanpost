@@ -372,23 +372,48 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
 
   const inlineExternalImages = async (svgElement: SVGSVGElement): Promise<void> => {
     const images = svgElement.querySelectorAll("image");
+    const proxyBase = `https://rgufivgtyonitgjlozog.functions.supabase.co/image-proxy?url=`;
+
+    const toDataUrl = async (blob: Blob) =>
+      await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+
+    const tryFetch = async (url: string): Promise<string | null> => {
+      try {
+        const res = await fetch(url, { mode: "cors" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        return await toDataUrl(blob);
+      } catch (e) {
+        // Fallback via proxy
+        try {
+          const proxyUrl = proxyBase + encodeURIComponent(url);
+          const res2 = await fetch(proxyUrl, { mode: "cors" });
+          if (!res2.ok) throw new Error(`Proxy HTTP ${res2.status}`);
+          const blob2 = await res2.blob();
+          return await toDataUrl(blob2);
+        } catch (e2) {
+          console.error("Failed to inline image (and proxy)", url, e2);
+          return null;
+        }
+      }
+    };
+
     const promises = Array.from(images).map(async (img) => {
       const href = img.getAttribute("href") || img.getAttribute("xlink:href");
-      if (href && (href.startsWith("http://") || href.startsWith("https://"))) {
-        try {
-          const response = await fetch(href);
-          const blob = await response.blob();
-          const dataUrl = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.readAsDataURL(blob);
-          });
+      if (!href) return;
+      if (href.startsWith("data:")) return; // already inlined
+      if (/^https?:\/\//i.test(href)) {
+        const dataUrl = await tryFetch(href);
+        if (dataUrl) {
           img.setAttribute("href", dataUrl);
-        } catch (error) {
-          console.error("Failed to inline image:", href, error);
         }
       }
     });
+
     await Promise.all(promises);
   };
 
