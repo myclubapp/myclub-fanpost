@@ -177,11 +177,11 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pt-16">{/* pt-16 für fixed header */}
+    <main className="min-h-screen bg-background pt-16">
       <Header />
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 py-12">
         {/* Title with selection info */}
         <div className="text-center mb-8 space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold text-foreground">
@@ -372,8 +372,8 @@ const Index = () => {
             </div>
           )}
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 };
 
