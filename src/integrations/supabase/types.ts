@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      credit_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          transaction_type: Database["public"]["Enums"]["credit_transaction_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          transaction_type: Database["public"]["Enums"]["credit_transaction_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          transaction_type?: Database["public"]["Enums"]["credit_transaction_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -149,6 +176,11 @@ export type Database = {
     }
     Enums: {
       app_role: "free_user" | "paid_user" | "admin"
+      credit_transaction_type:
+        | "monthly_reset"
+        | "purchase"
+        | "consumption"
+        | "subscription_grant"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -277,6 +309,12 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["free_user", "paid_user", "admin"],
+      credit_transaction_type: [
+        "monthly_reset",
+        "purchase",
+        "consumption",
+        "subscription_grant",
+      ],
     },
   },
 } as const
