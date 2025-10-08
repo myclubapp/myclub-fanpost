@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Trash2, Move, Type, ImageIcon, Database, Upload } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { ImageCropper } from '@/components/ImageCropper';
 
 interface SVGElement {
   id: string;
@@ -83,6 +84,8 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
   const [draggingElement, setDraggingElement] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [uploading, setUploading] = useState(false);
+  const [tempImage, setTempImage] = useState<string | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
 
   // Sync elements with config
   useEffect(() => {
@@ -211,7 +214,7 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
     setSelectedElement(newElement.id);
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -235,15 +238,31 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
       return;
     }
 
+    // Load image and show cropper
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setTempImage(e.target?.result as string);
+      setShowCropper(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedImage: string) => {
+    setTempImage(null);
     setUploading(true);
+    
     try {
-      const fileExt = file.name.split('.').pop();
+      // Convert base64 to blob
+      const response = await fetch(croppedImage);
+      const blob = await response.blob();
+      
+      const fileExt = 'png';
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('template-images')
-        .upload(filePath, file);
+        .upload(filePath, blob);
 
       if (uploadError) throw uploadError;
 
@@ -265,7 +284,7 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
 
       toast({
         title: "Bild hochgeladen",
-        description: "Das Bild wurde erfolgreich hochgeladen.",
+        description: "Das Bild wurde erfolgreich zugeschnitten und hochgeladen.",
       });
     } catch (error: any) {
       toast({
@@ -284,7 +303,22 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
   const selectedElementData = elements.find(el => el.id === selectedElement);
 
   return (
-    <div className="grid lg:grid-cols-[1fr_350px] gap-6">
+    <>
+      {tempImage && (
+        <ImageCropper
+          image={tempImage}
+          open={showCropper}
+          onClose={() => {
+            setShowCropper(false);
+            setTempImage(null);
+            if (fileInputRef.current) {
+              fileInputRef.current.value = '';
+            }
+          }}
+          onCropComplete={handleCropComplete}
+        />
+      )}
+      <div className="grid lg:grid-cols-[1fr_350px] gap-6">
       {/* Canvas */}
       <Card>
         <CardHeader>
@@ -351,7 +385,7 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
             </div>
           </div>
 
-          <div className="border rounded-lg overflow-auto bg-muted/10">
+          <div className="border rounded-none overflow-auto bg-muted/10">
             <svg
               ref={svgRef}
               width="1080"
@@ -648,5 +682,6 @@ export const TemplateDesigner = ({ templateType, config, onChange }: TemplateDes
         </CardContent>
       </Card>
     </div>
+    </>
   );
 };

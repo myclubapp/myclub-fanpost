@@ -54,7 +54,23 @@ interface CustomTemplate {
   id: string;
   name: string;
   value: string; // Will be template ID
+  template_type: 'game-preview' | 'game-result';
   isCustom: true;
+  config?: any;
+}
+
+interface GameData {
+  id: string;
+  teamHome: string;
+  teamAway: string;
+  date: string;
+  time: string;
+  location?: string;
+  city?: string;
+  result?: string;
+  resultDetail?: string;
+  teamHomeLogo?: string;
+  teamAwayLogo?: string;
 }
 
 // Declare the custom web components
@@ -92,9 +108,15 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
   const [svgDimensions, setSvgDimensions] = useState({ width: "500", height: "625" });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [customTemplates, setCustomTemplates] = useState<CustomTemplate[]>([]);
+  const [gameData, setGameData] = useState<GameData | null>(null);
+  const [loadingGameData, setLoadingGameData] = useState(false);
 
   // Map sport type to API type
   const apiType = sportType === "unihockey" ? "swissunihockey" : sportType;
+  
+  // Check if selected theme is a myclub theme
+  const isMyClubTheme = STANDARD_THEMES.some(t => t.value === selectedTheme);
+  const selectedCustomTemplate = customTemplates.find(t => t.value === selectedTheme);
 
   // Load custom templates for paid users
   useEffect(() => {
@@ -107,7 +129,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
       try {
         const { data, error } = await supabase
           .from('templates')
-          .select('id, name, template_type')
+          .select('id, name, template_type, svg_config')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
@@ -118,6 +140,8 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
             id: template.id,
             name: template.name,
             value: template.id,
+            template_type: template.template_type as 'game-preview' | 'game-result',
+            config: template.svg_config,
             isCustom: true as const,
           }));
           setCustomTemplates(templates);
@@ -129,6 +153,35 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
 
     loadCustomTemplates();
   }, [user, isPaidUser]);
+
+  // Load game data when custom template is selected
+  useEffect(() => {
+    const fetchGameData = async () => {
+      if (!selectedCustomTemplate || !gameId) return;
+      
+      setLoadingGameData(true);
+      try {
+        const apiUrl = `https://europe-west6-myclubmanagement.cloudfunctions.net/api/${apiType}?query=%7B%0A%20%20game(id%3A%20%22${gameId}%22)%20%7B%0A%20%20%20%20id%0A%20%20%20%20teamHome%0A%20%20%20%20teamAway%0A%20%20%20%20date%0A%20%20%20%20time%0A%20%20%20%20location%0A%20%20%20%20city%0A%20%20%20%20result%0A%20%20%20%20resultDetail%0A%20%20%20%20teamHomeLogo%0A%20%20%20%20teamAwayLogo%0A%20%20%7D%0A%7D%0A`;
+        
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error('Failed to fetch game data');
+        
+        const result = await response.json();
+        setGameData(result.data?.game || null);
+      } catch (error) {
+        console.error('Error fetching game data:', error);
+        toast({
+          title: "Fehler",
+          description: "Spieldaten konnten nicht geladen werden",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingGameData(false);
+      }
+    };
+
+    fetchGameData();
+  }, [selectedCustomTemplate, gameId, apiType, toast]);
 
   // Update tab when gamesHaveResults changes
   useEffect(() => {
@@ -210,6 +263,87 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  // Render custom template SVG with API data
+  const renderCustomTemplateSVG = () => {
+    if (!selectedCustomTemplate || !gameData) return null;
+    
+    const config = selectedCustomTemplate.config;
+    if (!config || !config.elements) return null;
+
+    return (
+      <svg
+        width="1080"
+        height="1350"
+        viewBox="0 0 1080 1350"
+        className="max-w-full h-auto"
+      >
+        {/* Background */}
+        <rect width="1080" height="1350" fill={config.backgroundColor || '#1a1a1a'} />
+        
+        {/* Background image if set */}
+        {backgroundImage && (
+          <image
+            href={backgroundImage}
+            width="1080"
+            height="1350"
+            preserveAspectRatio="xMidYMid slice"
+          />
+        )}
+        
+        {/* Render elements */}
+        {config.elements.map((element: any) => {
+          if (element.type === 'text' || element.type === 'api-text') {
+            let content = element.content;
+            
+            // Replace API fields with actual data
+            if (element.type === 'api-text' && element.apiField) {
+              const fieldValue = (gameData as any)[element.apiField];
+              content = fieldValue || element.content;
+            }
+            
+            return (
+              <text
+                key={element.id}
+                x={element.x}
+                y={element.y}
+                fontSize={element.fontSize}
+                fontFamily={element.fontFamily}
+                fill={element.fill}
+                fontWeight={element.fontWeight}
+                textAnchor={element.textAnchor}
+              >
+                {content}
+              </text>
+            );
+          }
+          
+          if (element.type === 'image' || element.type === 'api-image') {
+            let href = element.href;
+            
+            // Replace API image fields with actual data
+            if (element.type === 'api-image' && element.apiField) {
+              const fieldValue = (gameData as any)[element.apiField];
+              href = fieldValue || element.href;
+            }
+            
+            return (
+              <image
+                key={element.id}
+                x={element.x}
+                y={element.y}
+                width={element.width}
+                height={element.height}
+                href={href}
+              />
+            );
+          }
+          
+          return null;
+        })}
+      </svg>
+    );
   };
 
   const inlineExternalImages = async (svgElement: SVGSVGElement): Promise<void> => {
@@ -461,9 +595,40 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="flex flex-col gap-4 mb-6">
-            <TabsList className="grid w-full grid-cols-2 bg-muted/50">
+        {/* Template Selection - First */}
+        <div className="flex items-center gap-2 mb-6">
+          <Palette className="h-4 w-4 text-muted-foreground" />
+          <Label htmlFor="theme-select" className="text-sm text-muted-foreground">Vorlage:</Label>
+          <Select value={selectedTheme} onValueChange={setSelectedTheme}>
+            <SelectTrigger id="theme-select" className="w-[220px] border-border">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-card border-border">
+              {STANDARD_THEMES.map((theme) => (
+                <SelectItem key={theme.value} value={theme.value}>
+                  {theme.label}
+                </SelectItem>
+              ))}
+              {isPaidUser && customTemplates.length > 0 && (
+                <>
+                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                    Eigene Vorlagen
+                  </div>
+                  {customTemplates.map((template) => (
+                    <SelectItem key={template.value} value={template.value}>
+                      {template.name}
+                    </SelectItem>
+                  ))}
+                </>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {isMyClubTheme ? (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <div className="flex flex-col gap-4 mb-6">
+              <TabsList className="grid w-full grid-cols-2 bg-muted/50">
               <TabsTrigger value="preview" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <ImageIcon className="h-4 w-4" />
                 Spielvorschau
@@ -500,34 +665,6 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
                 </div>
               )}
               <div className="flex items-center gap-2">
-                <Palette className="h-4 w-4 text-muted-foreground" />
-                <Label htmlFor="theme-select" className="text-sm text-muted-foreground">Theme:</Label>
-                <Select value={selectedTheme} onValueChange={setSelectedTheme}>
-                  <SelectTrigger id="theme-select" className="w-[220px] border-border">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    {STANDARD_THEMES.map((theme) => (
-                      <SelectItem key={theme.value} value={theme.value}>
-                        {theme.label}
-                      </SelectItem>
-                    ))}
-                    {isPaidUser && customTemplates.length > 0 && (
-                      <>
-                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                          Eigene Vorlagen
-                        </div>
-                        {customTemplates.map((template) => (
-                          <SelectItem key={template.value} value={template.value}>
-                            {template.name}
-                          </SelectItem>
-                        ))}
-                      </>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center gap-2">
                 <Input
                   ref={fileInputRef}
                   type="file"
@@ -556,7 +693,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
               </div>
             </div>
           </div>
-          
+            
           <TabsContent value="preview" className="mt-0">
             <div
               ref={previewRef}
@@ -579,10 +716,10 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
                   />
                 </div>
               </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="result" className="mt-0">
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="result" className="mt-0">
             <div
               ref={resultRef}
               className="w-full bg-muted/10 rounded-lg border border-border overflow-hidden"
@@ -605,9 +742,25 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
                   />
                 </div>
               </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+              </div>
+            </TabsContent>
+          </Tabs>
+        ) : (
+          /* Custom Template Display */
+          <div className="w-full bg-muted/10 rounded-lg border border-border overflow-hidden">
+            {loadingGameData ? (
+              <div className="flex items-center justify-center py-24">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <div className="w-full p-4 sm:p-8 flex justify-center">
+                <div className="w-full flex justify-center" style={{ maxWidth: `${svgDimensions.width}px` }}>
+                  {renderCustomTemplateSVG()}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
         
         <Button 
           onClick={handleDownload} 
