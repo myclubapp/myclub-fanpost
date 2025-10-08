@@ -2,6 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Image as ImageIcon, FileText, Palette, Upload, X } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -71,6 +81,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
   const [isHomeGame, setIsHomeGame] = useState(false);
   const [showResultDetail, setShowResultDetail] = useState(false);
   const [svgDimensions, setSvgDimensions] = useState({ width: "400", height: "400" });
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // Map sport type to API type
   const apiType = sportType === "unihockey" ? "swissunihockey" : sportType;
@@ -183,7 +194,7 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
     });
   };
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     // Check if user is logged in
     if (!user) {
       toast({
@@ -198,11 +209,18 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
     if (!hasCredits) {
       toast({
         title: "Keine Credits verfügbar",
-        description: "Sie haben keine Credits mehr. Upgraden Sie Ihren Account oder warten Sie bis zum nächsten Monat.",
+        description: "Sie haben keine Credits mehr. Kaufen Sie zusätzliche Credits oder upgraden Sie auf Pro.",
         variant: "destructive",
       });
       return;
     }
+
+    // Show confirmation dialog
+    setShowConfirmDialog(true);
+  };
+
+  const confirmDownload = async () => {
+    setShowConfirmDialog(false);
 
     const targetRef = activeTab === "preview" ? previewRef : resultRef;
     if (!targetRef.current) return;
@@ -536,6 +554,28 @@ export const GamePreviewDisplay = ({ sportType, clubId, gameIds, gamesHaveResult
         </Button>
       </CardContent>
     </Card>
+
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bild exportieren</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bist du sicher? Dieses Bild kostet dich 1 Credit.
+              {credits && (
+                <span className="block mt-2 text-foreground font-medium">
+                  Verbleibende Credits: {credits.credits_remaining}
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDownload}>
+              Ja, exportieren
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
