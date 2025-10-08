@@ -1,120 +1,99 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
-import myclubLogo from '@/assets/myclub-logo.png';
-import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { z } from 'zod';
+
+const emailSchema = z.string().email({ message: "Ungültige E-Mail-Adresse" });
 
 const Auth = () => {
   const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const { signInWithMagicLink, user } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleMagicLinkLogin = async (e: React.FormEvent) => {
+  useEffect(() => {
+    // Redirect if already logged in
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setEmailError('');
     
-    if (!email) {
-      toast.error('Bitte gib deine E-Mail-Adresse ein');
+    // Validate email
+    const validation = emailSchema.safeParse(email);
+    if (!validation.success) {
+      setEmailError(validation.error.errors[0].message);
       return;
     }
 
-    setLoading(true);
+    setIsLoading(true);
+    const { error } = await signInWithMagicLink(email);
+    setIsLoading(false);
     
-    try {
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: redirectUrl,
-        },
+    if (error) {
+      toast({
+        title: "Fehler beim Senden",
+        description: error.message,
+        variant: "destructive",
       });
-
-      if (error) {
-        toast.error('Fehler beim Senden des Login-Links: ' + error.message);
-      } else {
-        toast.success('Magic Link wurde an deine E-Mail-Adresse gesendet!');
-        setEmail('');
-      }
-    } catch (error) {
-      toast.error('Ein Fehler ist aufgetreten');
-      console.error('Login error:', error);
-    } finally {
-      setLoading(false);
+    } else {
+      toast({
+        title: "Magic Link gesendet!",
+        description: "Überprüfen Sie Ihr E-Mail-Postfach für den Login-Link.",
+      });
     }
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="border-b border-border/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
-          <button
-            onClick={() => navigate('/')}
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-          >
-            <img src={myclubLogo} alt="myclub" className="h-10 w-auto" />
-            <div className="border-l border-border/50 pl-3">
-              <h1 className="text-xl font-bold text-foreground">FanPost</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">Willkommen bei Fanpost</CardTitle>
+          <CardDescription className="text-center">
+            Melden Sie sich mit Ihrer E-Mail-Adresse an
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Input
+                type="email"
+                placeholder="ihre.email@beispiel.ch"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setEmailError('');
+                }}
+                disabled={isLoading}
+                className={emailError ? "border-destructive" : ""}
+                required
+              />
+              {emailError && (
+                <p className="text-sm text-destructive">{emailError}</p>
+              )}
             </div>
-          </button>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md">
-          <Card className="shadow-[var(--shadow-card)] border-border">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-bold text-center">
-                Willkommen zurück
-              </CardTitle>
-              <CardDescription className="text-center">
-                Melde dich mit deiner E-Mail-Adresse an
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleMagicLinkLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">E-Mail-Adresse</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="deine@email.ch"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={loading}
-                    required
-                  />
-                </div>
-                
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sende Link...
-                    </>
-                  ) : (
-                    'Magic Link senden'
-                  )}
-                </Button>
-
-                <p className="text-sm text-muted-foreground text-center mt-4">
-                  Wir senden dir einen Login-Link per E-Mail. Klicke auf den Link um dich einzuloggen.
-                </p>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isLoading}
+            >
+              {isLoading ? 'Wird gesendet...' : 'Magic Link senden'}
+            </Button>
+          </form>
+          <p className="text-sm text-muted-foreground text-center mt-4">
+            Sie erhalten eine E-Mail mit einem Login-Link
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 };
