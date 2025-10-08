@@ -366,47 +366,33 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
 
   const moveElementForward = (id: string) => {
     setElements(prev => {
-      const element = prev.find(el => el.id === id);
-      if (!element) return prev;
+      const currentIndex = prev.findIndex(el => el.id === id);
+      if (currentIndex === -1 || currentIndex === prev.length - 1) return prev; // Already at top or not found
       
-      const currentZ = element.zIndex ?? 0;
-      const higherElements = prev.filter(el => (el.zIndex ?? 0) > currentZ);
+      // Swap with next element (move forward in rendering order)
+      const newElements = [...prev];
+      const temp = newElements[currentIndex];
+      newElements[currentIndex] = newElements[currentIndex + 1];
+      newElements[currentIndex + 1] = temp;
       
-      if (higherElements.length === 0) return prev; // Already at top
-      
-      const nextZ = Math.min(...higherElements.map(el => el.zIndex ?? 0));
-      
-      // Swap z-indices
-      const updated = prev.map(el => {
-        if (el.id === id) return { ...el, zIndex: nextZ };
-        if (el.zIndex === nextZ) return { ...el, zIndex: currentZ };
-        return el;
-      });
-      
-      return updated;
+      // Update z-indices to match new order
+      return newElements.map((el, idx) => ({ ...el, zIndex: idx }));
     });
   };
 
   const moveElementBackward = (id: string) => {
     setElements(prev => {
-      const element = prev.find(el => el.id === id);
-      if (!element) return prev;
+      const currentIndex = prev.findIndex(el => el.id === id);
+      if (currentIndex === -1 || currentIndex === 0) return prev; // Already at bottom or not found
       
-      const currentZ = element.zIndex ?? 0;
-      const lowerElements = prev.filter(el => (el.zIndex ?? 0) < currentZ);
+      // Swap with previous element (move backward in rendering order)
+      const newElements = [...prev];
+      const temp = newElements[currentIndex];
+      newElements[currentIndex] = newElements[currentIndex - 1];
+      newElements[currentIndex - 1] = temp;
       
-      if (lowerElements.length === 0) return prev; // Already at bottom
-      
-      const prevZ = Math.max(...lowerElements.map(el => el.zIndex ?? 0));
-      
-      // Swap z-indices
-      const updated = prev.map(el => {
-        if (el.id === id) return { ...el, zIndex: prevZ };
-        if (el.zIndex === prevZ) return { ...el, zIndex: currentZ };
-        return el;
-      });
-      
-      return updated;
+      // Update z-indices to match new order
+      return newElements.map((el, idx) => ({ ...el, zIndex: idx }));
     });
   };
 
@@ -572,12 +558,6 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
           </div>
 
           <div className="border rounded-none overflow-auto bg-muted/10">
-            <span className="text-sm text-muted-foreground ml-2">
-              {canvasDimensions.width}x{canvasDimensions.height}px
-            </span>
-          </div>
-
-          <div className="border rounded-none overflow-auto bg-muted/10">
             <svg
               ref={svgRef}
               width={canvasDimensions.width}
@@ -600,9 +580,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
               <rect width={canvasDimensions.width} height={canvasDimensions.height} fill="url(#grid)" />
 
               {/* Render elements */}
-              {[...elements]
-                .sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0))
-                .map(element => {
+              {elements.map((element, index) => {
                 const isSelected = selectedElement === element.id && !previewMode;
                 const isApiElement = element.type === 'api-text' || element.type === 'api-image';
                 const displayContent = getElementContent(element);
@@ -916,13 +894,14 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                )}
 
                <div className="space-y-2">
-                 <Label>Ebene (Z-Index)</Label>
+                 <Label>Ebene</Label>
                  <div className="flex gap-2">
                    <Button
                      size="sm"
                      variant="outline"
                      onClick={() => moveElementBackward(selectedElementData.id)}
                      className="flex-1"
+                     disabled={elements.findIndex(el => el.id === selectedElementData.id) === 0}
                    >
                      Nach hinten
                    </Button>
@@ -931,12 +910,13 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                      variant="outline"
                      onClick={() => moveElementForward(selectedElementData.id)}
                      className="flex-1"
+                     disabled={elements.findIndex(el => el.id === selectedElementData.id) === elements.length - 1}
                    >
                      Nach vorne
                    </Button>
                  </div>
                  <p className="text-xs text-muted-foreground">
-                   Aktuell: {selectedElementData.zIndex ?? 0}
+                   Position: {elements.findIndex(el => el.id === selectedElementData.id) + 1} von {elements.length}
                  </p>
                </div>
 
