@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { ClubSearch } from "@/components/ClubSearch";
 import { TeamSearch } from "@/components/TeamSearch";
 import { GameList } from "@/components/GameList";
@@ -8,7 +9,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import myclubLogo from "@/assets/myclub-logo.png";
+import { LogIn, LogOut } from "lucide-react";
 
 export type SportType = "unihockey" | "volleyball" | "handball";
 
@@ -20,6 +23,7 @@ const Index = () => {
     gameId?: string;
   }>();
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
 
   const [selectedSport, setSelectedSport] = useState<SportType | "">(sport || "");
   const [selectedClubId, setSelectedClubId] = useState<string>(clubId || "");
@@ -170,6 +174,28 @@ const Index = () => {
                 </h1>
               </div>
             </button>
+            
+            <div>
+              {user ? (
+                <Button
+                  variant="ghost"
+                  onClick={() => signOut()}
+                  className="gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Abmelden
+                </Button>
+              ) : (
+                <Button
+                  variant="default"
+                  onClick={() => navigate('/auth')}
+                  className="gap-2"
+                >
+                  <LogIn className="h-4 w-4" />
+                  Anmelden
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </header>
