@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Download } from "lucide-react";
+import { ChevronLeft, Download, Instagram } from "lucide-react";
 import myclubLogo from "@/assets/myclub-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,7 +58,8 @@ const Index = () => {
   const [gamesHaveResults, setGamesHaveResults] = useState<boolean[]>([]);
   const [rememberLastSelection, setRememberLastSelection] = useState(true);
   const [loadedLastSelection, setLoadedLastSelection] = useState(false);
-  const gamePreviewRef = useRef<{ triggerDownload: () => void } | null>(null);
+  const [instagramUsername, setInstagramUsername] = useState<string | null>(null);
+  const gamePreviewRef = useRef<{ triggerDownload: () => void; triggerInstagramShare: () => void } | null>(null);
 
   // Load last selection from profile on mount
   useEffect(() => {
@@ -126,29 +127,30 @@ const Index = () => {
     }
   }, [user, rememberLastSelection, selectedSport, selectedClubId, selectedTeamId, loadedLastSelection]);
 
-  // Load remember setting from profile
+  // Load remember setting and Instagram username from profile
   useEffect(() => {
-    const loadRememberSetting = async () => {
+    const loadProfileSettings = async () => {
       if (!user) return;
-      
+
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('remember_last_selection')
+          .select('remember_last_selection, instagram_username')
           .eq('id', user.id)
           .maybeSingle();
 
         if (error) throw error;
-        
+
         if (data) {
           setRememberLastSelection(data.remember_last_selection ?? true);
+          setInstagramUsername(data.instagram_username || null);
         }
       } catch (error) {
-        console.error('Error loading remember setting:', error);
+        console.error('Error loading profile settings:', error);
       }
     };
 
-    loadRememberSetting();
+    loadProfileSettings();
   }, [user]);
 
   // Load club name from API when clubId is set via URL
@@ -574,14 +576,36 @@ const Index = () => {
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border shadow-lg animate-fade-in">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between gap-4 max-w-4xl mx-auto">
-              <Button 
-                onClick={() => gamePreviewRef.current?.triggerDownload()}
-                className="w-full gap-2"
-                size="lg"
-              >
-                <Download className="h-4 w-4" />
-                Als Bild exportieren
-              </Button>
+              {instagramUsername ? (
+                <>
+                  <Button
+                    onClick={() => gamePreviewRef.current?.triggerDownload()}
+                    className="flex-1 gap-2"
+                    size="lg"
+                    variant="outline"
+                  >
+                    <Download className="h-4 w-4" />
+                    Exportieren
+                  </Button>
+                  <Button
+                    onClick={() => gamePreviewRef.current?.triggerInstagramShare()}
+                    className="flex-1 gap-2"
+                    size="lg"
+                  >
+                    <Instagram className="h-4 w-4" />
+                    Instagram Story
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  onClick={() => gamePreviewRef.current?.triggerDownload()}
+                  className="w-full gap-2"
+                  size="lg"
+                >
+                  <Download className="h-4 w-4" />
+                  Als Bild exportieren
+                </Button>
+              )}
             </div>
           </div>
         </div>

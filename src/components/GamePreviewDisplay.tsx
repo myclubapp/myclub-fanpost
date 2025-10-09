@@ -54,6 +54,7 @@ export interface GamePreviewDisplayProps {
 
 export interface GamePreviewDisplayRef {
   triggerDownload: () => void;
+  triggerInstagramShare: () => void;
 }
 
 const STANDARD_THEMES = [
@@ -157,9 +158,10 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   const [loadingGameData, setLoadingGameData] = useState(false);
   const customTemplateRef = useRef<SVGSVGElement>(null);
 
-  // Expose the handleDownload function to parent via ref
+  // Expose the handleDownload and handleInstagramShare functions to parent via ref
   useImperativeHandle(ref, () => ({
-    triggerDownload: handleDownload
+    triggerDownload: handleDownload,
+    triggerInstagramShare: handleInstagramShare
   }));
   // Map sport type to API type
   const apiType = sportType === "unihockey" ? "swissunihockey" : sportType;
@@ -512,6 +514,239 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     setShowConfirmDialog(true);
   };
 
+  const handleInstagramShare = async () => {
+    // Check if user is logged in
+    if (!user) {
+      toast({
+        title: "Anmeldung erforderlich",
+        description: "Bitte melden Sie sich an, um Posts zu erstellen",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if user has credits
+    if (!hasCredits) {
+      toast({
+        title: "Keine Credits verfügbar",
+        description: "Sie haben keine Credits mehr. Kaufen Sie zusätzliche Credits oder upgraden Sie auf Pro.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Directly execute Instagram share without confirmation dialog
+    await executeInstagramShare();
+  };
+
+  const executeInstagramShare = async () => {
+    const notifyStart = () =>
+      toast({
+        title: "Bild wird vorbereitet",
+        description: "Das Bild für Instagram wird erstellt...",
+      });
+
+    const notifySuccess = () =>
+      toast({
+        title: "Erfolgreich!",
+        description: "Das Bild wurde gespeichert. Instagram wird geöffnet.",
+      });
+
+    const notifyError = () =>
+      toast({
+        title: "Fehler",
+        description:
+          "Bild konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+        variant: "destructive",
+      });
+
+    try {
+      notifyStart();
+
+      let svgElement: SVGSVGElement | null = null;
+
+      // Check if using custom template
+      if (selectedCustomTemplate) {
+        if (!customTemplateRef.current) {
+          console.error("Custom template ref not available");
+          throw new Error("Template nicht geladen");
+        }
+        svgElement = customTemplateRef.current;
+      } else {
+        // Using myclub web component
+        const targetRef = activeTab === "preview" ? previewRef : resultRef;
+        const componentSelector = activeTab === "preview" ? "game-preview" : "game-result";
+        const gameElement = targetRef.current?.querySelector(componentSelector);
+
+        if (!gameElement) {
+          throw new Error("Komponente nicht gefunden");
+        }
+
+        const shadowRoot = (gameElement as any).shadowRoot as ShadowRoot | null;
+        svgElement = shadowRoot?.querySelector("svg") || null;
+      }
+
+      if (!svgElement) {
+        throw new Error("Kein SVG-Element gefunden");
+      }
+
+      // Wait for images to load
+      const images = svgElement.querySelectorAll('image');
+      await Promise.all(
+        Array.from(images).map(img => {
+          const href = img.getAttribute('href') || img.getAttribute('xlink:href');
+          if (!href || href.startsWith('data:')) return Promise.resolve();
+
+          return new Promise((resolve) => {
+            const testImg = new Image();
+            const timeout = setTimeout(() => resolve(undefined), 10000);
+            testImg.onload = () => {
+              clearTimeout(timeout);
+              resolve(undefined);
+            };
+            testImg.onerror = () => {
+              clearTimeout(timeout);
+              resolve(undefined);
+            };
+            testImg.src = href;
+          });
+        })
+      );
+
+      // Inline external images
+      await inlineExternalImages(svgElement);
+
+      // Get SVG dimensions
+      let width = 1080;
+      let height = 1350;
+
+      if (svgElement.viewBox && svgElement.viewBox.baseVal) {
+        width = svgElement.viewBox.baseVal.width;
+        height = svgElement.viewBox.baseVal.height;
+      } else if (svgElement.getAttribute('width') && svgElement.getAttribute('height')) {
+        width = parseFloat(svgElement.getAttribute('width') || '1080');
+        height = parseFloat(svgElement.getAttribute('height') || '1350');
+      }
+
+      const options = {
+        scale: 2,
+        backgroundColor: "white",
+        width,
+        height,
+      };
+
+      // Convert SVG to PNG
+      const pngUri = await svg.svgAsPngUri(svgElement, options);
+      const response = await fetch(pngUri);
+      const blob = await response.blob();
+      const fileName = `instagram-story-${gameId}-${Date.now()}.png`;
+
+      // Build game URL and template info for credit consumption
+      const gameUrl = wizardUrl || window.location.pathname;
+      const templateInfo = selectedCustomTemplate
+        ? `template=${selectedCustomTemplate.id}`
+        : `theme=${selectedTheme}`;
+
+      // Consume credit BEFORE sharing
+      const creditConsumed = await consumeCredit(gameUrl, templateInfo);
+      if (!creditConsumed) {
+        toast({
+          title: "Fehler",
+          description: "Credit konnte nicht verbraucht werden. Bitte versuchen Sie es erneut.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const isNative = Capacitor.isNativePlatform();
+
+      if (isNative) {
+        try {
+          const base64Data = await blobToBase64(blob);
+
+          // Save to filesystem
+          await Filesystem.writeFile({
+            path: fileName,
+            data: base64Data,
+            directory: Directory.Cache,
+          });
+
+          // Get file URI
+          const fileUri = await Filesystem.getUri({
+            directory: Directory.Cache,
+            path: fileName,
+          });
+
+          // Try to open Instagram app
+          try {
+            // Try Instagram Stories deep link
+            window.location.href = 'instagram://story-camera';
+          } catch (e) {
+            console.warn('Could not open Instagram app directly');
+          }
+
+          // Share the image
+          await Share.share({
+            title: "Teile in Instagram Story",
+            text: "Erstelle eine Story mit diesem Bild!",
+            url: fileUri.uri,
+            dialogTitle: "In Instagram Story teilen",
+          });
+
+          notifySuccess();
+        } catch (error) {
+          console.error("Instagram share failed:", error);
+          throw error;
+        }
+      } else {
+        // Web platform
+        const canShare = navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'image/png' })] });
+
+        if (canShare) {
+          try {
+            const file = new File([blob], fileName, { type: 'image/png' });
+            await navigator.share({
+              files: [file],
+              title: "Teile in Instagram Story",
+              text: "Erstelle eine Story mit diesem Bild!",
+            });
+
+            // Try to open Instagram after sharing
+            setTimeout(() => {
+              try {
+                window.open('instagram://story-camera', '_blank');
+              } catch (e) {
+                console.warn('Could not open Instagram app');
+              }
+            }, 1000);
+
+            notifySuccess();
+          } catch (error) {
+            if ((error as Error).name !== 'AbortError') {
+              throw error;
+            }
+          }
+        } else {
+          // Fallback: download and show instructions
+          const link = document.createElement('a');
+          link.download = fileName;
+          link.href = pngUri;
+          link.click();
+
+          toast({
+            title: "Bild gespeichert",
+            description: "Öffnen Sie Instagram und laden Sie das Bild aus Ihrer Galerie hoch.",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Instagram share failed:", error);
+      if ((error as Error).name !== 'AbortError') {
+        notifyError();
+      }
+    }
+  };
+
   const confirmDownload = async () => {
     setShowConfirmDialog(false);
 
@@ -575,28 +810,45 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         viewBox: svgElement.getAttribute('viewBox')
       });
 
-      // Wait for images to load if using custom template
-      if (selectedCustomTemplate) {
-        console.log("Waiting for images to load in custom template...");
-        const images = svgElement.querySelectorAll('image');
-        await Promise.all(
-          Array.from(images).map(img => {
-            const href = img.getAttribute('href') || img.getAttribute('xlink:href');
-            if (!href || href.startsWith('data:')) return Promise.resolve();
-            
-            return new Promise((resolve) => {
-              const testImg = new Image();
-              testImg.onload = () => resolve(undefined);
-              testImg.onerror = () => {
-                console.warn('Failed to preload image:', href);
-                resolve(undefined);
-              };
-              testImg.src = href;
-            });
-          })
-        );
-        console.log("All images loaded");
-      }
+      // Wait for images to load - both custom templates and web components
+      console.log("Waiting for images to load...");
+      const images = svgElement.querySelectorAll('image');
+      await Promise.all(
+        Array.from(images).map(img => {
+          const href = img.getAttribute('href') || img.getAttribute('xlink:href');
+          if (!href || href.startsWith('data:')) return Promise.resolve();
+
+          return new Promise((resolve) => {
+            const testImg = new Image();
+            testImg.onload = () => {
+              console.log('Image loaded:', href);
+              resolve(undefined);
+            };
+            testImg.onerror = () => {
+              console.warn('Failed to preload image:', href);
+              resolve(undefined);
+            };
+            // Add a timeout for slow loading images on mobile
+            const timeout = setTimeout(() => {
+              console.warn('Image load timeout:', href);
+              resolve(undefined);
+            }, 10000); // 10 second timeout
+
+            testImg.onload = () => {
+              clearTimeout(timeout);
+              console.log('Image loaded:', href);
+              resolve(undefined);
+            };
+            testImg.onerror = () => {
+              clearTimeout(timeout);
+              console.warn('Failed to preload image:', href);
+              resolve(undefined);
+            };
+            testImg.src = href;
+          });
+        })
+      );
+      console.log("All images loaded");
 
       // Inline external images (team logos, etc.)
       console.log("Inlining external images...");
@@ -637,6 +889,25 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       // Check if running on native platform (iOS/Android)
       const isNative = Capacitor.isNativePlatform();
 
+      // Build game URL and template info for credit consumption
+      const gameUrl = wizardUrl || window.location.pathname;
+      const templateInfo = selectedCustomTemplate
+        ? `template=${selectedCustomTemplate.id}`
+        : `theme=${selectedTheme}`;
+
+      // Consume credit BEFORE share/download to ensure it's always consumed
+      console.log("Consuming credit...");
+      const creditConsumed = await consumeCredit(gameUrl, templateInfo);
+      if (!creditConsumed) {
+        toast({
+          title: "Fehler",
+          description: "Credit konnte nicht verbraucht werden. Bitte versuchen Sie es erneut.",
+          variant: "destructive",
+        });
+        return;
+      }
+      console.log("Credit consumed successfully");
+
       if (isNative) {
         // Use Capacitor Share for native platforms
         try {
@@ -663,77 +934,53 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
             dialogTitle: "Bild teilen",
           });
 
-          // Consume credit after successful share
-          // Build game URL and template info
-          const gameUrl = wizardUrl || window.location.pathname; // Current wizard URL
-          const templateInfo = selectedCustomTemplate 
-            ? `template=${selectedCustomTemplate.id}` 
-            : `theme=${selectedTheme}`;
-          
-          const creditConsumed = await consumeCredit(gameUrl, templateInfo);
-          if (!creditConsumed) {
-            toast({
-              title: "Warnung",
-              description: "Das Bild wurde erstellt, aber es gab ein Problem beim Verbrauch des Credits.",
-              variant: "destructive",
-            });
-          }
           notifySuccess(true);
         } catch (error) {
           console.error("Capacitor share failed:", error);
-          throw error;
+          // Credit was already consumed, so we don't throw error
+          // User might have cancelled the share dialog
+          if ((error as Error).name === 'AbortError') {
+            toast({
+              title: "Abgebrochen",
+              description: "Der Share-Dialog wurde abgebrochen. Der Credit wurde bereits verbraucht.",
+            });
+          } else {
+            throw error;
+          }
         }
       } else {
         // Web platform - try Web Share API first
         const canShare = navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'image/png' })] });
 
         if (canShare) {
-          // Use native share on mobile browsers
-          const file = new File([blob], fileName, { type: 'image/png' });
-          await navigator.share({
-            files: [file],
-            title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
-            text: activeTab === "preview" ? "Schau dir diese Spielvorschau an!" : "Schau dir dieses Resultat an!",
-          });
-          
-          // Consume credit after successful share
-          // Build game URL and template info
-          const gameUrl = wizardUrl || window.location.pathname;
-          const templateInfo = selectedCustomTemplate 
-            ? `template=${selectedCustomTemplate.id}` 
-            : `theme=${selectedTheme}`;
-          
-          const creditConsumed = await consumeCredit(gameUrl, templateInfo);
-          if (!creditConsumed) {
-            toast({
-              title: "Warnung",
-              description: "Das Bild wurde erstellt, aber es gab ein Problem beim Verbrauch des Credits.",
-              variant: "destructive",
+          try {
+            // Use native share on mobile browsers
+            const file = new File([blob], fileName, { type: 'image/png' });
+            await navigator.share({
+              files: [file],
+              title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
+              text: activeTab === "preview" ? "Schau dir diese Spielvorschau an!" : "Schau dir dieses Resultat an!",
             });
+
+            notifySuccess(true);
+          } catch (error) {
+            // Credit was already consumed
+            if ((error as Error).name === 'AbortError') {
+              toast({
+                title: "Abgebrochen",
+                description: "Der Share-Dialog wurde abgebrochen. Der Credit wurde bereits verbraucht.",
+              });
+            } else {
+              throw error;
+            }
           }
-          notifySuccess(true);
         } else {
           // Fallback to download on desktop
           const link = document.createElement('a');
           link.download = fileName;
           link.href = pngUri;
           link.click();
-          
-          // Consume credit after successful download
-          // Build game URL and template info
-          const gameUrl = wizardUrl || window.location.pathname;
-          const templateInfo = selectedCustomTemplate 
-            ? `template=${selectedCustomTemplate.id}` 
-            : `theme=${selectedTheme}`;
-          
-          const creditConsumed = await consumeCredit(gameUrl, templateInfo);
-          if (!creditConsumed) {
-            toast({
-              title: "Warnung",
-              description: "Das Bild wurde heruntergeladen, aber es gab ein Problem beim Verbrauch des Credits.",
-              variant: "destructive",
-            });
-          }
+
           notifySuccess(false);
         }
       }
