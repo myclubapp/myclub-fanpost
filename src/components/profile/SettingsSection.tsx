@@ -25,13 +25,14 @@ export const SettingsSection = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('instagram_username')
+          .select('*')
           .eq('id', user.id)
           .maybeSingle();
 
         if (error) throw error;
-        if (data?.instagram_username) {
-          setInstagramUsername(data.instagram_username);
+        const ig = (data as any)?.instagram_username as string | undefined;
+        if (ig) {
+          setInstagramUsername(ig);
         }
       } catch (error) {
         console.error('Error loading Instagram username:', error);
@@ -49,10 +50,10 @@ export const SettingsSection = () => {
       // Remove @ symbol if user included it
       const cleanUsername = instagramUsername.replace('@', '').trim();
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({ instagram_username: cleanUsername || null })
-        .eq('id', user.id);
+        const { error } = await supabase
+          .from('profiles')
+          .update({ instagram_username: (cleanUsername || null) } as any)
+          .eq('id', user.id);
 
       if (error) throw error;
 

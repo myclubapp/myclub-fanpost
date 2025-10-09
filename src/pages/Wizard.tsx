@@ -135,15 +135,15 @@ const Index = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('remember_last_selection, instagram_username')
+          .select('*')
           .eq('id', user.id)
           .maybeSingle();
 
         if (error) throw error;
 
         if (data) {
-          setRememberLastSelection(data.remember_last_selection ?? true);
-          setInstagramUsername(data.instagram_username || null);
+          setRememberLastSelection((data as any).remember_last_selection ?? true);
+          setInstagramUsername((data as any).instagram_username || null);
         }
       } catch (error) {
         console.error('Error loading profile settings:', error);

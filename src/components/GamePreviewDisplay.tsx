@@ -257,7 +257,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     fetchGameData();
   }, [selectedCustomTemplate, gameId, apiType, toast]);
 
-  // Set initial tab based on whether games have results only if not provided
+  // Auto-switch to Result tab once when results become available
   useEffect(() => {
     const hasAnyResult = gamesHaveResults.some(hasResult => hasResult);
     if (hasAnyResult && activeTab === 'preview') {
@@ -265,7 +265,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       setActiveTab(newTab);
       onTabChange?.(newTab);
     }
-  }, [gamesHaveResults, activeTab, onTabChange]);
+  }, [gamesHaveResults]);
 
   // Update SVG dimensions based on screen size (for display only)
   useEffect(() => {
