@@ -56,6 +56,7 @@ const Index = () => {
     return [];
   });
   const [gamesHaveResults, setGamesHaveResults] = useState<boolean[]>([]);
+  const [gamesData, setGamesData] = useState<any[]>([]);
   const [rememberLastSelection, setRememberLastSelection] = useState(true);
   const [loadedLastSelection, setLoadedLastSelection] = useState(false);
   const [instagramUsername, setInstagramUsername] = useState<string | null>(null);
@@ -269,9 +270,10 @@ const Index = () => {
     }
   };
 
-  const handleGameSelect = (gameIds: string[], hasResults: boolean[]) => {
+  const handleGameSelect = (gameIds: string[], hasResults: boolean[], games?: any[]) => {
     setSelectedGameIds(gameIds);
     setGamesHaveResults(hasResults);
+    setGamesData(games || []);
     const gameIdsParam = gameIds.join(',');
     const params = new URLSearchParams();
     if (selectedTheme !== 'myclub') params.set('theme', selectedTheme);
@@ -542,6 +544,7 @@ const Index = () => {
                 clubId={selectedClubId}
                 gameIds={selectedGameIds}
                 gamesHaveResults={gamesHaveResults}
+                gamesData={gamesData}
                 wizardUrl={(() => {
                   const params = new URLSearchParams();
                   if (selectedTheme !== 'myclub') params.set('theme', selectedTheme);

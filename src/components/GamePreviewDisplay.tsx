@@ -41,6 +41,7 @@ export interface GamePreviewDisplayProps {
   clubId: string;
   gameIds: string[];
   gamesHaveResults?: boolean[];
+  gamesData?: any[];
   wizardUrl?: string;
   selectedTheme?: string;
   onThemeChange?: (theme: string) => void;
@@ -102,7 +103,8 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     sportType, 
     clubId, 
     gameIds, 
-    gamesHaveResults = [], 
+    gamesHaveResults = [],
+    gamesData = [],
     wizardUrl, 
     selectedTheme: initialTheme = "myclub", 
     onThemeChange,
@@ -213,7 +215,30 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       
       setLoadingGameData(true);
       try {
-        // Construct GraphQL query for single game
+        // For volleyball, use the games data passed from the list
+        if (sportType === 'volleyball' && gamesData.length > 0) {
+          const game = gamesData.find(g => g.id === gameId);
+          if (game) {
+            // Map the game data to match the expected format
+            setGameData({
+              id: game.id,
+              teamHome: game.teamHome,
+              teamAway: game.teamAway,
+              date: game.date,
+              time: game.time,
+              result: game.result || '',
+              resultDetail: '',
+              teamHomeLogo: '',
+              teamAwayLogo: '',
+              location: '',
+              city: ''
+            });
+            setLoadingGameData(false);
+            return;
+          }
+        }
+        
+        // For other sports, fetch individual game data
         const query = `{
   game(gameId: "${gameId}") {
     teamHome
@@ -255,7 +280,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     };
 
     fetchGameData();
-  }, [selectedCustomTemplate, gameId, apiType, toast]);
+  }, [selectedCustomTemplate, gameId, apiType, toast, sportType, gamesData]);
 
   // Auto-switch to Result tab once when results become available
   useEffect(() => {

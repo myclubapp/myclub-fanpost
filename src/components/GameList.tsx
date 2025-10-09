@@ -19,7 +19,7 @@ interface Game {
 interface GameListProps {
   sportType: SportType;
   teamId: string;
-  onGameSelect: (gameIds: string[], hasResults: boolean[]) => void;
+  onGameSelect: (gameIds: string[], hasResults: boolean[], games?: Game[]) => void;
   initialSelectedGameIds?: string[];
 }
 
@@ -78,7 +78,8 @@ export const GameList = ({ sportType, teamId, onGameSelect, initialSelectedGameI
       return !!(game?.result && game.result !== "" && game.result !== "-:-");
     });
     
-    onGameSelect(selectedGameIds, hasResults);
+    // Pass the games data for sports that don't support individual game queries
+    onGameSelect(selectedGameIds, hasResults, games);
   };
 
   // Update selected games when games are loaded and initialSelectedGameIds are present
