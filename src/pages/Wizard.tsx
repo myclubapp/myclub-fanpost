@@ -36,9 +36,15 @@ const Index = () => {
   const searchParams = new URLSearchParams(location.search);
   const editSelection = searchParams.get('editSelection') === '1';
   const themeParam = searchParams.get('theme') || searchParams.get('template');
+  const tabParam = searchParams.get('tab') || 'preview';
+  const homeParam = searchParams.get('home') === 'true';
+  const detailParam = searchParams.get('detail') === 'true';
 
   const [selectedSport, setSelectedSport] = useState<SportType | "">(sport || "");
   const [selectedTheme, setSelectedTheme] = useState<string>(themeParam || "myclub");
+  const [activeTab, setActiveTab] = useState<string>(tabParam);
+  const [isHomeGame, setIsHomeGame] = useState<boolean>(homeParam);
+  const [showResultDetail, setShowResultDetail] = useState<boolean>(detailParam);
   const [selectedClubId, setSelectedClubId] = useState<string>(clubId || "");
   const [selectedClubName, setSelectedClubName] = useState<string>("");
   const [selectedTeamId, setSelectedTeamId] = useState<string>(teamId || "");
@@ -265,17 +271,57 @@ const Index = () => {
     setSelectedGameIds(gameIds);
     setGamesHaveResults(hasResults);
     const gameIdsParam = gameIds.join(',');
-    const themeQuery = selectedTheme !== 'myclub' ? `?theme=${selectedTheme}` : '';
-    navigate(`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIdsParam}${themeQuery}`);
+    const params = new URLSearchParams();
+    if (selectedTheme !== 'myclub') params.set('theme', selectedTheme);
+    if (activeTab !== 'preview') params.set('tab', activeTab);
+    if (isHomeGame) params.set('home', 'true');
+    if (showResultDetail) params.set('detail', 'true');
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    navigate(`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIdsParam}${queryString}`);
+  };
+
+  const buildUrlWithParams = (overrides: Partial<{ theme: string; tab: string; home: boolean; detail: boolean }> = {}) => {
+    if (selectedGameIds.length === 0) return;
+    
+    const gameIdsParam = selectedGameIds.join(',');
+    const params = new URLSearchParams();
+    
+    const finalTheme = overrides.theme ?? selectedTheme;
+    const finalTab = overrides.tab ?? activeTab;
+    const finalHome = overrides.home ?? isHomeGame;
+    const finalDetail = overrides.detail ?? showResultDetail;
+    
+    if (finalTheme !== 'myclub') params.set('theme', finalTheme);
+    if (finalTab !== 'preview') params.set('tab', finalTab);
+    if (finalHome) params.set('home', 'true');
+    if (finalDetail) params.set('detail', 'true');
+    
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    return `/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIdsParam}${queryString}`;
   };
 
   const handleThemeChange = (theme: string) => {
     setSelectedTheme(theme);
-    if (selectedGameIds.length > 0) {
-      const gameIdsParam = selectedGameIds.join(',');
-      const themeQuery = theme !== 'myclub' ? `?theme=${theme}` : '';
-      navigate(`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIdsParam}${themeQuery}`);
-    }
+    const url = buildUrlWithParams({ theme });
+    if (url) navigate(url);
+  };
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    const url = buildUrlWithParams({ tab });
+    if (url) navigate(url);
+  };
+
+  const handleHomeGameChange = (value: boolean) => {
+    setIsHomeGame(value);
+    const url = buildUrlWithParams({ home: value });
+    if (url) navigate(url);
+  };
+
+  const handleResultDetailChange = (value: boolean) => {
+    setShowResultDetail(value);
+    const url = buildUrlWithParams({ detail: value });
+    if (url) navigate(url);
   };
 
   const sportLabels: Record<SportType, string> = {
@@ -486,9 +532,23 @@ const Index = () => {
                 clubId={selectedClubId}
                 gameIds={selectedGameIds}
                 gamesHaveResults={gamesHaveResults}
-                wizardUrl={`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${selectedGameIds.join(',')}${selectedTheme !== 'myclub' ? `?theme=${selectedTheme}` : ''}`}
+                wizardUrl={(() => {
+                  const params = new URLSearchParams();
+                  if (selectedTheme !== 'myclub') params.set('theme', selectedTheme);
+                  if (activeTab !== 'preview') params.set('tab', activeTab);
+                  if (isHomeGame) params.set('home', 'true');
+                  if (showResultDetail) params.set('detail', 'true');
+                  const queryString = params.toString() ? `?${params.toString()}` : '';
+                  return `/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${selectedGameIds.join(',')}${queryString}`;
+                })()}
                 selectedTheme={selectedTheme}
                 onThemeChange={handleThemeChange}
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+                isHomeGame={isHomeGame}
+                onHomeGameChange={handleHomeGameChange}
+                showResultDetail={showResultDetail}
+                onResultDetailChange={handleResultDetailChange}
                 ref={gamePreviewRef}
               />
             </div>

@@ -44,6 +44,12 @@ export interface GamePreviewDisplayProps {
   wizardUrl?: string;
   selectedTheme?: string;
   onThemeChange?: (theme: string) => void;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
+  isHomeGame?: boolean;
+  onHomeGameChange?: (value: boolean) => void;
+  showResultDetail?: boolean;
+  onResultDetailChange?: (value: boolean) => void;
 }
 
 export interface GamePreviewDisplayRef {
@@ -91,7 +97,21 @@ declare global {
 }
 
 export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewDisplayProps>(
-  ({ sportType, clubId, gameIds, gamesHaveResults = [], wizardUrl, selectedTheme: initialTheme = "myclub", onThemeChange }, ref) => {
+  ({ 
+    sportType, 
+    clubId, 
+    gameIds, 
+    gamesHaveResults = [], 
+    wizardUrl, 
+    selectedTheme: initialTheme = "myclub", 
+    onThemeChange,
+    activeTab: initialActiveTab = "preview",
+    onTabChange,
+    isHomeGame: initialIsHomeGame = false,
+    onHomeGameChange,
+    showResultDetail: initialShowResultDetail = false,
+    onResultDetailChange
+  }, ref) => {
   const gameId = gameIds[0];
   const gameId2 = gameIds.length > 1 ? gameIds[1] : undefined;
   const gameId3 = gameIds.length > 2 ? gameIds[2] : undefined;
@@ -103,21 +123,33 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   const { credits, hasCredits, consumeCredit, loading: creditsLoading } = useCredits();
   const { isPaidUser } = useUserRole();
   
-  // Set initial tab based on whether games have results
-  const hasAnyResult = gamesHaveResults.some(hasResult => hasResult);
-  const [activeTab, setActiveTab] = useState<string>(hasAnyResult ? "result" : "preview");
-  
   const [selectedTheme, setSelectedTheme] = useState(initialTheme);
+  const [activeTab, setActiveTab] = useState<string>(initialActiveTab);
   
   // Update local theme when prop changes
   useEffect(() => {
     setSelectedTheme(initialTheme);
   }, [initialTheme]);
+  
+  // Update local tab when prop changes
+  useEffect(() => {
+    setActiveTab(initialActiveTab);
+  }, [initialActiveTab]);
+  
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
-  const [isHomeGame, setIsHomeGame] = useState(false);
-  const [showResultDetail, setShowResultDetail] = useState(false);
+  const [isHomeGame, setIsHomeGame] = useState(initialIsHomeGame);
+  const [showResultDetail, setShowResultDetail] = useState(initialShowResultDetail);
+  
+  // Update local states when props change
+  useEffect(() => {
+    setIsHomeGame(initialIsHomeGame);
+  }, [initialIsHomeGame]);
+  
+  useEffect(() => {
+    setShowResultDetail(initialShowResultDetail);
+  }, [initialShowResultDetail]);
   const [svgDimensions, setSvgDimensions] = useState({ width: "500", height: "625" });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [customTemplates, setCustomTemplates] = useState<CustomTemplate[]>([]);
@@ -223,11 +255,15 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     fetchGameData();
   }, [selectedCustomTemplate, gameId, apiType, toast]);
 
-  // Update tab when gamesHaveResults changes
+  // Set initial tab based on whether games have results only if not provided
   useEffect(() => {
     const hasAnyResult = gamesHaveResults.some(hasResult => hasResult);
-    setActiveTab(hasAnyResult ? "result" : "preview");
-  }, [gamesHaveResults]);
+    if (hasAnyResult && activeTab === 'preview') {
+      const newTab = "result";
+      setActiveTab(newTab);
+      onTabChange?.(newTab);
+    }
+  }, [gamesHaveResults, activeTab, onTabChange]);
 
   // Update SVG dimensions based on screen size (for display only)
   useEffect(() => {
@@ -768,7 +804,10 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         </div>
 
         {isMyClubTheme ? (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs value={activeTab} onValueChange={(value) => {
+            setActiveTab(value);
+            onTabChange?.(value);
+          }} className="w-full">
             <div className="flex flex-col gap-4 mb-6">
               <TabsList className="grid w-full grid-cols-2 bg-muted/50">
               <TabsTrigger value="preview" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
@@ -787,7 +826,11 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
                   <Checkbox
                     id="home-game"
                     checked={isHomeGame}
-                    onCheckedChange={(checked) => setIsHomeGame(checked as boolean)}
+                    onCheckedChange={(checked) => {
+                      const value = checked as boolean;
+                      setIsHomeGame(value);
+                      onHomeGameChange?.(value);
+                    }}
                   />
                   <Label htmlFor="home-game" className="text-sm text-muted-foreground cursor-pointer">
                     Ist Heimspiel
@@ -799,7 +842,11 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
                   <Checkbox
                     id="result-detail"
                     checked={showResultDetail}
-                    onCheckedChange={(checked) => setShowResultDetail(checked as boolean)}
+                    onCheckedChange={(checked) => {
+                      const value = checked as boolean;
+                      setShowResultDetail(value);
+                      onResultDetailChange?.(value);
+                    }}
                   />
                   <Label htmlFor="result-detail" className="text-sm text-muted-foreground cursor-pointer">
                     Details anzeigen
