@@ -525,38 +525,17 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       return;
     }
 
-    // Check if user has credits
-    if (!hasCredits) {
-      toast({
-        title: "Keine Credits verfügbar",
-        description: "Sie haben keine Credits mehr. Kaufen Sie zusätzliche Credits oder upgraden Sie auf Pro.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Directly execute Instagram share without confirmation dialog
-    await executeInstagramShare();
-  };
-
-  const executeInstagramShare = async () => {
     const notifyStart = () =>
-      toast({
-        title: "Bild wird vorbereitet",
-        description: "Das Bild für Instagram wird erstellt...",
-      });
-
+      toast({ title: "Vorbereitung...", description: "Bild wird erstellt" });
     const notifySuccess = () =>
       toast({
         title: "Erfolgreich!",
-        description: "Das Bild wurde gespeichert. Instagram wird geöffnet.",
+        description: "Bild wurde heruntergeladen. Möchten Sie Instagram öffnen?",
       });
-
     const notifyError = () =>
       toast({
         title: "Fehler",
-        description:
-          "Bild konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+        description: "Beim Erstellen des Bildes ist ein Fehler aufgetreten",
         variant: "destructive",
       });
 
@@ -647,7 +626,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         ? `template=${selectedCustomTemplate.id}`
         : `theme=${selectedTheme}`;
 
-      // Consume credit BEFORE sharing
+      // Consume credit BEFORE download
       const creditConsumed = await consumeCredit(gameUrl, templateInfo);
       if (!creditConsumed) {
         toast({
@@ -658,93 +637,44 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         return;
       }
 
-      const isNative = Capacitor.isNativePlatform();
+      // Download the image
+      const link = document.createElement('a');
+      link.download = fileName;
+      link.href = pngUri;
+      link.click();
 
-      if (isNative) {
-        try {
-          const base64Data = await blobToBase64(blob);
+      // Show dialog asking if user wants to open Instagram
+      setShowConfirmDialog(true);
 
-          // Save to filesystem
-          await Filesystem.writeFile({
-            path: fileName,
-            data: base64Data,
-            directory: Directory.Cache,
-          });
-
-          // Get file URI
-          const fileUri = await Filesystem.getUri({
-            directory: Directory.Cache,
-            path: fileName,
-          });
-
-          // Try to open Instagram app
-          try {
-            // Try Instagram Stories deep link
-            window.location.href = 'instagram://story-camera';
-          } catch (e) {
-            console.warn('Could not open Instagram app directly');
-          }
-
-          // Share the image
-          await Share.share({
-            title: "Teile in Instagram Story",
-            text: "Erstelle eine Story mit diesem Bild!",
-            url: fileUri.uri,
-            dialogTitle: "In Instagram Story teilen",
-          });
-
-          notifySuccess();
-        } catch (error) {
-          console.error("Instagram share failed:", error);
-          throw error;
-        }
-      } else {
-        // Web platform
-        const canShare = navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'image/png' })] });
-
-        if (canShare) {
-          try {
-            const file = new File([blob], fileName, { type: 'image/png' });
-            await navigator.share({
-              files: [file],
-              title: "Teile in Instagram Story",
-              text: "Erstelle eine Story mit diesem Bild!",
-            });
-
-            // Try to open Instagram after sharing
-            setTimeout(() => {
-              try {
-                window.open('instagram://story-camera', '_blank');
-              } catch (e) {
-                console.warn('Could not open Instagram app');
-              }
-            }, 1000);
-
-            notifySuccess();
-          } catch (error) {
-            if ((error as Error).name !== 'AbortError') {
-              throw error;
-            }
-          }
-        } else {
-          // Fallback: download and show instructions
-          const link = document.createElement('a');
-          link.download = fileName;
-          link.href = pngUri;
-          link.click();
-
-          toast({
-            title: "Bild gespeichert",
-            description: "Öffnen Sie Instagram und laden Sie das Bild aus Ihrer Galerie hoch.",
-          });
-        }
-      }
     } catch (error) {
       console.error("Instagram share failed:", error);
-      if ((error as Error).name !== 'AbortError') {
-        notifyError();
-      }
+      notifyError();
     }
+  };
+
+  const handleOpenInstagram = () => {
+    setShowConfirmDialog(false);
+    
+    // Try to open Instagram app or website
+    const isNative = Capacitor.isNativePlatform();
+    
+    if (isNative) {
+      // Try Instagram app deep link on mobile
+      try {
+        window.location.href = 'instagram://';
+      } catch (e) {
+        // Fallback to Instagram website
+        window.open('https://www.instagram.com', '_blank');
+      }
+    } else {
+      // Open Instagram website on desktop
+      window.open('https://www.instagram.com', '_blank');
+    }
+    
+    toast({
+      title: "Instagram geöffnet",
+      description: "Sie können das Bild jetzt in Ihrer Instagram Story hochladen.",
+    });
   };
 
   const confirmDownload = async () => {
@@ -1204,20 +1134,15 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Bild exportieren</AlertDialogTitle>
+            <AlertDialogTitle>Instagram öffnen?</AlertDialogTitle>
             <AlertDialogDescription>
-              Bist du sicher? Dieses Bild kostet dich 1 Credit.
-              {credits && (
-                <span className="block mt-2 text-foreground font-medium">
-                  Verbleibende Credits: {credits.credits_remaining}
-                </span>
-              )}
+              Ihr Bild wurde erfolgreich heruntergeladen. Möchten Sie Instagram öffnen, um das Bild zu teilen?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDownload}>
-              Ja, exportieren
+            <AlertDialogCancel>Nein, danke</AlertDialogCancel>
+            <AlertDialogAction onClick={handleOpenInstagram}>
+              Ja, Instagram öffnen
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
