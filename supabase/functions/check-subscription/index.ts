@@ -119,7 +119,7 @@ serve(async (req) => {
           .insert({
             user_id: user.id,
             amount: 10,
-            transaction_type: 'subscription_activated',
+            transaction_type: 'subscription_grant',
             description: 'Pro Abo aktiviert: +10 Credits'
           });
       } else if (roleData?.role === 'paid_user') {
