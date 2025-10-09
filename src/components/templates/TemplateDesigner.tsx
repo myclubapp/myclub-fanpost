@@ -75,6 +75,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   const [lockAspectRatio, setLockAspectRatio] = useState(true);
   const [expandedGame, setExpandedGame] = useState<number | null>(1);
   const [cropperFormat, setCropperFormat] = useState<'4:5' | '1:1'>(format);
+  const [backgroundColor, setBackgroundColor] = useState(config.backgroundColor || '#1a1a1a');
 
   // Canvas dimensions based on format
   const canvasDimensions = format === '4:5' 
@@ -83,8 +84,8 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
 
   // Sync elements and format with config
   useEffect(() => {
-    onChange({ ...config, elements, format });
-  }, [elements, format]);
+    onChange({ ...config, elements, format, backgroundColor });
+  }, [elements, format, backgroundColor]);
 
   const handleMouseDown = (e: React.MouseEvent, elementId: string) => {
     e.stopPropagation();
@@ -459,6 +460,25 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
             />
           </div>
 
+          <div className="mb-4 p-3 border rounded-lg bg-card">
+            <Label className="text-sm font-medium mb-2 block">Hintergrundfarbe</Label>
+            <div className="flex gap-2">
+              <Input
+                type="color"
+                value={backgroundColor}
+                onChange={(e) => setBackgroundColor(e.target.value)}
+                className="w-16 p-1 h-10"
+              />
+              <Input
+                type="text"
+                value={backgroundColor}
+                onChange={(e) => setBackgroundColor(e.target.value)}
+                className="flex-1"
+                placeholder="#1a1a1a"
+              />
+            </div>
+          </div>
+
           {/* Drag & Drop API Fields per Game */}
           <div className="mb-4 space-y-2">
             {Array.from({ length: supportedGames }, (_, i) => i + 1).map(gameNumber => {
@@ -543,7 +563,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
               onMouseLeave={handleMouseUp}
             >
               {/* Background */}
-              <rect width={canvasDimensions.width} height={canvasDimensions.height} fill={config.backgroundColor || '#1a1a1a'} />
+              <rect width={canvasDimensions.width} height={canvasDimensions.height} fill={backgroundColor} />
               
               {/* Grid for reference */}
               <defs>
