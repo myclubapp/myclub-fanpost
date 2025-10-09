@@ -333,10 +333,7 @@ const Index = () => {
                     <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                       <span className="text-lg font-bold text-primary">V</span>
                     </div>
-                    <div className="flex flex-col">
-                      <span className="font-medium">Volleyball</span>
-                      <Badge variant="secondary" className="text-xs w-fit mt-1">Coming soon</Badge>
-                    </div>
+                    <span className="font-medium">Volleyball</span>
                   </div>
                   <span className="text-sm text-muted-foreground">Swiss Volley</span>
                 </div>
