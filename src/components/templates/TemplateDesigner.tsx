@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Trash2, Move, Type, ImageIcon, Database, Upload, Eye, ChevronDown, ChevronUp, RectangleHorizontal, Square } from 'lucide-react';
+import { Trash2, Move, Type, ImageIcon, Database, Upload, ChevronDown, ChevronUp, RectangleHorizontal, Square } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ImageCropper } from '@/components/ImageCropper';
@@ -57,9 +57,12 @@ interface TemplateDesignerProps {
   onSupportedGamesChange: (games: number) => void;
   format: '4:5' | '1:1';
   onFormatChange: (format: '4:5' | '1:1') => void;
+  previewMode: boolean;
+  previewData: any;
+  onTogglePreview: () => void;
 }
 
-export const TemplateDesigner = ({ supportedGames, config, onChange, onSupportedGamesChange, format, onFormatChange }: TemplateDesignerProps) => {
+export const TemplateDesigner = ({ supportedGames, config, onChange, onSupportedGamesChange, format, onFormatChange, previewMode, previewData, onTogglePreview }: TemplateDesignerProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -70,8 +73,6 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   const [uploading, setUploading] = useState(false);
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
-  const [previewMode, setPreviewMode] = useState(false);
-  const [previewData, setPreviewData] = useState<any>(null);
   const [lockAspectRatio, setLockAspectRatio] = useState(true);
   const [expandedGame, setExpandedGame] = useState<number | null>(1);
   const [cropperFormat, setCropperFormat] = useState<'4:5' | '1:1'>(format);
@@ -304,48 +305,6 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
     }
   };
 
-  const loadPreviewData = async () => {
-    try {
-      const gameIds = ['1073721', '1073723', '1073724'];
-      const gamesToLoad = gameIds.slice(0, supportedGames);
-      
-      const promises = gamesToLoad.map(gameId =>
-        fetch(`https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissunihockey?query=%7B%0A%20%20game(gameId%3A%20%22${gameId}%22)%20%7B%0A%20%20%20%20teamHome%0A%20%20%20%20teamAway%0A%20%20%20%20date%0A%20%20%20%20time%0A%20%20%20%20location%0A%20%20%20%20city%0A%20%20%20%20result%0A%20%20%20%20resultDetail%0A%20%20%20%20teamHomeLogo%0A%20%20%20%20teamAwayLogo%0A%20%20%7D%0A%7D%0A`)
-          .then(res => res.json())
-          .then(data => data.data.game)
-      );
-      
-      const gamesData = await Promise.all(promises);
-      
-      // Create preview data with suffixed fields for games 2 and 3
-      const previewDataObj: any = gamesData[0]; // Game 1 has no suffix
-      
-      if (gamesData[1]) {
-        Object.keys(gamesData[1]).forEach(key => {
-          previewDataObj[`${key}2`] = gamesData[1][key];
-        });
-      }
-      
-      if (gamesData[2]) {
-        Object.keys(gamesData[2]).forEach(key => {
-          previewDataObj[`${key}3`] = gamesData[2][key];
-        });
-      }
-      
-      setPreviewData(previewDataObj);
-      setPreviewMode(true);
-      toast({
-        title: "Vorschau geladen",
-        description: `Template wird mit Beispieldaten für ${supportedGames} ${supportedGames === 1 ? 'Spiel' : 'Spiele'} angezeigt`,
-      });
-    } catch (error) {
-      toast({
-        title: "Fehler beim Laden",
-        description: "Vorschaudaten konnten nicht geladen werden",
-        variant: "destructive",
-      });
-    }
-  };
 
   const getElementContent = (element: SVGElement) => {
     if (previewMode && (element.type === 'api-text' || element.type === 'api-image')) {
@@ -432,24 +391,15 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
               <Type className="h-4 w-4" />
               Statischer Text
             </Button>
-            <Button 
-              onClick={() => fileInputRef.current?.click()} 
-              size="sm" 
-              variant="outline" 
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              size="sm"
+              variant="outline"
               className="gap-2"
               disabled={uploading}
             >
               <Upload className="h-4 w-4" />
               {uploading ? 'Lädt hoch...' : 'Bild hochladen'}
-            </Button>
-            <Button 
-              onClick={() => previewMode ? setPreviewMode(false) : loadPreviewData()} 
-              size="sm" 
-              variant={previewMode ? "default" : "outline"}
-              className="gap-2"
-            >
-              <Eye className="h-4 w-4" />
-              {previewMode ? 'Editor-Modus' : 'Vorschau'}
             </Button>
             <input
               ref={fileInputRef}
@@ -458,25 +408,6 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
               onChange={handleFileUpload}
               className="hidden"
             />
-          </div>
-
-          <div className="mb-4 p-3 border rounded-lg bg-card">
-            <Label className="text-sm font-medium mb-2 block">Hintergrundfarbe</Label>
-            <div className="flex gap-2">
-              <Input
-                type="color"
-                value={backgroundColor}
-                onChange={(e) => setBackgroundColor(e.target.value)}
-                className="w-16 p-1 h-10"
-              />
-              <Input
-                type="text"
-                value={backgroundColor}
-                onChange={(e) => setBackgroundColor(e.target.value)}
-                className="flex-1"
-                placeholder="#1a1a1a"
-              />
-            </div>
           </div>
 
           {/* Drag & Drop API Fields per Game */}
@@ -704,15 +635,42 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
       </Card>
 
       {/* Properties Panel */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Element-Eigenschaften</CardTitle>
-          <CardDescription>
-            {selectedElementData 
-              ? `Bearbeiten: ${selectedElementData.type === 'text' ? 'Text' : 'Bild'}`
-              : 'Kein Element ausgewählt'}
-          </CardDescription>
-        </CardHeader>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Hintergrundfarbe</CardTitle>
+            <CardDescription>
+              Wählen Sie die Hintergrundfarbe für das Template
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2">
+              <Input
+                type="color"
+                value={backgroundColor}
+                onChange={(e) => setBackgroundColor(e.target.value)}
+                className="w-16 p-1 h-10"
+              />
+              <Input
+                type="text"
+                value={backgroundColor}
+                onChange={(e) => setBackgroundColor(e.target.value)}
+                className="flex-1"
+                placeholder="#1a1a1a"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Element-Eigenschaften</CardTitle>
+            <CardDescription>
+              {selectedElementData
+                ? `Bearbeiten: ${selectedElementData.type === 'text' ? 'Text' : 'Bild'}`
+                : 'Kein Element ausgewählt'}
+            </CardDescription>
+          </CardHeader>
         <CardContent>
           {selectedElementData ? (
             <div className="space-y-4">
@@ -931,6 +889,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
     </>
   );

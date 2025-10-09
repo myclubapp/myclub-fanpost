@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save, ArrowLeft } from 'lucide-react';
+import { Loader2, Save, ArrowLeft, Eye } from 'lucide-react';
 import { TemplateDesigner } from '@/components/templates/TemplateDesigner';
 import { z } from 'zod';
 
@@ -32,6 +32,8 @@ const TemplateEditor = () => {
   const [format, setFormat] = useState<'4:5' | '1:1'>('4:5');
   const [svgConfig, setSvgConfig] = useState<any>({});
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [previewMode, setPreviewMode] = useState(false);
+  const [previewData, setPreviewData] = useState<any>(null);
 
   const isEditMode = !!id;
 
@@ -79,6 +81,58 @@ const TemplateEditor = () => {
       navigate('/templates');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPreviewData = async () => {
+    try {
+      const gameIds = ['1073721', '1073723', '1073724'];
+      const gamesToLoad = gameIds.slice(0, supportedGames);
+
+      const promises = gamesToLoad.map(gameId =>
+        fetch(`https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissunihockey?query=%7B%0A%20%20game(gameId%3A%20%22${gameId}%22)%20%7B%0A%20%20%20%20teamHome%0A%20%20%20%20teamAway%0A%20%20%20%20date%0A%20%20%20%20time%0A%20%20%20%20location%0A%20%20%20%20city%0A%20%20%20%20result%0A%20%20%20%20resultDetail%0A%20%20%20%20teamHomeLogo%0A%20%20%20%20teamAwayLogo%0A%20%20%7D%0A%7D%0A`)
+          .then(res => res.json())
+          .then(data => data.data.game)
+      );
+
+      const gamesData = await Promise.all(promises);
+
+      // Create preview data with suffixed fields for games 2 and 3
+      const previewDataObj: any = gamesData[0]; // Game 1 has no suffix
+
+      if (gamesData[1]) {
+        Object.keys(gamesData[1]).forEach(key => {
+          previewDataObj[`${key}2`] = gamesData[1][key];
+        });
+      }
+
+      if (gamesData[2]) {
+        Object.keys(gamesData[2]).forEach(key => {
+          previewDataObj[`${key}3`] = gamesData[2][key];
+        });
+      }
+
+      setPreviewData(previewDataObj);
+      setPreviewMode(true);
+      toast({
+        title: "Vorschau geladen",
+        description: `Template wird mit Beispieldaten für ${supportedGames} ${supportedGames === 1 ? 'Spiel' : 'Spiele'} angezeigt`,
+      });
+    } catch (error) {
+      toast({
+        title: "Fehler beim Laden",
+        description: "Vorschaudaten konnten nicht geladen werden",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleTogglePreview = () => {
+    if (previewMode) {
+      setPreviewMode(false);
+      setPreviewData(null);
+    } else {
+      loadPreviewData();
     }
   };
 
@@ -179,14 +233,24 @@ const TemplateEditor = () => {
                 </p>
               </div>
             </div>
-            <Button onClick={handleSave} disabled={loading} className="gap-2">
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              Speichern
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleTogglePreview}
+                variant={previewMode ? "default" : "outline"}
+                className="gap-2"
+              >
+                <Eye className="h-4 w-4" />
+                {previewMode ? 'Editor-Modus' : 'Vorschau'}
+              </Button>
+              <Button onClick={handleSave} disabled={loading} className="gap-2">
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                Speichern
+              </Button>
+            </div>
           </div>
 
           <Card>
@@ -258,6 +322,9 @@ const TemplateEditor = () => {
             onSupportedGamesChange={setSupportedGames}
             format={format}
             onFormatChange={setFormat}
+            previewMode={previewMode}
+            previewData={previewData}
+            onTogglePreview={handleTogglePreview}
           />
         </div>
       </div>
