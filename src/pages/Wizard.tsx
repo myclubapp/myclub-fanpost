@@ -291,14 +291,23 @@ const Index = () => {
     const finalHome = overrides.home ?? isHomeGame;
     const finalDetail = overrides.detail ?? showResultDetail;
     
-    if (finalTheme !== 'myclub') params.set('theme', finalTheme);
-    if (finalTab !== 'preview') params.set('tab', finalTab);
+    // Check if it's a custom template (not a standard myclub theme)
+    const isCustomTemplate = !['myclub', 'kadetten-unihockey', 'myclub-light', 'myclub-dark'].includes(finalTheme);
     
-    // Only add home parameter if preview tab is active
-    if (finalTab === 'preview' && finalHome) params.set('home', 'true');
-    
-    // Only add detail parameter if result tab is active
-    if (finalTab === 'result' && finalDetail) params.set('detail', 'true');
+    if (isCustomTemplate) {
+      // For custom templates, only set the template parameter
+      params.set('template', finalTheme);
+    } else {
+      // For standard themes
+      if (finalTheme !== 'myclub') params.set('theme', finalTheme);
+      if (finalTab !== 'preview') params.set('tab', finalTab);
+      
+      // Only add home parameter if preview tab is active
+      if (finalTab === 'preview' && finalHome) params.set('home', 'true');
+      
+      // Only add detail parameter if result tab is active
+      if (finalTab === 'result' && finalDetail) params.set('detail', 'true');
+    }
     
     const queryString = params.toString() ? `?${params.toString()}` : '';
     return `/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIdsParam}${queryString}`;
