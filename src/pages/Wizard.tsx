@@ -160,7 +160,7 @@ const Index = () => {
       
       const apiUrls: Record<SportType, string> = {
         unihockey: "https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissunihockey?query={%0A%20%20clubs{%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20}%20%0A}",
-        volleyball: "",
+        volleyball: "https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissvolley?query=%7B%0A%20%20clubs%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A",
         handball: "",
       };
 
@@ -190,7 +190,7 @@ const Index = () => {
       
       const apiUrls: Record<SportType, (clubId: string) => string> = {
         unihockey: (clubId: string) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissunihockey?query={%0A%20%20teams(clubId%3A%20%22${clubId}%22)%20{%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20}%0A}%0A`,
-        volleyball: () => "",
+        volleyball: (clubId: string) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissvolley?query=%7B%0A%20%20teams(clubId%3A%20%22${clubId}%22)%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A`,
         handball: () => "",
       };
 
@@ -392,12 +392,7 @@ const Index = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="unihockey">Unihockey</SelectItem>
-                      <SelectItem value="volleyball" disabled>
-                        <div className="flex items-center gap-2">
-                          Volleyball
-                          <Badge variant="secondary" className="text-xs">Coming soon</Badge>
-                        </div>
-                      </SelectItem>
+                      <SelectItem value="volleyball">Volleyball</SelectItem>
                       <SelectItem value="handball" disabled>
                         <div className="flex items-center gap-2">
                           Handball
