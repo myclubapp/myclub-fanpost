@@ -36,7 +36,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 type SportType = "unihockey" | "volleyball" | "handball";
 
-interface GamePreviewDisplayProps {
+export interface GamePreviewDisplayProps {
   sportType: SportType;
   clubId: string;
   gameIds: string[];

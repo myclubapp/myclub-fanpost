@@ -468,12 +468,12 @@ const Index = () => {
                 <ChevronLeft className="h-4 w-4" />
                 Zurück zur Spielauswahl
               </Button>
-              <GamePreviewDisplay 
+              <GamePreviewDisplay
                 sportType={selectedSport}
                 clubId={selectedClubId}
-                wizardUrl={`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${selectedGameIds.join(',')}`}
                 gameIds={selectedGameIds}
                 gamesHaveResults={gamesHaveResults}
+                wizardUrl={`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${selectedGameIds.join(',')}`}
                 ref={gamePreviewRef}
               />
             </div>
