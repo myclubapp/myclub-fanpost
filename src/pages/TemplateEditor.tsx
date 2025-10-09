@@ -213,9 +213,11 @@ const TemplateEditor = () => {
   return (
     <div className="min-h-screen bg-background pt-16">
       <Header />
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <div className="flex items-center justify-between">
+
+      {/* Sticky Header */}
+      <div className="fixed top-16 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-b border-border shadow-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="max-w-6xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button
                 variant="ghost"
@@ -225,10 +227,10 @@ const TemplateEditor = () => {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div>
-                <h1 className="text-3xl font-bold">
+                <h1 className="text-2xl font-bold">
                   {isEditMode ? 'Template bearbeiten' : 'Neues Template'}
                 </h1>
-                <p className="text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground">
                   Erstellen Sie eine eigene Vorlage für Ihre Spielbilder
                 </p>
               </div>
@@ -252,6 +254,11 @@ const TemplateEditor = () => {
               </Button>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8 pt-32">
+        <div className="max-w-6xl mx-auto space-y-6">
 
           <Card>
             <CardHeader>
