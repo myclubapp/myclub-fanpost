@@ -471,6 +471,7 @@ const Index = () => {
               <GamePreviewDisplay 
                 sportType={selectedSport}
                 clubId={selectedClubId}
+                wizardUrl={`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${selectedGameIds.join(',')}`}
                 gameIds={selectedGameIds}
                 gamesHaveResults={gamesHaveResults}
                 ref={gamePreviewRef}

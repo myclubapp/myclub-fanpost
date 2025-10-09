@@ -41,6 +41,7 @@ interface GamePreviewDisplayProps {
   clubId: string;
   gameIds: string[];
   gamesHaveResults?: boolean[];
+  wizardUrl?: string;
 }
 
 export interface GamePreviewDisplayRef {
@@ -88,7 +89,7 @@ declare global {
 }
 
 export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewDisplayProps>(
-  ({ sportType, clubId, gameIds, gamesHaveResults = [] }, ref) => {
+  ({ sportType, clubId, gameIds, gamesHaveResults = [], wizardUrl }, ref) => {
   const gameId = gameIds[0];
   const gameId2 = gameIds.length > 1 ? gameIds[1] : undefined;
   const gameId3 = gameIds.length > 2 ? gameIds[2] : undefined;
@@ -621,7 +622,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
 
           // Consume credit after successful share
           // Build game URL and template info
-          const gameUrl = window.location.pathname; // Current wizard URL
+          const gameUrl = wizardUrl || window.location.pathname; // Current wizard URL
           const templateInfo = selectedCustomTemplate 
             ? `template=${selectedCustomTemplate.id}` 
             : `theme=${selectedTheme}`;
@@ -654,7 +655,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
           
           // Consume credit after successful share
           // Build game URL and template info
-          const gameUrl = window.location.pathname;
+          const gameUrl = wizardUrl || window.location.pathname;
           const templateInfo = selectedCustomTemplate 
             ? `template=${selectedCustomTemplate.id}` 
             : `theme=${selectedTheme}`;
@@ -677,7 +678,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
           
           // Consume credit after successful download
           // Build game URL and template info
-          const gameUrl = window.location.pathname;
+          const gameUrl = wizardUrl || window.location.pathname;
           const templateInfo = selectedCustomTemplate 
             ? `template=${selectedCustomTemplate.id}` 
             : `theme=${selectedTheme}`;
