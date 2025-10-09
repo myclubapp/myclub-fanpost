@@ -293,8 +293,12 @@ const Index = () => {
     
     if (finalTheme !== 'myclub') params.set('theme', finalTheme);
     if (finalTab !== 'preview') params.set('tab', finalTab);
-    if (finalHome) params.set('home', 'true');
-    if (finalDetail) params.set('detail', 'true');
+    
+    // Only add home parameter if preview tab is active
+    if (finalTab === 'preview' && finalHome) params.set('home', 'true');
+    
+    // Only add detail parameter if result tab is active
+    if (finalTab === 'result' && finalDetail) params.set('detail', 'true');
     
     const queryString = params.toString() ? `?${params.toString()}` : '';
     return `/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIdsParam}${queryString}`;
