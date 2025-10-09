@@ -387,7 +387,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2 mb-4">
-            <Button onClick={addTextElement} size="sm" variant="outline" className="gap-2">
+            <Button onClick={addTextElement} size="sm" variant="outline" className="gap-2" disabled={previewMode}>
               <Type className="h-4 w-4" />
               Statischer Text
             </Button>
@@ -396,7 +396,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
               size="sm"
               variant="outline"
               className="gap-2"
-              disabled={uploading}
+              disabled={uploading || previewMode}
             >
               <Upload className="h-4 w-4" />
               {uploading ? 'Lädt hoch...' : 'Bild hochladen'}
@@ -443,7 +443,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                                 size="sm"
                                 className="justify-start text-xs h-8"
                                 onClick={() => !isUsed && addApiTextField(field.value)}
-                                disabled={isUsed}
+                                disabled={isUsed || previewMode}
                               >
                                 <Type className="h-3 w-3 mr-1.5" />
                                 {field.label}
@@ -465,7 +465,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                                 size="sm"
                                 className="justify-start text-xs h-8"
                                 onClick={() => !isUsed && addApiImageField(field.value)}
-                                disabled={isUsed}
+                                disabled={isUsed || previewMode}
                               >
                                 <ImageIcon className="h-3 w-3 mr-1.5" />
                                 {field.label}
