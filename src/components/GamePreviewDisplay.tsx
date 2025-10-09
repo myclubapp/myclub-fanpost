@@ -168,8 +168,8 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   // Map sport type to API type
   const apiType = sportType === "unihockey" ? "swissunihockey" : sportType === "volleyball" ? "swissvolley" : sportType === "handball" ? "swisshandball" : sportType;
   
-  // Check if selected theme is a myclub theme
-  const isMyClubTheme = STANDARD_THEMES.some(t => t.value === selectedTheme);
+  // Check if selected theme is a myclub theme; for volleyball we avoid web components
+  const isMyClubTheme = sportType !== 'volleyball' && STANDARD_THEMES.some(t => t.value === selectedTheme);
   const selectedCustomTemplate = customTemplates.find(t => t.value === selectedTheme);
 
   // Load custom templates for paid users
@@ -208,34 +208,40 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     loadCustomTemplates();
   }, [user, isPaidUser]);
 
-  // Load game data when custom template is selected
+  // Load game data when needed (custom template or volleyball fallback)
   useEffect(() => {
     const fetchGameData = async () => {
-      if (!selectedCustomTemplate || !gameId) return;
+      if (((sportType !== 'volleyball') && !selectedCustomTemplate) || !gameId) return;
       
       setLoadingGameData(true);
       try {
         // For volleyball, use the games data passed from the list
-        if (sportType === 'volleyball' && gamesData.length > 0) {
-          const game = gamesData.find(g => g.id === gameId);
-          if (game) {
-            // Map the game data to match the expected format
-            setGameData({
-              id: game.id,
-              teamHome: game.teamHome,
-              teamAway: game.teamAway,
-              date: game.date,
-              time: game.time,
-              result: game.result || '',
-              resultDetail: '',
-              teamHomeLogo: '',
-              teamAwayLogo: '',
-              location: '',
-              city: ''
-            });
-            setLoadingGameData(false);
-            return;
+        if (sportType === 'volleyball') {
+          if (gamesData.length > 0) {
+            const game = gamesData.find((g: any) => g.id === gameId);
+            if (game) {
+              // Map the game data to match the expected format (with extended fields)
+              setGameData({
+                id: game.id,
+                teamHome: game.teamHome,
+                teamAway: game.teamAway,
+                date: game.date,
+                time: game.time,
+                result: game.result || '',
+                resultDetail: game.resultDetail || '',
+                teamHomeLogo: game.teamHomeLogo || '',
+                teamAwayLogo: game.teamAwayLogo || '',
+                location: game.location || '',
+                city: game.city || ''
+              });
+              setLoadingGameData(false);
+              return;
+            }
           }
+          // If still not found, do not perform single-game fetch (not supported)
+          setGameData(null);
+          setLoadingGameData(false);
+          return;
         }
         
         // For other sports, fetch individual game data

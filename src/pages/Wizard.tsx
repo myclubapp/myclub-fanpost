@@ -239,6 +239,53 @@ const Index = () => {
     }
   }, [gameId]);
 
+  // Ensure volleyball has gamesData available even when navigating directly with a gameId
+  useEffect(() => {
+    const fetchVolleyballGamesIfNeeded = async () => {
+      if (
+        selectedSport === 'volleyball' &&
+        selectedTeamId &&
+        selectedGameIds.length > 0 &&
+        gamesData.length === 0
+      ) {
+        try {
+          const query = `{
+  games(teamId: "${selectedTeamId}") {
+    id
+    date
+    time
+    location
+    city
+    teamHome
+    teamAway
+    teamHomeLogo
+    teamAwayLogo
+    result
+    resultDetail
+  }
+}`;
+          const apiUrl = `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissvolley?query=${encodeURIComponent(query)}`;
+          const res = await fetch(apiUrl);
+          if (res.ok) {
+            const json = await res.json();
+            const list = json.data?.games || [];
+            setGamesData(list);
+            // Optionally recompute results presence
+            const hasRes = selectedGameIds.map(id => {
+              const g = list.find((x: any) => x.id === id);
+              return !!(g?.result && g.result !== '' && g.result !== '-:-');
+            });
+            setGamesHaveResults(hasRes);
+          }
+        } catch (e) {
+          console.error('Failed to preload volleyball games list', e);
+        }
+      }
+    };
+
+    fetchVolleyballGamesIfNeeded();
+  }, [selectedSport, selectedTeamId, selectedGameIds, gamesData.length]);
+
   const handleSportChange = (value: string) => {
     const newSport = value as SportType;
     setSelectedSport(newSport);
