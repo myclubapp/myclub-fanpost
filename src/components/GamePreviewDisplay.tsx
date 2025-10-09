@@ -166,7 +166,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     triggerInstagramShare: handleInstagramShare
   }));
   // Map sport type to API type
-  const apiType = sportType === "unihockey" ? "swissunihockey" : sportType;
+  const apiType = sportType === "unihockey" ? "swissunihockey" : sportType === "volleyball" ? "swissvolley" : sportType === "handball" ? "swisshandball" : sportType;
   
   // Check if selected theme is a myclub theme
   const isMyClubTheme = STANDARD_THEMES.some(t => t.value === selectedTheme);
