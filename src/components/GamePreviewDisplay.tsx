@@ -42,6 +42,8 @@ export interface GamePreviewDisplayProps {
   gameIds: string[];
   gamesHaveResults?: boolean[];
   wizardUrl?: string;
+  selectedTheme?: string;
+  onThemeChange?: (theme: string) => void;
 }
 
 export interface GamePreviewDisplayRef {
@@ -89,7 +91,7 @@ declare global {
 }
 
 export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewDisplayProps>(
-  ({ sportType, clubId, gameIds, gamesHaveResults = [], wizardUrl }, ref) => {
+  ({ sportType, clubId, gameIds, gamesHaveResults = [], wizardUrl, selectedTheme: initialTheme = "myclub", onThemeChange }, ref) => {
   const gameId = gameIds[0];
   const gameId2 = gameIds.length > 1 ? gameIds[1] : undefined;
   const gameId3 = gameIds.length > 2 ? gameIds[2] : undefined;
@@ -105,7 +107,12 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   const hasAnyResult = gamesHaveResults.some(hasResult => hasResult);
   const [activeTab, setActiveTab] = useState<string>(hasAnyResult ? "result" : "preview");
   
-  const [selectedTheme, setSelectedTheme] = useState("myclub");
+  const [selectedTheme, setSelectedTheme] = useState(initialTheme);
+  
+  // Update local theme when prop changes
+  useEffect(() => {
+    setSelectedTheme(initialTheme);
+  }, [initialTheme]);
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
@@ -731,7 +738,10 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         <div className="flex items-center gap-2 mb-6">
           <Palette className="h-4 w-4 text-muted-foreground" />
           <Label htmlFor="theme-select" className="text-sm text-muted-foreground">Vorlage:</Label>
-          <Select value={selectedTheme} onValueChange={setSelectedTheme}>
+          <Select value={selectedTheme} onValueChange={(value) => {
+            setSelectedTheme(value);
+            onThemeChange?.(value);
+          }}>
             <SelectTrigger id="theme-select" className="w-[220px] border-border">
               <SelectValue />
             </SelectTrigger>

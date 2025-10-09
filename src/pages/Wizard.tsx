@@ -33,9 +33,12 @@ const Index = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const editSelection = new URLSearchParams(location.search).get('editSelection') === '1';
+  const searchParams = new URLSearchParams(location.search);
+  const editSelection = searchParams.get('editSelection') === '1';
+  const themeParam = searchParams.get('theme') || searchParams.get('template');
 
   const [selectedSport, setSelectedSport] = useState<SportType | "">(sport || "");
+  const [selectedTheme, setSelectedTheme] = useState<string>(themeParam || "myclub");
   const [selectedClubId, setSelectedClubId] = useState<string>(clubId || "");
   const [selectedClubName, setSelectedClubName] = useState<string>("");
   const [selectedTeamId, setSelectedTeamId] = useState<string>(teamId || "");
@@ -262,7 +265,17 @@ const Index = () => {
     setSelectedGameIds(gameIds);
     setGamesHaveResults(hasResults);
     const gameIdsParam = gameIds.join(',');
-    navigate(`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIdsParam}`);
+    const themeQuery = selectedTheme !== 'myclub' ? `?theme=${selectedTheme}` : '';
+    navigate(`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIdsParam}${themeQuery}`);
+  };
+
+  const handleThemeChange = (theme: string) => {
+    setSelectedTheme(theme);
+    if (selectedGameIds.length > 0) {
+      const gameIdsParam = selectedGameIds.join(',');
+      const themeQuery = theme !== 'myclub' ? `?theme=${theme}` : '';
+      navigate(`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIdsParam}${themeQuery}`);
+    }
   };
 
   const sportLabels: Record<SportType, string> = {
@@ -473,7 +486,9 @@ const Index = () => {
                 clubId={selectedClubId}
                 gameIds={selectedGameIds}
                 gamesHaveResults={gamesHaveResults}
-                wizardUrl={`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${selectedGameIds.join(',')}`}
+                wizardUrl={`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${selectedGameIds.join(',')}${selectedTheme !== 'myclub' ? `?theme=${selectedTheme}` : ''}`}
+                selectedTheme={selectedTheme}
+                onThemeChange={handleThemeChange}
                 ref={gamePreviewRef}
               />
             </div>
