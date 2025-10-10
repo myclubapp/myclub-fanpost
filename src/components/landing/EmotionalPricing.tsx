@@ -35,26 +35,26 @@ const pricingPlans = [
       "Alle Free Features",
       "Eigene Templates erstellen",
       "Template-Bibliothek verwalten",
-      "Priority Support"
+     
     ],
     cta: "Jetzt upgraden",
     ctaVariant: "default" as const,
     popular: true
   },
   {
-    name: "Enterprise",
-    subtitle: "Für ganze Vereine",
+    name: "Premium",
+    subtitle: "Für grosse Vereine",
     description: "Von den Junioren bis zur 1. Mannschaft",
-    price: "Custom",
+    price: "Auf Anfrage",
     period: "",
     icon: Trophy,
     gradient: "from-orange-500 to-red-500",
     features: [
       "Unbegrenzte Credits",
       "Alle Pro Features",
-      "Mehrere Teams & Admins",
-      "Vereins-Branding",
-      "Dedizierter Support"
+      "Templates exportieren und teilen",
+      "Eigene Bilderbibliothek",
+
     ],
     cta: "Kontakt aufnehmen",
     ctaVariant: "outline" as const,
@@ -165,7 +165,7 @@ export const EmotionalPricing = () => {
 
         <div className="text-center mt-12">
           <p className="text-muted-foreground">
-            Alle Preise in Schweizer Franken. Jederzeit kündbar.
+            Alle Preise in Schweizer Franken inkl. MwSt.  Jederzeit kündbar.
           </p>
         </div>
       </div>

@@ -17,8 +17,8 @@ const Index = () => {
       {/* Feature Timeline - How it works */}
       <FeatureTimeline />
 
-      {/* Emotion Strip - Scrolling Example Posts */}
-      <EmotionStrip />
+      {/* Emotion Strip - Scrolling Example Posts 
+      <EmotionStrip />*/}
 
       {/* Pricing Section */}
       <EmotionalPricing />
