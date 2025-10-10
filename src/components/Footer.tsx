@@ -31,10 +31,7 @@ const Footer = () => {
             {/* Swiss Made Software Logo */}
             <div className="mt-6">
               <a href="https://www.swissmadesoftware.org/companies/liitu-consulting-gmbh/home.html" target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="text-2xl">🇨🇭</span>
-                  <span>Swiss Made Software</span>
-                </div>
+                <img src="/swiss-made-software.png" alt="swiss made software" className="h-10 mr-2" />
               </a>
             </div>
           </div>

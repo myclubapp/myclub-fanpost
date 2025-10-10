@@ -10,7 +10,7 @@ const TermsAndConditionsDe = () => {
       <main className="pt-32 pb-16">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
-            <h1 className="text-3xl font-bold mb-6">Geschäftsbedingungen (Version Januar 2025)</h1>
+            <h1 className="text-3xl font-bold mb-6">Geschäftsbedingungen (Version Oktober 2025)</h1>
             
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">Einführung</h2>
@@ -30,7 +30,7 @@ const TermsAndConditionsDe = () => {
               <h2 className="text-2xl font-semibold mb-4">Konten</h2>
               <p className="text-muted-foreground mb-2">a. Um bestimmte Funktionen des Dienstes nutzen zu können, müssen Sie ein Konto erstellen.</p>
               <p className="text-muted-foreground mb-2">b. Sie sind verantwortlich für die Wahrung der Vertraulichkeit Ihrer Kontozugangsdaten.</p>
-              <p className="text-muted-foreground mb-2">c. Sie erklären sich damit einverstanden, uns sofort zu informieren, wenn Sie von einer Verletzung der Sicherheit oder einer unbefugten Nutzung Ihres Kontos Kenntnis erlangen. Nutzen Sie dazu die E-Mail-Adresse <a href="mailto:hello@fanpost.ch" className="text-primary hover:underline">hello@fanpost.ch</a></p>
+              <p className="text-muted-foreground mb-2">c. Sie erklären sich damit einverstanden, uns sofort zu informieren, wenn Sie von einer Verletzung der Sicherheit oder einer unbefugten Nutzung Ihres Kontos Kenntnis erlangen. Nutzen Sie dazu die E-Mail-Adresse <a href="mailto:support@my-club.app" className="text-primary hover:underline">support@my-club.app</a></p>
             </section>
             
             <section className="mb-8">
@@ -68,7 +68,7 @@ const TermsAndConditionsDe = () => {
             
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">Kontaktieren Sie uns</h2>
-              <p className="text-muted-foreground mb-2">Wenn Sie Fragen zu diesen Bedingungen haben, kontaktieren Sie uns bitte unter <a href="mailto:hello@fanpost.ch" className="text-primary hover:underline">hello@fanpost.ch</a></p>
+              <p className="text-muted-foreground mb-2">Wenn Sie Fragen zu diesen Bedingungen haben, kontaktieren Sie uns bitte unter <a href="mailto:support@my-club.app" className="text-primary hover:underline">support@my-club.app</a></p>
             </section>
             
             <div className="mt-12">

@@ -89,7 +89,7 @@ const PrivacyPolicy = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Contact Us</h2>
             <p className="text-muted-foreground mb-4">
-              If you have any questions or suggestions about our Privacy Policy, do not hesitate to contact us at <a href="mailto:hello@fanpost.ch" className="text-primary hover:underline">hello@fanpost.ch</a>.
+              If you have any questions or suggestions about our Privacy Policy, do not hesitate to contact us at <a href="mailto:support@my-club.app" className="text-primary hover:underline">support@my-club.app</a>.
             </p>
           </section>
           

@@ -14,7 +14,7 @@ const Impressum = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Kontakt</h2>
             <p className="text-muted-foreground mb-4">
-              FanPost<br />
+              FanPost powered by myclub | the next generation<br />
               c/o liitu consulting gmbh<br />
               Villenstrasse 4<br />
               8200 Schaffhausen<br />
@@ -22,7 +22,7 @@ const Impressum = () => {
             </p>
             <p className="text-muted-foreground mb-4">
               Telefon: +41 79 403 36 13<br />
-              E-Mail: <a href="mailto:hello@fanpost.ch" className="text-primary hover:underline">hello@fanpost.ch</a>
+              E-Mail: <a href="mailto:support@my-club.app" className="text-primary hover:underline">support@my-club.app</a>
             </p>
           </section>
           
