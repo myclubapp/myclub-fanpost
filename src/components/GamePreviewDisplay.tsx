@@ -39,6 +39,7 @@ type SportType = "unihockey" | "volleyball" | "handball";
 export interface GamePreviewDisplayProps {
   sportType: SportType;
   clubId: string;
+  teamId: string;
   gameIds: string[];
   gamesHaveResults?: boolean[];
   gamesData?: any[];
@@ -101,7 +102,8 @@ declare global {
 export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewDisplayProps>(
   ({ 
     sportType, 
-    clubId, 
+    clubId,
+    teamId, 
     gameIds, 
     gamesHaveResults = [],
     gamesData = [],
@@ -168,8 +170,8 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   // Map sport type to API type
   const apiType = sportType === "unihockey" ? "swissunihockey" : sportType === "volleyball" ? "swissvolley" : sportType === "handball" ? "swisshandball" : sportType;
   
-  // Check if selected theme is a myclub theme; for volleyball we avoid web components
-  const isMyClubTheme = sportType !== 'volleyball' && STANDARD_THEMES.some(t => t.value === selectedTheme);
+  // Check if selected theme is a myclub theme; for volleyball and handball we avoid web components for standard themes
+  const isMyClubTheme = (sportType !== 'volleyball' && sportType !== 'handball') && STANDARD_THEMES.some(t => t.value === selectedTheme);
   const selectedCustomTemplate = customTemplates.find(t => t.value === selectedTheme);
 
   // Load custom templates for paid users
@@ -208,15 +210,15 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     loadCustomTemplates();
   }, [user, isPaidUser]);
 
-  // Load game data when needed (custom template or volleyball fallback)
+  // Load game data when needed (custom template or volleyball/handball fallback)
   useEffect(() => {
     const fetchGameData = async () => {
-      if (((sportType !== 'volleyball') && !selectedCustomTemplate) || !gameId) return;
+      if (((sportType !== 'volleyball' && sportType !== 'handball') && !selectedCustomTemplate) || !gameId) return;
       
       setLoadingGameData(true);
       try {
-        // For volleyball, use the games data passed from the list
-        if (sportType === 'volleyball') {
+        // For volleyball and handball, use the games data passed from the list
+        if (sportType === 'volleyball' || sportType === 'handball') {
           if (gamesData.length > 0) {
             const game = gamesData.find((g: any) => g.id === gameId);
             if (game) {
@@ -1104,6 +1106,8 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
                     game={gameId}
                     {...(gameId2 && { "game-2": gameId2 })}
                     {...(gameId3 && { "game-3": gameId3 })}
+                    {...((apiType === 'swissvolley' || apiType === 'swisshandball') && { team: teamId })}
+                    {...(apiType === 'swisshandball' && { club: clubId })}
                     width={svgDimensions.width}
                     height={svgDimensions.height}
                     theme={selectedTheme}
@@ -1129,6 +1133,8 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
                     game={gameId}
                     {...(gameId2 && { "game-2": gameId2 })}
                     {...(gameId3 && { "game-3": gameId3 })}
+                    {...((apiType === 'swissvolley' || apiType === 'swisshandball') && { team: teamId })}
+                    {...(apiType === 'swisshandball' && { club: clubId })}
                     width={svgDimensions.width}
                     height={svgDimensions.height}
                     theme={selectedTheme}

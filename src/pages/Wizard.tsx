@@ -162,7 +162,7 @@ const Index = () => {
       const apiUrls: Record<SportType, string> = {
         unihockey: "https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissunihockey?query={%0A%20%20clubs{%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20}%20%0A}",
         volleyball: "https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissvolley?query=%7B%0A%20%20clubs%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A",
-        handball: "",
+        handball: "https://europe-west6-myclubmanagement.cloudfunctions.net/api/swisshandball?query=%7B%0A%20%20clubs%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A",
       };
 
       const apiUrl = apiUrls[selectedSport as SportType];
@@ -192,7 +192,7 @@ const Index = () => {
       const apiUrls: Record<SportType, (clubId: string) => string> = {
         unihockey: (clubId: string) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissunihockey?query={%0A%20%20teams(clubId%3A%20%22${clubId}%22)%20{%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20}%0A}%0A`,
         volleyball: (clubId: string) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissvolley?query=%7B%0A%20%20teams(clubId%3A%20%22${clubId}%22)%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A`,
-        handball: () => "",
+        handball: (clubId: string) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swisshandball?query=%7B%0A%20%20teams(clubId%3A%20%22${clubId}%22)%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A`,
       };
 
       const apiUrl = apiUrls[selectedSport as SportType](selectedClubId);
@@ -239,17 +239,20 @@ const Index = () => {
     }
   }, [gameId]);
 
-  // Ensure volleyball has gamesData available even when navigating directly with a gameId
+  // Ensure volleyball and handball have gamesData available even when navigating directly with a gameId
   useEffect(() => {
-    const fetchVolleyballGamesIfNeeded = async () => {
+    const fetchGamesIfNeeded = async () => {
       if (
-        selectedSport === 'volleyball' &&
+        (selectedSport === 'volleyball' || selectedSport === 'handball') &&
         selectedTeamId &&
         selectedGameIds.length > 0 &&
         gamesData.length === 0
       ) {
         try {
-          const query = `{
+          let apiUrl: string;
+          
+          if (selectedSport === 'volleyball') {
+            const query = `{
   games(teamId: "${selectedTeamId}") {
     id
     date
@@ -264,7 +267,25 @@ const Index = () => {
     resultDetail
   }
 }`;
-          const apiUrl = `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissvolley?query=${encodeURIComponent(query)}`;
+            apiUrl = `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissvolley?query=${encodeURIComponent(query)}`;
+          } else {
+            // handball
+            const query = `{
+  games(teamId: "${selectedTeamId}", clubId: "${selectedClubId}") {
+    id
+    teamHome
+    teamAway
+    teamHomeLogo
+    teamAwayLogo
+    date
+    time
+    result
+    resultDetail
+  }
+}`;
+            apiUrl = `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swisshandball?query=${encodeURIComponent(query)}`;
+          }
+          
           const res = await fetch(apiUrl);
           if (res.ok) {
             const json = await res.json();
@@ -278,13 +299,13 @@ const Index = () => {
             setGamesHaveResults(hasRes);
           }
         } catch (e) {
-          console.error('Failed to preload volleyball games list', e);
+          console.error('Failed to preload games list', e);
         }
       }
     };
 
-    fetchVolleyballGamesIfNeeded();
-  }, [selectedSport, selectedTeamId, selectedGameIds, gamesData.length]);
+    fetchGamesIfNeeded();
+  }, [selectedSport, selectedTeamId, selectedClubId, selectedGameIds, gamesData.length]);
 
   const handleSportChange = (value: string) => {
     const newSport = value as SportType;
@@ -442,12 +463,7 @@ const Index = () => {
                     <SelectContent>
                       <SelectItem value="unihockey">Unihockey</SelectItem>
                       <SelectItem value="volleyball">Volleyball</SelectItem>
-                      <SelectItem value="handball" disabled>
-                        <div className="flex items-center gap-2">
-                          Handball
-                          <Badge variant="secondary" className="text-xs">Coming soon</Badge>
-                        </div>
-                      </SelectItem>
+                      <SelectItem value="handball">Handball</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -564,6 +580,7 @@ const Index = () => {
                   <GameList
                     sportType={selectedSport}
                     teamId={selectedTeamId}
+                    clubId={selectedClubId}
                     onGameSelect={handleGameSelect}
                     initialSelectedGameIds={selectedGameIds}
                   />
@@ -589,6 +606,7 @@ const Index = () => {
               <GamePreviewDisplay
                 sportType={selectedSport}
                 clubId={selectedClubId}
+                teamId={selectedTeamId}
                 gameIds={selectedGameIds}
                 gamesHaveResults={gamesHaveResults}
                 gamesData={gamesData}

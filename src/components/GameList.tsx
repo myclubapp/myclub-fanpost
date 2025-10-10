@@ -24,17 +24,18 @@ interface Game {
 interface GameListProps {
   sportType: SportType;
   teamId: string;
+  clubId?: string;
   onGameSelect: (gameIds: string[], hasResults: boolean[], games?: Game[]) => void;
   initialSelectedGameIds?: string[];
 }
 
-const SPORT_API_URLS: Record<SportType, (teamId: string) => string> = {
+const SPORT_API_URLS: Record<SportType, (teamId: string, clubId?: string) => string> = {
   unihockey: (teamId) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissunihockey?query=%7B%0A%20%20games(teamId%3A%20%22${teamId}%22)%20%7B%0A%20%20%20%20id%0A%20%20%20%20result%0A%20%20%20%20date%0A%20%20%20%20time%0A%20%20%20%20teamHome%0A%20%20%20%20teamAway%0A%20%20%7D%0A%7D%0A`,
   volleyball: (teamId) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissvolley?query=%7B%0A%20%20games(teamId%3A%20%22${teamId}%22)%20%7B%0A%20%20%20%20id%0A%20%20%20%20date%0A%20%20%20%20time%0A%20%20%20%20location%0A%20%20%20%20city%0A%20%20%20%20teamHome%0A%20%20%20%20teamAway%0A%20%20%20%20teamHomeLogo%0A%20%20%20%20teamAwayLogo%0A%20%20%20%20result%0A%20%20%20%20resultDetail%0A%20%20%7D%0A%7D%0A`,
-  handball: (teamId) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swisshandball?query=%7B%0A%20%20games(teamId%3A%20%22${teamId}%22)%20%7B%0A%20%20%20%20id%0A%20%20%20%20result%0A%20%20%20%20date%0A%20%20%20%20time%0A%20%20%20%20teamHome%0A%20%20%20%20teamAway%0A%20%20%7D%0A%7D%0A`
+  handball: (teamId, clubId) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swisshandball?query=%7B%0A%20%20games(teamId%3A%20%22${teamId}%22%2C%20clubId%3A%20%22${clubId}%22)%20%7B%0A%20%20%20%20id%0A%20%20%20%20teamHome%0A%20%20%20%20teamAway%0A%20%20%20%20teamHomeLogo%0A%20%20%20%20teamAwayLogo%0A%20%20%20%20date%0A%20%20%20%20time%0A%20%20%20%20result%0A%20%20%20%20resultDetail%0A%20%20%7D%0A%7D%0A`
 };
 
-export const GameList = ({ sportType, teamId, onGameSelect, initialSelectedGameIds = [] }: GameListProps) => {
+export const GameList = ({ sportType, teamId, clubId, onGameSelect, initialSelectedGameIds = [] }: GameListProps) => {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedGameIds, setSelectedGameIds] = useState<string[]>(initialSelectedGameIds);
@@ -98,7 +99,7 @@ export const GameList = ({ sportType, teamId, onGameSelect, initialSelectedGameI
     const fetchGames = async () => {
       setLoading(true);
       try {
-        const apiUrl = SPORT_API_URLS[sportType](teamId);
+        const apiUrl = SPORT_API_URLS[sportType](teamId, clubId);
         const response = await fetch(apiUrl);
         
         if (!response.ok) throw new Error("Fehler beim Laden der Spiele");
