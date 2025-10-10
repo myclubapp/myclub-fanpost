@@ -110,7 +110,7 @@ export const AnimatedHero = () => {
                 <span className="text-foreground">{currentHeadline.line2}</span>
               </h1>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-xl mx-auto lg:mx-0">
-                Dein Spiel, dein Moment, dein Post in Sekunden.
+                Dein Spiel, dein Moment, dein Post.
               </p>
             </div>
 
