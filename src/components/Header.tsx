@@ -107,7 +107,7 @@ export const Header = () => {
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <button onClick={handleLogoClick} className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
           <img src={logo} alt="MyClub Logo" className="h-8 w-auto" />
-          <span className="font-bold text-xl">Fanpost</span>
+          <span className="font-bold text-xl">FanPost</span>
         </button>
 
         {/* Desktop Navigation */}
