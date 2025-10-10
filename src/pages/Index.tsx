@@ -5,6 +5,7 @@ import { EmotionStrip } from "@/components/landing/EmotionStrip";
 import { EmotionalPricing } from "@/components/landing/EmotionalPricing";
 import { MissionSection } from "@/components/landing/MissionSection";
 import { FinalCTA } from "@/components/landing/FinalCTA";
+import Footer from "@/components/Footer";
 
 const Index = () => {
   return (
@@ -28,6 +29,9 @@ const Index = () => {
       
       {/* Final CTA 
       <FinalCTA />*/}
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };

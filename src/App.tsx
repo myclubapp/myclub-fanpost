@@ -10,6 +10,11 @@ import Profile from "./pages/Profile";
 import Templates from "./pages/Templates";
 import TemplateEditor from "./pages/TemplateEditor";
 import Wizard from "./pages/Wizard";
+import Impressum from "./pages/Impressum";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import PrivacyPolicyDe from "./pages/PrivacyPolicyDe";
+import TermsAndConditions from "./pages/TermsAndConditions";
+import TermsAndConditionsDe from "./pages/TermsAndConditionsDe";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +38,11 @@ const App = () => (
             <Route path="/wizard/:sport/:clubId" element={<Wizard />} />
             <Route path="/wizard/:sport/:clubId/:teamId" element={<Wizard />} />
             <Route path="/wizard/:sport/:clubId/:teamId/:gameId" element={<Wizard />} />
+            <Route path="/impressum" element={<Impressum />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/privacy-policy-de" element={<PrivacyPolicyDe />} />
+            <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+            <Route path="/terms-and-conditions-de" element={<TermsAndConditionsDe />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
