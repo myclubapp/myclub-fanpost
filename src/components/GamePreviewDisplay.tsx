@@ -331,7 +331,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     // Load the web component script
     const script = document.createElement('script');
     script.type = 'module';
-    script.src = 'https://unpkg.com/myclub-game-preview@1.3.4/dist/myclub-game-preview/myclub-game-preview.esm.js';
+    script.src = 'https://unpkg.com/myclub-game-preview@1.4.1/dist/myclub-game-preview/myclub-game-preview.esm.js';
     document.head.appendChild(script);
 
     return () => {
