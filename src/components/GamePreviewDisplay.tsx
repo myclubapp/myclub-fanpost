@@ -170,8 +170,8 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   // Map sport type to API type
   const apiType = sportType === "unihockey" ? "swissunihockey" : sportType === "volleyball" ? "swissvolley" : sportType === "handball" ? "swisshandball" : sportType;
   
-  // Check if selected theme is a myclub theme; for volleyball and handball we avoid web components for standard themes
-  const isMyClubTheme = (sportType !== 'volleyball' && sportType !== 'handball') && STANDARD_THEMES.some(t => t.value === selectedTheme);
+  // Check if selected theme is a myclub theme
+  const isMyClubTheme = STANDARD_THEMES.some(t => t.value === selectedTheme);
   const selectedCustomTemplate = customTemplates.find(t => t.value === selectedTheme);
 
   // Load custom templates for paid users
@@ -210,10 +210,10 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     loadCustomTemplates();
   }, [user, isPaidUser]);
 
-  // Load game data when needed (custom template or volleyball/handball fallback)
+  // Load game data when needed (only for custom templates)
   useEffect(() => {
     const fetchGameData = async () => {
-      if (((sportType !== 'volleyball' && sportType !== 'handball') && !selectedCustomTemplate) || !gameId) return;
+      if (!selectedCustomTemplate || !gameId) return;
       
       setLoadingGameData(true);
       try {
