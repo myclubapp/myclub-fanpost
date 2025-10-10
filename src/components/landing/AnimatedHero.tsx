@@ -38,10 +38,27 @@ const mockPosts = [
   }
 ];
 
+const headlines = [
+  {
+    line1: "Aus Emotionen",
+    line2: "werden Posts."
+  },
+  {
+    line1: "Poste den Sieg,",
+    line2: "teile die Leidenschaft."
+  },
+  {
+    line1: "Deine Fans. Deine Farben.",
+    line2: "Dein Post in Sekunden."
+  }
+];
+
 export const AnimatedHero = () => {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [headlineIndex, setHeadlineIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isHeadlineAnimating, setIsHeadlineAnimating] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -55,7 +72,20 @@ export const AnimatedHero = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const headlineInterval = setInterval(() => {
+      setIsHeadlineAnimating(true);
+      setTimeout(() => {
+        setHeadlineIndex((prev) => (prev + 1) % headlines.length);
+        setIsHeadlineAnimating(false);
+      }, 500);
+    }, 4000);
+
+    return () => clearInterval(headlineInterval);
+  }, []);
+
   const currentPost = mockPosts[currentIndex];
+  const currentHeadline = headlines[headlineIndex];
 
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-background via-muted/30 to-background">
@@ -70,12 +100,14 @@ export const AnimatedHero = () => {
           {/* Left Side - Text Content */}
           <div className="space-y-8 text-center lg:text-left">
             <div className="space-y-4">
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight">
+              <h1 className={`text-5xl md:text-6xl lg:text-7xl font-bold leading-tight transition-all duration-500 ${
+                isHeadlineAnimating ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
+              }`}>
                 <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-pulse">
-                  Aus Emotionen
+                  {currentHeadline.line1}
                 </span>
                 <br />
-                <span className="text-foreground">werden Posts.</span>
+                <span className="text-foreground">{currentHeadline.line2}</span>
               </h1>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-xl mx-auto lg:mx-0">
                 Dein Spiel, dein Moment, dein Post in Sekunden.
