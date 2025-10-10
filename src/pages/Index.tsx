@@ -23,11 +23,11 @@ const Index = () => {
       {/* Pricing Section */}
       <EmotionalPricing />
 
-      {/* Mission & About Section */}
-      <MissionSection />
-
-      {/* Final CTA */}
-      <FinalCTA />
+      {/* Mission & About Section 
+      <MissionSection />*/}
+      
+      {/* Final CTA 
+      <FinalCTA />*/}
     </div>
   );
 };
