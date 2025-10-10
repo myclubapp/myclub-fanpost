@@ -53,6 +53,7 @@ export type Database = {
           email: string
           first_name: string | null
           id: string
+          instagram_username: string | null
           last_club_id: string | null
           last_name: string | null
           last_sport: string | null
@@ -65,6 +66,7 @@ export type Database = {
           email: string
           first_name?: string | null
           id: string
+          instagram_username?: string | null
           last_club_id?: string | null
           last_name?: string | null
           last_sport?: string | null
@@ -77,6 +79,7 @@ export type Database = {
           email?: string
           first_name?: string | null
           id?: string
+          instagram_username?: string | null
           last_club_id?: string | null
           last_name?: string | null
           last_sport?: string | null
@@ -188,10 +191,6 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
-      }
-      reset_monthly_credits: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
       }
     }
     Enums: {
