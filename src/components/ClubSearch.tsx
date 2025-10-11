@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Building2, Check } from "lucide-react";
+import { Building2, Check, Info } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import {
   Command,
@@ -110,6 +111,23 @@ export const ClubSearch = ({ sportType, onClubSelect }: ClubSearchProps) => {
         <CardDescription className="text-muted-foreground">
           Wähle deinen {SPORT_LABELS[sportType]}-Verein aus ({clubs.length} Clubs verfügbar)
         </CardDescription>
+        {sportType === "handball" && (
+          <Alert className="mt-4">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Damit du FanPost für deinen Handball Verein nutzen kannst, musst du zuerst deinen API Key hochladen. 
+              Hier bekommst du einen API-Key:{" "}
+              <a 
+                href="https://www.handball.ch/de/news/2023/api-schnittstellen-wechsel-fuer-vereine-erforderlich/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="underline hover:text-primary"
+              >
+                handball.ch
+              </a>
+            </AlertDescription>
+          </Alert>
+        )}
       </CardHeader>
       <CardContent>
         <Command className="rounded-lg border border-border shadow-md">
