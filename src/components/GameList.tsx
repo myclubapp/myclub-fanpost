@@ -39,6 +39,7 @@ export const GameList = ({ sportType, teamId, clubId, onGameSelect, initialSelec
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedGameIds, setSelectedGameIds] = useState<string[]>(initialSelectedGameIds);
+  const [showPastGames, setShowPastGames] = useState(false);
   const { toast } = useToast();
 
   // Group games by date
@@ -107,19 +108,44 @@ export const GameList = ({ sportType, teamId, clubId, onGameSelect, initialSelec
         const result = await response.json();
         const data: Game[] = result.data?.games || [];
         
-        // Sort games by date (newest first)
-        const sortedGames = data.sort((a, b) => {
-          // Parse date format DD.MM.YYYY
-          const parseDate = (dateStr: string) => {
-            const [day, month, year] = dateStr.split('.');
-            return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-          };
+        // Parse date helper
+        const parseDate = (dateStr: string) => {
+          const [day, month, year] = dateStr.split('.');
+          return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        };
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        // Separate games into past, today, and future
+        const pastGames: Game[] = [];
+        const todayGames: Game[] = [];
+        const futureGames: Game[] = [];
+        
+        data.forEach(game => {
+          const gameDate = parseDate(game.date);
+          gameDate.setHours(0, 0, 0, 0);
           
-          const dateA = parseDate(a.date);
-          const dateB = parseDate(b.date);
-          
-          return dateB.getTime() - dateA.getTime(); // Newest first
+          if (gameDate < today) {
+            pastGames.push(game);
+          } else if (gameDate.getTime() === today.getTime()) {
+            todayGames.push(game);
+          } else {
+            futureGames.push(game);
+          }
         });
+        
+        // Sort past games (newest first = descending)
+        pastGames.sort((a, b) => parseDate(b.date).getTime() - parseDate(a.date).getTime());
+        
+        // Sort today and future games (ascending = oldest first)
+        todayGames.sort((a, b) => parseDate(a.date).getTime() - parseDate(b.date).getTime());
+        futureGames.sort((a, b) => parseDate(a.date).getTime() - parseDate(b.date).getTime());
+        
+        // Combine: if showPastGames, include past games at the top
+        const sortedGames = showPastGames 
+          ? [...pastGames, ...todayGames, ...futureGames]
+          : [...todayGames, ...futureGames];
         
         setGames(sortedGames);
       } catch (error) {
@@ -135,7 +161,7 @@ export const GameList = ({ sportType, teamId, clubId, onGameSelect, initialSelec
     };
 
     fetchGames();
-  }, [sportType, teamId, toast]);
+  }, [sportType, teamId, clubId, showPastGames, toast]);
 
   if (loading) {
     return (
@@ -175,6 +201,19 @@ export const GameList = ({ sportType, teamId, clubId, onGameSelect, initialSelec
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="flex items-center space-x-2 mb-4 p-3 rounded-lg border border-border bg-muted/30">
+            <Checkbox 
+              id="show-past-games"
+              checked={showPastGames}
+              onCheckedChange={(checked) => setShowPastGames(checked as boolean)}
+            />
+            <label
+              htmlFor="show-past-games"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+            >
+              Vergangene Spiele anzeigen
+            </label>
+          </div>
           <div className="space-y-4">
           {Object.entries(groupedGames).map(([date, gamesOnDate]) => {
             const hasMultipleGames = gamesOnDate.length > 1;
