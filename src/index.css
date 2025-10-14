@@ -9,23 +9,23 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* KANVA Brand Colors - Midnight Slate Theme */
-    --background: 240 20% 14%;
+    --background: 225 32% 7.5%;
     --foreground: 0 0% 100%;
 
-    --card: 240 18% 18%;
+    --card: 225 28% 12%;
     --card-foreground: 0 0% 100%;
 
-    --popover: 240 18% 18%;
+    --popover: 225 28% 12%;
     --popover-foreground: 0 0% 100%;
 
-    --primary: 215 100% 57%;
+    --primary: 219 99% 50%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 215 100% 67%;
+    --primary-glow: 219 99% 60%;
 
     --secondary: 357 100% 65%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 240 16% 22%;
+    --muted: 225 24% 16%;
     --muted-foreground: 210 15% 70%;
 
     --accent: 357 100% 65%;
@@ -34,32 +34,32 @@ All colors MUST be HSL.
     --destructive: 357 100% 65%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 16% 26%;
-    --input: 240 16% 26%;
-    --ring: 215 100% 57%;
+    --border: 225 24% 16%;
+    --input: 225 24% 16%;
+    --ring: 219 99% 50%;
 
     --radius: 0.75rem;
 
-    --gradient-primary: linear-gradient(135deg, hsl(215 100% 57%), hsl(215 100% 67%));
+    --gradient-primary: linear-gradient(135deg, hsl(219 99% 50%), hsl(219 99% 60%));
     --gradient-accent: linear-gradient(135deg, hsl(357 100% 65%), hsl(357 100% 75%));
-    --gradient-hero: linear-gradient(135deg, hsl(240 20% 14%) 0%, hsl(240 22% 20%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(225 32% 7.5%) 0%, hsl(225 28% 12%) 100%);
 
-    --shadow-glow: 0 10px 40px -10px hsl(215 100% 57% / 0.4);
+    --shadow-glow: 0 10px 40px -10px hsl(219 99% 50% / 0.4);
     --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.3);
-    --shadow-elegant: 0 10px 30px -10px hsl(215 100% 57% / 0.3);
+    --shadow-elegant: 0 10px 30px -10px hsl(219 99% 50% / 0.3);
 
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     --animation-float: float 3s ease-in-out infinite;
 
-    --sidebar-background: 240 20% 14%;
+    --sidebar-background: 225 32% 7.5%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 215 100% 57%;
+    --sidebar-primary: 219 99% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 18% 18%;
+    --sidebar-accent: 225 28% 12%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 240 16% 26%;
-    --sidebar-ring: 215 100% 57%;
+    --sidebar-border: 225 24% 16%;
+    --sidebar-ring: 219 99% 50%;
   }
 
   .light {
@@ -73,9 +73,9 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 240 20% 14%;
 
-    --primary: 215 100% 57%;
+    --primary: 219 99% 50%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 215 100% 67%;
+    --primary-glow: 219 99% 60%;
 
     --secondary: 357 100% 65%;
     --secondary-foreground: 0 0% 100%;
@@ -91,45 +91,45 @@ All colors MUST be HSL.
 
     --border: 210 16% 88%;
     --input: 210 16% 88%;
-    --ring: 215 100% 57%;
+    --ring: 219 99% 50%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(215 100% 57%), hsl(215 100% 67%));
+    --gradient-primary: linear-gradient(135deg, hsl(219 99% 50%), hsl(219 99% 60%));
     --gradient-accent: linear-gradient(135deg, hsl(357 100% 65%), hsl(357 100% 75%));
     --gradient-hero: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(210 20% 98%) 100%);
 
     --shadow-glow: 0 10px 40px -10px hsl(215 100% 57% / 0.3);
     --shadow-card: 0 4px 20px -4px hsl(240 15% 20% / 0.1);
-    --shadow-elegant: 0 10px 30px -10px hsl(215 100% 57% / 0.3);
+    --shadow-elegant: 0 10px 30px -10px hsl(219 99% 50% / 0.3);
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 240 20% 14%;
-    --sidebar-primary: 215 100% 57%;
+    --sidebar-primary: 219 99% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 210 18% 92%;
     --sidebar-accent-foreground: 240 20% 14%;
     --sidebar-border: 210 16% 88%;
-    --sidebar-ring: 215 100% 57%;
+    --sidebar-ring: 219 99% 50%;
   }
 
   .dark {
     /* KANVA Brand Colors - Midnight Slate Theme (Dark Mode) */
-    --background: 240 20% 14%;
+    --background: 225 32% 7.5%;
     --foreground: 0 0% 100%;
 
-    --card: 240 18% 18%;
+    --card: 225 28% 12%;
     --card-foreground: 0 0% 100%;
 
-    --popover: 240 18% 18%;
+    --popover: 225 28% 12%;
     --popover-foreground: 0 0% 100%;
 
-    --primary: 215 100% 57%;
+    --primary: 219 99% 50%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 215 100% 67%;
+    --primary-glow: 219 99% 60%;
 
     --secondary: 357 100% 65%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 240 16% 22%;
+    --muted: 225 24% 16%;
     --muted-foreground: 210 15% 70%;
 
     --accent: 357 100% 65%;
@@ -138,26 +138,26 @@ All colors MUST be HSL.
     --destructive: 357 100% 65%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 16% 26%;
-    --input: 240 16% 26%;
-    --ring: 215 100% 57%;
+    --border: 225 24% 16%;
+    --input: 225 24% 16%;
+    --ring: 219 99% 50%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(215 100% 57%), hsl(215 100% 67%));
+    --gradient-primary: linear-gradient(135deg, hsl(219 99% 50%), hsl(219 99% 60%));
     --gradient-accent: linear-gradient(135deg, hsl(357 100% 65%), hsl(357 100% 75%));
-    --gradient-hero: linear-gradient(135deg, hsl(240 20% 14%) 0%, hsl(240 22% 20%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(225 32% 7.5%) 0%, hsl(225 28% 12%) 100%);
 
-    --shadow-glow: 0 10px 40px -10px hsl(215 100% 57% / 0.4);
+    --shadow-glow: 0 10px 40px -10px hsl(219 99% 50% / 0.4);
     --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.3);
-    --shadow-elegant: 0 10px 30px -10px hsl(215 100% 57% / 0.3);
+    --shadow-elegant: 0 10px 30px -10px hsl(219 99% 50% / 0.3);
 
-    --sidebar-background: 240 20% 14%;
+    --sidebar-background: 225 32% 7.5%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 215 100% 57%;
+    --sidebar-primary: 219 99% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 18% 18%;
+    --sidebar-accent: 225 28% 12%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 240 16% 26%;
-    --sidebar-ring: 215 100% 57%;
+    --sidebar-border: 225 24% 16%;
+    --sidebar-ring: 219 99% 50%;
   }
 }
 
@@ -168,5 +168,36 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Light mode background pattern */
+  .light body {
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(219, 99%, 50%, 0.03) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(357, 100%, 65%, 0.02) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(219, 99%, 50%, 0.03) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(357, 100%, 65%, 0.02) 0px, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  /* Subtle dot pattern for light mode */
+  .light body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.4;
+    z-index: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle at 1px 1px, hsl(219 99% 50% / 0.05) 1px, transparent 0);
+    background-size: 40px 40px;
+  }
+
+  /* Ensure content is above the pattern */
+  .light body > * {
+    position: relative;
+    z-index: 1;
   }
 }

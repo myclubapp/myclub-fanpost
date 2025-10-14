@@ -147,8 +147,12 @@ export const AnimatedHero = () => {
                   <div className={`flex items-center justify-between px-6 pt-3 pb-2 ${isDarkMode ? 'text-white' : 'text-black'} text-xs`}>
                     <span className="font-semibold">12:41</span>
                     <div className="flex items-center gap-1">
-                      <div className={`w-4 h-3 border ${isDarkMode ? 'border-white' : 'border-black'} rounded-sm`} />
-                      <div className={`w-0.5 h-2 ${isDarkMode ? 'bg-white' : 'bg-black'} rounded`} />
+                      {/* Battery Icon */}
+                      <svg width="24" height="12" viewBox="0 0 24 12" fill="none" className={isDarkMode ? 'text-white' : 'text-black'}>
+                        <rect x="1" y="2" width="18" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                        <rect x="3" y="4" width="14" height="4" rx="0.5" fill="currentColor" />
+                        <rect x="20" y="4.5" width="2" height="3" rx="0.5" fill="currentColor" />
+                      </svg>
                     </div>
                   </div>
 
