@@ -8,29 +8,39 @@ const mockPosts = [
   {
     id: 1,
     sport: "Unihockey",
-    team: "EC LaLärwe Sport",
-    opponent: "FC Lugano",
-    score: "3 - 1",
-    gradient: "from-[#2979FF] to-[#1E5FCC]",
-    resultText: "3 - 1"
+    team: "Kadetten UH Schaffhausen",
+    colorTeam: "#f89828",
+    scoreTeam: "5",
+    opponent: "UHC Winterthur United",
+    colorOpponent: "#fc4349",
+    scoreOpponent: "3",
+    gradient: "from-[#f89828] to-[#fc4349]",
+    
   },
   {
     id: 2,
     sport: "Volleyball",
-    team: "VBC Eagles",
-    opponent: "VBC Zürich",
-    score: "3 - 1",
-    gradient: "from-[#FF4E56] to-[#CC3E44]",
-    resultText: "3 - 1"
+    team: "VBC Schaffhausen",
+    colorTeam: "#FFD000",
+    scoreTeam: "1",
+    opponent: "Volley Aadorf",
+    colorOpponent: "#003eaa",
+    scoreOpponent: "3",
+    gradient: "from-[#ff8f00] to-[#e1241b]",
+  
   },
   {
     id: 3,
     sport: "Handball",
-    team: "Handball Stars",
-    opponent: "HC Bern",
-    score: "28 - 24",
-    gradient: "from-[#2979FF] to-[#FF4E56]",
-    resultText: "28 - 24"
+    team: "Kadetten Schaffhausen",
+    colorTeam: "#eb6000",
+    scoreTeam: "37",
+    opponent: "Wacher Thun",
+    colorOpponent: "#0F7973",
+    scoreOpponent: "30",
+   
+    gradient: "from-[#eb6000] to-[#ec1919]",
+ 
   }
 ];
 
@@ -132,7 +142,7 @@ export const AnimatedHero = () => {
                       </svg>
                     </button>
                     <div className="flex-1 text-center">
-                      <p className={`${isDarkMode ? 'text-white' : 'text-black'} font-semibold text-sm`}>Maranday 8</p>
+                      <p className={`${isDarkMode ? 'text-white' : 'text-black'} font-semibold text-sm`}>Montag 13. Oktober 2025</p>
                       <p className={`${isDarkMode ? 'text-white' : 'text-black'} font-bold text-base`}>KANVA</p>
                     </div>
                     <div className="w-6" />
@@ -140,27 +150,42 @@ export const AnimatedHero = () => {
 
                   {/* Post Image - Dynamic */}
                   <div
-                    className={`aspect-[4/5] bg-gradient-to-br ${currentPost.gradient} flex items-center justify-center transition-all duration-500 ${
+                    className={`aspect-[4/5] ${isDarkMode ? 'bg-gradient-to-br from-slate-800 to-slate-900' : 'bg-gradient-to-br from-blue-50 to-purple-50'} flex items-center justify-center transition-all duration-500 ${
                       isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
                     } relative`}
                   >
+                    {/* Sport Label */}
+                    <div className="absolute top-8 left-8">
+                      <span className={`${isDarkMode ? 'bg-white/20 text-white' : 'bg-black/10 text-black'} px-4 py-2 rounded-full text-sm font-semibold backdrop-blur-sm`}>
+                        {currentPost.sport}
+                      </span>
+                    </div>
+
                     {/* Score Display */}
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="bg-[#2979FF] text-white px-8 py-6 rounded-2xl font-bold text-6xl flex items-center gap-4">
-                        <span>3</span>
+                      <div
+                        className="text-white px-8 py-6 rounded-2xl font-bold text-6xl flex items-center gap-4"
+                        style={{ backgroundColor: currentPost.colorTeam }}
+                      >
+                        <span>{currentPost.scoreTeam}</span>
                         <span className="text-4xl">-</span>
-                        <span className="bg-[#FF4E56] px-6 py-4 rounded-xl">1</span>
+                        <span
+                          className="px-6 py-4 rounded-xl"
+                          style={{ backgroundColor: currentPost.colorOpponent }}
+                        >
+                          {currentPost.scoreOpponent}
+                        </span>
                       </div>
                     </div>
 
                     {/* Team Names */}
-                    <div className="absolute bottom-8 left-8 right-8 flex justify-between text-white text-sm font-semibold">
+                    <div className={`absolute bottom-8 left-8 right-8 flex justify-between ${isDarkMode ? 'text-white' : 'text-gray-900'} text-sm font-semibold`}>
                       <span>{currentPost.team}</span>
                       <span>{currentPost.opponent}</span>
                     </div>
 
                     {/* Background Image Effect */}
-                    <div className="absolute inset-0 bg-black/20" />
+                    <div className={`absolute inset-0 ${isDarkMode ? 'bg-black/20' : 'bg-white/10'}`} />
                   </div>
 
                   {/* Instagram Actions */}
@@ -190,12 +215,12 @@ export const AnimatedHero = () => {
                     </div>
 
                     <p className={`${isDarkMode ? 'text-white' : 'text-black'} text-sm mb-1`}>
-                      <span className="font-semibold">1,23a likes</span>
+                      <span className="font-semibold">1,2k Likes</span>
                     </p>
                     <p className={`${isDarkMode ? 'text-white' : 'text-black'} text-sm`}>
-                      <span className="font-semibold">KANVA</span> Your caption moretth
+                      <span className="font-semibold">KANVA</span> Dein Sportmoment in wenigen Sekunden
                     </p>
-                    <p className="text-gray-500 text-xs mt-1">CHF 5/month</p>
+                    <p className="text-gray-500 text-xs mt-1"></p>
                   </div>
 
                   {/* Bottom Navigation */}

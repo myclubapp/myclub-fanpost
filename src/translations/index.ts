@@ -78,7 +78,7 @@ export const translations = {
         description: 'Wähle dein Spiel aus oder erstelle ein neues mit allen Details.',
       },
       step2: {
-        title: 'Template wählen',
+        title: 'Vorlage wählen',
         description: 'Wähle aus professionellen Vorlagen oder erstelle deine eigenen.',
       },
       step3: {
