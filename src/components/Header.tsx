@@ -255,6 +255,13 @@ export const Header = () => {
               </SheetHeader>
               <div className="flex flex-col gap-4 mt-6">
                 <Button
+                  variant="default"
+                  className="justify-start text-base font-semibold"
+                  onClick={() => handleNavigate('/studio')}
+                >
+                  {t.nav.studio}
+                </Button>
+                <Button
                   variant="ghost"
                   className="justify-start"
                   onClick={() => handleNavigate('/#pricing')}
@@ -274,13 +281,6 @@ export const Header = () => {
                   onClick={() => handleNavigate('/#about')}
                 >
                   {t.nav.about}
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="justify-start"
-                  onClick={() => handleNavigate('/studio')}
-                >
-                  {t.nav.studio}
                 </Button>
                 
                 {!loading && (

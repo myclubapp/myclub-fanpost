@@ -424,8 +424,8 @@ const Index = () => {
       {/* Main Content */}
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-12">
         {/* Title with selection info */}
-        <div className="text-center mb-6 sm:mb-8 space-y-2 sm:space-y-4">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight px-2">
+        <div className="text-center mb-4 sm:mb-6 md:mb-8 space-y-2 sm:space-y-3 md:space-y-4">
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-foreground leading-tight px-2 break-words">
             {!selectedSport && t.studio.title}
             {selectedSport && !selectedClubId && `${sportLabels[selectedSport]} - ${t.studio.selectClub}`}
             {selectedClubId && !selectedTeamId && `${selectedClubName} - ${t.studio.selectTeam}`}
@@ -433,14 +433,14 @@ const Index = () => {
             {selectedGameIds.length > 0 && `${selectedClubName} - ${selectedTeamName}`}
           </h1>
           {!selectedSport && (
-            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
               {t.studio.subtitle}
             </p>
           )}
         </div>
 
         {/* Selection Steps */}
-        <div className="max-w-4xl mx-auto space-y-4 sm:space-y-8">
+        <div className="max-w-4xl mx-auto space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-8">
           {/* Step 1: Sport Selection - Show only if no sport selected */}
           {!selectedSport && (
             <Card>

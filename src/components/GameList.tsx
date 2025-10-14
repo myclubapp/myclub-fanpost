@@ -191,17 +191,17 @@ export const GameList = ({ sportType, teamId, clubId, onGameSelect, initialSelec
 
   return (
     <>
-      <Card className="shadow-[var(--shadow-card)] border-border bg-card/50 backdrop-blur-sm mb-24">
-        <CardHeader>
-          <CardTitle className="text-xl sm:text-2xl font-bold text-foreground">
+      <Card className="shadow-[var(--shadow-card)] border-border bg-card/50 backdrop-blur-sm mb-20 sm:mb-24">
+        <CardHeader className="px-4 sm:px-6 py-4 sm:py-6">
+          <CardTitle className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
             Verfügbare Spiele
           </CardTitle>
-          <CardDescription className="text-sm sm:text-base text-muted-foreground">
+          <CardDescription className="text-xs sm:text-sm md:text-base text-muted-foreground">
             Wähle ein oder mehrere Spiele vom gleichen Tag aus
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center space-x-2 mb-4 p-3 rounded-lg border border-border bg-muted/30">
+        <CardContent className="px-4 sm:px-6">
+          <div className="flex items-center space-x-2 mb-3 sm:mb-4 p-2 sm:p-3 rounded-lg border border-border bg-muted/30">
             <Checkbox 
               id="show-past-games"
               checked={showPastGames}
@@ -209,69 +209,71 @@ export const GameList = ({ sportType, teamId, clubId, onGameSelect, initialSelec
             />
             <label
               htmlFor="show-past-games"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              className="text-xs sm:text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
             >
               Vergangene Spiele anzeigen
             </label>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
           {Object.entries(groupedGames).map(([date, gamesOnDate]) => {
             const hasMultipleGames = gamesOnDate.length > 1;
             
             return (
               <div 
                 key={date}
-                className={`rounded-lg ${hasMultipleGames ? 'border-2 border-primary/20 p-3 bg-primary/5' : ''}`}
+                className={`rounded-lg ${hasMultipleGames ? 'border-2 border-primary/20 p-2 sm:p-3 bg-primary/5' : ''}`}
               >
                 {hasMultipleGames && (
-                  <div className="flex items-center gap-2 mb-3 px-2">
-                    <Calendar className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-semibold text-primary">
+                  <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3 px-1 sm:px-2">
+                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+                    <span className="text-xs sm:text-sm font-semibold text-primary">
                       {date} - {gamesOnDate.length} Spiele
                     </span>
                   </div>
                 )}
-                <div className="space-y-2">
+                <div className="space-y-2 sm:space-y-2">
                   {gamesOnDate.map((game) => {
                     const isSelected = selectedGameIds.includes(game.id);
                     
                     return (
                       <div
                         key={game.id}
-                        className={`group p-3 sm:p-4 rounded-lg border transition-all duration-300 cursor-pointer ${
+                        className={`group p-2.5 sm:p-3 md:p-4 rounded-lg border transition-all duration-300 cursor-pointer ${
                           isSelected 
                             ? 'border-primary bg-primary/10' 
                             : 'border-border bg-background hover:bg-muted/50 hover:border-muted-foreground/30'
                         }`}
                         onClick={() => handleGameToggle(game.id)}
                       >
-                        <div className="flex items-start gap-3 sm:gap-4">
+                        <div className="flex items-start gap-2 sm:gap-3 md:gap-4">
                           <Checkbox 
                             checked={isSelected}
                             onCheckedChange={() => handleGameToggle(game.id)}
-                            className="pointer-events-none mt-0.5"
+                            className="pointer-events-none mt-0.5 shrink-0"
                           />
-                          <div className="flex-1 space-y-2 min-w-0">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                              <span className="font-semibold text-sm sm:text-base text-foreground break-words">{game.teamHome}</span>
-                              <span className="text-xs sm:text-sm text-muted-foreground">vs</span>
-                              <span className="font-semibold text-sm sm:text-base text-foreground break-words">{game.teamAway}</span>
+                          <div className="flex-1 space-y-1.5 sm:space-y-2 min-w-0">
+                            <div className="flex flex-col gap-0.5 sm:gap-1">
+                              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                                <span className="font-semibold text-xs sm:text-sm md:text-base text-foreground break-words leading-tight">{game.teamHome}</span>
+                                <span className="text-[10px] sm:text-xs md:text-sm text-muted-foreground shrink-0">vs</span>
+                                <span className="font-semibold text-xs sm:text-sm md:text-base text-foreground break-words leading-tight">{game.teamAway}</span>
+                              </div>
                             </div>
                             {game.result && game.result !== "-:-" && game.result !== "" && (
                               <div className="text-xs sm:text-sm font-medium text-primary">
                                 Resultat: {game.result}
                               </div>
                             )}
-                            <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+                            <div className="flex flex-wrap gap-1.5 sm:gap-2 md:gap-4 text-[10px] sm:text-xs md:text-sm text-muted-foreground">
                               {!hasMultipleGames && (
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
-                                  {game.date}
+                                <div className="flex items-center gap-0.5 sm:gap-1">
+                                  <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 shrink-0" />
+                                  <span className="whitespace-nowrap">{game.date}</span>
                                 </div>
                               )}
-                              <div className="flex items-center gap-1">
-                                <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-                                {game.time}
+                              <div className="flex items-center gap-0.5 sm:gap-1">
+                                <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 shrink-0" />
+                                <span className="whitespace-nowrap">{game.time}</span>
                               </div>
                             </div>
                           </div>
@@ -290,18 +292,18 @@ export const GameList = ({ sportType, teamId, clubId, onGameSelect, initialSelec
       {/* Sticky Footer */}
       {selectedGameIds.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border shadow-lg animate-fade-in">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between gap-4 max-w-4xl mx-auto">
-              <span className="text-sm sm:text-base font-medium text-foreground">
+          <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+            <div className="flex items-center justify-between gap-2 sm:gap-4 max-w-4xl mx-auto">
+              <span className="text-xs sm:text-sm md:text-base font-medium text-foreground">
                 {selectedGameIds.length} Spiel{selectedGameIds.length > 1 ? 'e' : ''} ausgewählt
               </span>
               <Button 
                 onClick={handleContinue}
-                className="gap-2"
-                size="lg"
+                className="gap-1 sm:gap-2"
+                size="default"
               >
                 Weiter
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </Button>
             </div>
           </div>
