@@ -115,7 +115,7 @@ export const ClubSearch = ({ sportType, onClubSelect }: ClubSearchProps) => {
           <Alert className="mt-4">
             <Info className="h-4 w-4" />
             <AlertDescription>
-              Damit du FanPost für deinen Handball Verein nutzen kannst, musst du zuerst deinen API Key hochladen. 
+              Damit du KANVA für deinen Handball Verein nutzen kannst, musst du zuerst deinen API Key hochladen. 
               Hier bekommst du einen API-Key:{" "}
               <a 
                 href="https://www.handball.ch/de/news/2023/api-schnittstellen-wechsel-fuer-vereine-erforderlich/" 

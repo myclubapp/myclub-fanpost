@@ -15,7 +15,7 @@ const TermsAndConditions = () => {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">Introduction</h2>
               <p className="text-muted-foreground mb-4">
-                Welcome to FanPost. These Terms of Use ("Terms") govern your use of the FanPost website and application ("Service"). By accessing or using our Service, you agree to these Terms and our Privacy Policy.
+                Welcome to KANVA. These Terms of Use ("Terms") govern your use of the KANVA website and application ("Service"). By accessing or using our Service, you agree to these Terms and our Privacy Policy.
               </p>
             </section>
             
@@ -35,7 +35,7 @@ const TermsAndConditions = () => {
             
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">Copyright</h2>
-              <p className="text-muted-foreground mb-2">a. The Service and its original content, features, and functionality are and will remain the exclusive property of FanPost and its licensors.</p>
+              <p className="text-muted-foreground mb-2">a. The Service and its original content, features, and functionality are and will remain the exclusive property of KANVA and its licensors.</p>
               <p className="text-muted-foreground mb-2">b. You may not copy, modify, distribute, sell, or lease any part of our Service or included software.</p>
             </section>
             
@@ -53,7 +53,7 @@ const TermsAndConditions = () => {
             
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">Limitation of Liability</h2>
-              <p className="text-muted-foreground mb-2">In no event shall FanPost, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages.</p>
+              <p className="text-muted-foreground mb-2">In no event shall KANVA, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages.</p>
             </section>
             
             <section className="mb-8">

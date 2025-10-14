@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, Download, Instagram } from "lucide-react";
 import myclubLogo from "@/assets/myclub-logo.png";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 
 export type SportType = "unihockey" | "volleyball" | "handball";
@@ -33,6 +34,7 @@ const Index = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const searchParams = new URLSearchParams(location.search);
   const editSelection = searchParams.get('editSelection') === '1';
   const themeParam = searchParams.get('theme') || searchParams.get('template');
@@ -88,9 +90,9 @@ const Index = () => {
           
           if (data.last_team_id) {
             setSelectedTeamId(data.last_team_id);
-            navigate(`/wizard/${targetSport}/${data.last_club_id}/${data.last_team_id}`);
+            navigate(`/studio/${targetSport}/${data.last_club_id}/${data.last_team_id}`);
           } else {
-            navigate(`/wizard/${targetSport}/${data.last_club_id}`);
+            navigate(`/studio/${targetSport}/${data.last_club_id}`);
           }
         }
         
@@ -315,7 +317,7 @@ const Index = () => {
     setSelectedTeamId("");
     setSelectedTeamName("");
     setSelectedGameIds([]);
-    navigate(`/wizard/${newSport}`);
+    navigate(`/studio/${newSport}`);
   };
 
   const handleClubSelect = (clubId: string, clubName: string) => {
@@ -325,7 +327,7 @@ const Index = () => {
     setSelectedTeamName("");
     setSelectedGameIds([]);
     if (selectedSport) {
-      navigate(`/wizard/${selectedSport}/${clubId}`);
+      navigate(`/studio/${selectedSport}/${clubId}`);
     }
   };
 
@@ -334,7 +336,7 @@ const Index = () => {
     setSelectedTeamName(teamName);
     setSelectedGameIds([]);
     if (selectedSport && selectedClubId) {
-      navigate(`/wizard/${selectedSport}/${selectedClubId}/${teamId}`);
+      navigate(`/studio/${selectedSport}/${selectedClubId}/${teamId}`);
     }
   };
 
@@ -349,7 +351,7 @@ const Index = () => {
     if (isHomeGame) params.set('home', 'true');
     if (showResultDetail) params.set('detail', 'true');
     const queryString = params.toString() ? `?${params.toString()}` : '';
-    navigate(`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIdsParam}${queryString}`);
+    navigate(`/studio/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIdsParam}${queryString}`);
   };
 
   const buildUrlWithParams = (overrides: Partial<{ theme: string; tab: string; home: boolean; detail: boolean }> = {}) => {
@@ -382,7 +384,7 @@ const Index = () => {
     }
     
     const queryString = params.toString() ? `?${params.toString()}` : '';
-    return `/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIdsParam}${queryString}`;
+    return `/studio/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIdsParam}${queryString}`;
   };
 
   const handleThemeChange = (theme: string) => {
@@ -424,15 +426,15 @@ const Index = () => {
         {/* Title with selection info */}
         <div className="text-center mb-6 sm:mb-8 space-y-2 sm:space-y-4">
           <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight px-2">
-            {!selectedSport && "Social Media Posts für dein Team"}
-            {selectedSport && !selectedClubId && `${sportLabels[selectedSport]} - Club auswählen`}
-            {selectedClubId && !selectedTeamId && `${selectedClubName} - Team auswählen`}
+            {!selectedSport && t.studio.title}
+            {selectedSport && !selectedClubId && `${sportLabels[selectedSport]} - ${t.studio.selectClub}`}
+            {selectedClubId && !selectedTeamId && `${selectedClubName} - ${t.studio.selectTeam}`}
             {selectedTeamId && selectedGameIds.length === 0 && `${selectedClubName} - ${selectedTeamName}`}
             {selectedGameIds.length > 0 && `${selectedClubName} - ${selectedTeamName}`}
           </h1>
           {!selectedSport && (
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
-              Erstelle professionelle Social Media Posts für deine Spiele in Sekunden
+              {t.studio.subtitle}
             </p>
           )}
         </div>
@@ -447,18 +449,18 @@ const Index = () => {
                   <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold">
                     1
                   </span>
-                  Sportart wählen
+                  {t.studio.selectSport}
                 </CardTitle>
                 <CardDescription>
-                  Wähle deine Sportart aus
+                  {t.studio.selectSportDescription}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <Label htmlFor="sport-select">Sportart</Label>
+                  <Label htmlFor="sport-select">{t.studio.selectSport}</Label>
                   <Select value={selectedSport} onValueChange={handleSportChange}>
                     <SelectTrigger id="sport-select">
-                      <SelectValue placeholder="Wähle eine Sportart..." />
+                      <SelectValue placeholder={t.studio.selectSportPlaceholder} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="unihockey">Unihockey</SelectItem>
@@ -479,12 +481,12 @@ const Index = () => {
                 size="sm"
                 onClick={() => {
                   setSelectedSport("");
-                  navigate('/wizard');
+                  navigate('/studio');
                 }}
                 className="gap-1"
               >
                 <ChevronLeft className="h-4 w-4" />
-                Zurück
+                {t.studio.back}
               </Button>
               <Card>
                 <CardHeader>
@@ -492,15 +494,15 @@ const Index = () => {
                     <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold">
                       2
                     </span>
-                    Club auswählen
+                    {t.studio.selectClub}
                   </CardTitle>
                   <CardDescription>
-                    Wähle deinen Club aus
+                    {t.studio.selectClubDescription}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ClubSearch 
-                    sportType={selectedSport} 
+                  <ClubSearch
+                    sportType={selectedSport}
                     onClubSelect={handleClubSelect}
                   />
                 </CardContent>
@@ -517,12 +519,12 @@ const Index = () => {
                 onClick={() => {
                   setSelectedClubId("");
                   setSelectedClubName("");
-                  navigate(`/wizard/${selectedSport}`);
+                  navigate(`/studio/${selectedSport}`);
                 }}
                 className="gap-1"
               >
                 <ChevronLeft className="h-4 w-4" />
-                Zurück
+                {t.studio.back}
               </Button>
               <Card>
                 <CardHeader>
@@ -530,14 +532,14 @@ const Index = () => {
                     <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold">
                       3
                     </span>
-                    Team auswählen
+                    {t.studio.selectTeam}
                   </CardTitle>
                   <CardDescription>
-                    Wähle dein Team aus
+                    {t.studio.selectTeamDescription}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <TeamSearch 
+                  <TeamSearch
                     sportType={selectedSport}
                     clubId={selectedClubId}
                     clubName={selectedClubName}
@@ -557,12 +559,12 @@ const Index = () => {
                 onClick={() => {
                   setSelectedTeamId("");
                   setSelectedTeamName("");
-                  navigate(`/wizard/${selectedSport}/${selectedClubId}`);
+                  navigate(`/studio/${selectedSport}/${selectedClubId}`);
                 }}
                 className="gap-1"
               >
                 <ChevronLeft className="h-4 w-4" />
-                Zurück
+                {t.studio.back}
               </Button>
               <Card>
                 <CardHeader>
@@ -570,10 +572,10 @@ const Index = () => {
                     <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold">
                       4
                     </span>
-                    Spiel auswählen
+                    {t.studio.selectGame}
                   </CardTitle>
                   <CardDescription>
-                    Wähle das Spiel aus und erstelle deinen Post
+                    {t.studio.selectGameDescription}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -596,12 +598,12 @@ const Index = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  navigate(`/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}?editSelection=1`);
+                  navigate(`/studio/${selectedSport}/${selectedClubId}/${selectedTeamId}?editSelection=1`);
                 }}
                 className="gap-1"
               >
                 <ChevronLeft className="h-4 w-4" />
-                Zurück zur Spielauswahl
+                {t.studio.backToGameSelection}
               </Button>
               <GamePreviewDisplay
                 sportType={selectedSport}
@@ -610,14 +612,14 @@ const Index = () => {
                 gameIds={selectedGameIds}
                 gamesHaveResults={gamesHaveResults}
                 gamesData={gamesData}
-                wizardUrl={(() => {
+                studioUrl={(() => {
                   const params = new URLSearchParams();
                   if (selectedTheme !== 'myclub') params.set('theme', selectedTheme);
                   if (activeTab !== 'preview') params.set('tab', activeTab);
                   if (isHomeGame) params.set('home', 'true');
                   if (showResultDetail) params.set('detail', 'true');
                   const queryString = params.toString() ? `?${params.toString()}` : '';
-                  return `/wizard/${selectedSport}/${selectedClubId}/${selectedTeamId}/${selectedGameIds.join(',')}${queryString}`;
+                  return `/studio/${selectedSport}/${selectedClubId}/${selectedTeamId}/${selectedGameIds.join(',')}${queryString}`;
                 })()}
                 selectedTheme={selectedTheme}
                 onThemeChange={handleThemeChange}
@@ -648,7 +650,7 @@ const Index = () => {
                     variant="outline"
                   >
                     <Download className="h-4 w-4" />
-                    Exportieren
+                    {t.studio.export}
                   </Button>
                   <Button
                     onClick={() => gamePreviewRef.current?.triggerInstagramShare()}
@@ -656,7 +658,7 @@ const Index = () => {
                     size="lg"
                   >
                     <Instagram className="h-4 w-4" />
-                    Instagram Story
+                    {t.studio.instagramStory}
                   </Button>
                 </>
               ) : (
@@ -666,7 +668,7 @@ const Index = () => {
                   size="lg"
                 >
                   <Download className="h-4 w-4" />
-                  Als Bild exportieren
+                  {t.studio.exportAsImage}
                 </Button>
               )}
             </div>

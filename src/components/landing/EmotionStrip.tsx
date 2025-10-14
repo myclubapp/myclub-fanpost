@@ -149,7 +149,7 @@ export const EmotionStrip = () => {
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                 <div className="text-center text-white space-y-2">
                   <p className="text-2xl font-bold">Erstellt in 10 Sek</p>
-                  <p className="text-sm">Mit FanPost</p>
+                  <p className="text-sm">Mit KANVA</p>
                 </div>
               </div>
             </div>

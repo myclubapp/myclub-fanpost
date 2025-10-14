@@ -14,7 +14,7 @@ const PrivacyPolicy = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Introduction</h2>
             <p className="text-muted-foreground mb-4">
-              Welcome to FanPost. This Privacy Policy outlines our practices regarding the collection, use, and disclosure of your information when you use our app, as well as the associated choices you have.
+              Welcome to KANVA. This Privacy Policy outlines our practices regarding the collection, use, and disclosure of your information when you use our app, as well as the associated choices you have.
             </p>
           </section>
           
@@ -30,7 +30,7 @@ const PrivacyPolicy = () => {
                 <strong>Required Information:</strong> To create an account, we require your email address, first name, and last name.
               </li>
               <li>
-                <strong>Additional Information:</strong> Your profile information is used to personalize your experience with FanPost.
+                <strong>Additional Information:</strong> Your profile information is used to personalize your experience with KANVA.
               </li>
             </ul>
             

@@ -8,7 +8,7 @@ const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           <div>
-            <h3 className="text-xl font-bold mb-4">FanPost</h3>
+            <h3 className="text-xl font-bold mb-4">KANVA</h3>
             <p className="text-muted-foreground mb-4">
               Aus Emotionen werden Posts. Social Media für Sportvereine, die wieder Freude macht.
               <br />
@@ -69,7 +69,7 @@ const Footer = () => {
         <div className="border-t pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-muted-foreground text-sm mb-4 md:mb-0">
-              © {new Date().getFullYear()} FanPost. Alle Rechte vorbehalten.
+              © {new Date().getFullYear()} KANVA. Alle Rechte vorbehalten.
             </p>
             <div className="flex flex-wrap justify-center gap-2 md:gap-6 text-sm">
               <Link to="/impressum" className="text-muted-foreground hover:text-primary transition-colors">Impressum</Link>

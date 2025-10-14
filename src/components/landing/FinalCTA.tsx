@@ -40,7 +40,7 @@ export const FinalCTA = () => {
               <Button 
                 size="lg"
                 className="text-xl px-10 py-7 shadow-[var(--shadow-glow)] hover:scale-105 transition-transform group"
-                onClick={() => navigate('/wizard')}
+                onClick={() => navigate('/studio')}
               >
                 Jetzt kostenlos starten
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />

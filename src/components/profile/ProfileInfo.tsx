@@ -229,7 +229,7 @@ export const ProfileInfo = () => {
 
         <div className="space-y-4 pt-4 border-t">
           <div className="space-y-3">
-            <Label className="text-base font-semibold">Wizard-Einstellungen</Label>
+            <Label className="text-base font-semibold">Studio-Einstellungen</Label>
             <div className="flex items-center space-x-2">
               <Checkbox 
                 id="remember-selection" 
@@ -241,7 +241,7 @@ export const ProfileInfo = () => {
               </Label>
             </div>
             <p className="text-xs text-muted-foreground">
-              Wenn aktiviert, wird Ihre letzte Club- und Teamauswahl im Wizard gespeichert.
+              Wenn aktiviert, wird Ihre letzte Club- und Teamauswahl im Studio gespeichert.
             </p>
             
             {rememberLastSelection && (lastSport || lastClubName || lastTeamName) && (

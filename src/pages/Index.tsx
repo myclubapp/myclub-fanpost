@@ -1,10 +1,8 @@
 import { Header } from "@/components/Header";
 import { AnimatedHero } from "@/components/landing/AnimatedHero";
-import { FeatureTimeline } from "@/components/landing/FeatureTimeline";
-import { EmotionStrip } from "@/components/landing/EmotionStrip";
+import { HowItWorks } from "@/components/landing/HowItWorks";
 import { EmotionalPricing } from "@/components/landing/EmotionalPricing";
-import { MissionSection } from "@/components/landing/MissionSection";
-import { FinalCTA } from "@/components/landing/FinalCTA";
+import { AboutSection } from "@/components/landing/AboutSection";
 import Footer from "@/components/Footer";
 
 const Index = () => {
@@ -12,23 +10,17 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      {/* Hero with Animated Instagram Feed */}
+      {/* Hero Section */}
       <AnimatedHero />
-
-      {/* Feature Timeline - How it works */}
-      <FeatureTimeline />
-
-      {/* Emotion Strip - Scrolling Example Posts 
-      <EmotionStrip />*/}
 
       {/* Pricing Section */}
       <EmotionalPricing />
 
-      {/* Mission & About Section 
-      <MissionSection />*/}
-      
-      {/* Final CTA 
-      <FinalCTA />*/}
+      {/* How It Works Section */}
+      <HowItWorks />
+
+      {/* About Section */}
+      <AboutSection />
 
       {/* Footer */}
       <Footer />

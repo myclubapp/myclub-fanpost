@@ -14,7 +14,7 @@ const Impressum = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Kontakt</h2>
             <p className="text-muted-foreground mb-4">
-              FanPost powered by myclub | the next generation<br />
+              KANVA powered by myclub | the next generation<br />
               c/o liitu consulting gmbh<br />
               Villenstrasse 4<br />
               8200 Schaffhausen<br />

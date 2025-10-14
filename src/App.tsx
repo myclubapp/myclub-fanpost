@@ -9,7 +9,7 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import Templates from "./pages/Templates";
 import TemplateEditor from "./pages/TemplateEditor";
-import Wizard from "./pages/Wizard";
+import Studio from "./pages/Studio";
 import Impressum from "./pages/Impressum";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import PrivacyPolicyDe from "./pages/PrivacyPolicyDe";
@@ -33,11 +33,11 @@ const App = () => (
             <Route path="/templates" element={<Templates />} />
             <Route path="/templates/new" element={<TemplateEditor />} />
             <Route path="/templates/edit/:id" element={<TemplateEditor />} />
-            <Route path="/wizard" element={<Wizard />} />
-            <Route path="/wizard/:sport" element={<Wizard />} />
-            <Route path="/wizard/:sport/:clubId" element={<Wizard />} />
-            <Route path="/wizard/:sport/:clubId/:teamId" element={<Wizard />} />
-            <Route path="/wizard/:sport/:clubId/:teamId/:gameId" element={<Wizard />} />
+            <Route path="/studio" element={<Studio />} />
+            <Route path="/studio/:sport" element={<Studio />} />
+            <Route path="/studio/:sport/:clubId" element={<Studio />} />
+            <Route path="/studio/:sport/:clubId/:teamId" element={<Studio />} />
+            <Route path="/studio/:sport/:clubId/:teamId/:gameId" element={<Studio />} />
             <Route path="/impressum" element={<Impressum />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/privacy-policy-de" element={<PrivacyPolicyDe />} />

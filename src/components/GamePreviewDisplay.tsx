@@ -43,7 +43,7 @@ export interface GamePreviewDisplayProps {
   gameIds: string[];
   gamesHaveResults?: boolean[];
   gamesData?: any[];
-  wizardUrl?: string;
+  studioUrl?: string;
   selectedTheme?: string;
   onThemeChange?: (theme: string) => void;
   activeTab?: string;
@@ -107,7 +107,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     gameIds, 
     gamesHaveResults = [],
     gamesData = [],
-    wizardUrl, 
+    studioUrl, 
     selectedTheme: initialTheme = "myclub", 
     onThemeChange,
     activeTab: initialActiveTab = "preview",
@@ -654,7 +654,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       const fileName = `instagram-story-${gameId}-${Date.now()}.png`;
 
       // Build game URL and template info for credit consumption
-      const gameUrl = wizardUrl || window.location.pathname;
+      const gameUrl = studioUrl || window.location.pathname;
       const templateInfo = selectedCustomTemplate
         ? `template=${selectedCustomTemplate.id}`
         : `theme=${selectedTheme}`;
@@ -853,7 +853,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       const isNative = Capacitor.isNativePlatform();
 
       // Build game URL and template info for credit consumption
-      const gameUrl = wizardUrl || window.location.pathname;
+      const gameUrl = studioUrl || window.location.pathname;
       const templateInfo = selectedCustomTemplate
         ? `template=${selectedCustomTemplate.id}`
         : `theme=${selectedTheme}`;

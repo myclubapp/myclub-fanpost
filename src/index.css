@@ -8,153 +8,156 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 215 25% 12%;
-    --foreground: 0 0% 98%;
+    /* KANVA Brand Colors - Midnight Slate Theme */
+    --background: 240 20% 14%;
+    --foreground: 0 0% 100%;
 
-    --card: 215 20% 15%;
-    --card-foreground: 0 0% 98%;
+    --card: 240 18% 18%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 215 20% 15%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 240 18% 18%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 195 85% 60%;
+    --primary: 215 100% 57%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 195 85% 70%;
+    --primary-glow: 215 100% 67%;
 
-    --secondary: 195 75% 55%;
+    --secondary: 357 100% 65%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 215 20% 20%;
-    --muted-foreground: 215 15% 65%;
+    --muted: 240 16% 22%;
+    --muted-foreground: 210 15% 70%;
 
-    --accent: 195 85% 60%;
+    --accent: 357 100% 65%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 357 100% 65%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 215 20% 22%;
-    --input: 215 20% 22%;
-    --ring: 195 85% 60%;
+    --border: 240 16% 26%;
+    --input: 240 16% 26%;
+    --ring: 215 100% 57%;
 
     --radius: 0.75rem;
-    
-    --gradient-primary: linear-gradient(135deg, hsl(195 85% 60%), hsl(195 85% 70%));
-    --gradient-accent: linear-gradient(135deg, hsl(195 75% 55%), hsl(195 85% 65%));
-    --gradient-hero: linear-gradient(135deg, hsl(215 25% 12%) 0%, hsl(215 30% 18%) 100%);
-    
-    --shadow-glow: 0 10px 40px -10px hsl(195 85% 60% / 0.4);
+
+    --gradient-primary: linear-gradient(135deg, hsl(215 100% 57%), hsl(215 100% 67%));
+    --gradient-accent: linear-gradient(135deg, hsl(357 100% 65%), hsl(357 100% 75%));
+    --gradient-hero: linear-gradient(135deg, hsl(240 20% 14%) 0%, hsl(240 22% 20%) 100%);
+
+    --shadow-glow: 0 10px 40px -10px hsl(215 100% 57% / 0.4);
     --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.3);
-    --shadow-elegant: 0 10px 30px -10px hsl(195 85% 60% / 0.3);
-    
+    --shadow-elegant: 0 10px 30px -10px hsl(215 100% 57% / 0.3);
+
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    
+
     --animation-float: float 3s ease-in-out infinite;
 
-    --sidebar-background: 215 25% 12%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 195 85% 60%;
+    --sidebar-background: 240 20% 14%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 215 100% 57%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 20% 18%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 215 20% 22%;
-    --sidebar-ring: 195 85% 60%;
+    --sidebar-accent: 240 18% 18%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 240 16% 26%;
+    --sidebar-ring: 215 100% 57%;
   }
 
   .light {
-    --background: 0 0% 100%;
-    --foreground: 215 25% 15%;
+    /* KANVA Brand Colors - Cloud Gray Theme */
+    --background: 210 20% 96%;
+    --foreground: 240 20% 14%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
+    --card-foreground: 240 20% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
+    --popover-foreground: 240 20% 14%;
 
-    --primary: 195 85% 50%;
+    --primary: 215 100% 57%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 195 85% 60%;
+    --primary-glow: 215 100% 67%;
 
-    --secondary: 195 75% 45%;
+    --secondary: 357 100% 65%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 215 15% 95%;
-    --muted-foreground: 215 15% 40%;
+    --muted: 210 18% 92%;
+    --muted-foreground: 240 15% 45%;
 
-    --accent: 195 85% 50%;
+    --accent: 357 100% 65%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 357 100% 65%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 215 15% 88%;
-    --input: 215 15% 88%;
-    --ring: 195 85% 50%;
-    
-    --gradient-primary: linear-gradient(135deg, hsl(195 85% 50%), hsl(195 85% 60%));
-    --gradient-accent: linear-gradient(135deg, hsl(195 75% 45%), hsl(195 85% 55%));
-    --gradient-hero: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(195 20% 98%) 100%);
-    
-    --shadow-glow: 0 10px 40px -10px hsl(195 85% 50% / 0.3);
-    --shadow-card: 0 4px 20px -4px hsl(215 15% 20% / 0.1);
-    --shadow-elegant: 0 10px 30px -10px hsl(195 85% 50% / 0.3);
-    
+    --border: 210 16% 88%;
+    --input: 210 16% 88%;
+    --ring: 215 100% 57%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(215 100% 57%), hsl(215 100% 67%));
+    --gradient-accent: linear-gradient(135deg, hsl(357 100% 65%), hsl(357 100% 75%));
+    --gradient-hero: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(210 20% 98%) 100%);
+
+    --shadow-glow: 0 10px 40px -10px hsl(215 100% 57% / 0.3);
+    --shadow-card: 0 4px 20px -4px hsl(240 15% 20% / 0.1);
+    --shadow-elegant: 0 10px 30px -10px hsl(215 100% 57% / 0.3);
+
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 215 25% 15%;
-    --sidebar-primary: 195 85% 50%;
+    --sidebar-foreground: 240 20% 14%;
+    --sidebar-primary: 215 100% 57%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 15% 95%;
-    --sidebar-accent-foreground: 215 25% 15%;
-    --sidebar-border: 215 15% 88%;
-    --sidebar-ring: 195 85% 50%;
+    --sidebar-accent: 210 18% 92%;
+    --sidebar-accent-foreground: 240 20% 14%;
+    --sidebar-border: 210 16% 88%;
+    --sidebar-ring: 215 100% 57%;
   }
 
   .dark {
-    --background: 215 25% 12%;
-    --foreground: 0 0% 98%;
+    /* KANVA Brand Colors - Midnight Slate Theme (Dark Mode) */
+    --background: 240 20% 14%;
+    --foreground: 0 0% 100%;
 
-    --card: 215 20% 15%;
-    --card-foreground: 0 0% 98%;
+    --card: 240 18% 18%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 215 20% 15%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 240 18% 18%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 195 85% 60%;
+    --primary: 215 100% 57%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 195 85% 70%;
+    --primary-glow: 215 100% 67%;
 
-    --secondary: 195 75% 55%;
+    --secondary: 357 100% 65%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 215 20% 20%;
-    --muted-foreground: 215 15% 65%;
+    --muted: 240 16% 22%;
+    --muted-foreground: 210 15% 70%;
 
-    --accent: 195 85% 60%;
+    --accent: 357 100% 65%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 357 100% 65%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 215 20% 22%;
-    --input: 215 20% 22%;
-    --ring: 195 85% 60%;
-    
-    --gradient-primary: linear-gradient(135deg, hsl(195 85% 60%), hsl(195 85% 70%));
-    --gradient-accent: linear-gradient(135deg, hsl(195 75% 55%), hsl(195 85% 65%));
-    --gradient-hero: linear-gradient(135deg, hsl(215 25% 12%) 0%, hsl(215 30% 18%) 100%);
-    
-    --shadow-glow: 0 10px 40px -10px hsl(195 85% 60% / 0.4);
+    --border: 240 16% 26%;
+    --input: 240 16% 26%;
+    --ring: 215 100% 57%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(215 100% 57%), hsl(215 100% 67%));
+    --gradient-accent: linear-gradient(135deg, hsl(357 100% 65%), hsl(357 100% 75%));
+    --gradient-hero: linear-gradient(135deg, hsl(240 20% 14%) 0%, hsl(240 22% 20%) 100%);
+
+    --shadow-glow: 0 10px 40px -10px hsl(215 100% 57% / 0.4);
     --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.3);
-    --shadow-elegant: 0 10px 30px -10px hsl(195 85% 60% / 0.3);
-    
-    --sidebar-background: 215 25% 12%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 195 85% 60%;
+    --shadow-elegant: 0 10px 30px -10px hsl(215 100% 57% / 0.3);
+
+    --sidebar-background: 240 20% 14%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 215 100% 57%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 20% 18%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 215 20% 22%;
-    --sidebar-ring: 195 85% 60%;
+    --sidebar-accent: 240 18% 18%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 240 16% 26%;
+    --sidebar-ring: 215 100% 57%;
   }
 }
 

@@ -14,7 +14,7 @@ const PrivacyPolicyDe = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Einführung</h2>
             <p className="text-muted-foreground mb-4">
-              Willkommen bei FanPost. Diese Datenschutzrichtlinie umreisst unsere Praktiken bezüglich der Sammlung, Nutzung und Offenlegung Ihrer Informationen, wenn Sie unsere App verwenden, sowie die damit verbundenen Wahlmöglichkeiten.
+              Willkommen bei KANVA. Diese Datenschutzrichtlinie umreisst unsere Praktiken bezüglich der Sammlung, Nutzung und Offenlegung Ihrer Informationen, wenn Sie unsere App verwenden, sowie die damit verbundenen Wahlmöglichkeiten.
             </p>
           </section>
           
@@ -30,7 +30,7 @@ const PrivacyPolicyDe = () => {
                 <strong>Erforderliche Informationen:</strong> Zur Erstellung eines Kontos benötigen wir Ihre E-Mail-Adresse, Vor- und Nachnamen.
               </li>
               <li>
-                <strong>Zusätzliche Informationen:</strong> Ihre Profilinformationen werden verwendet, um Ihre Erfahrung mit FanPost zu personalisieren.
+                <strong>Zusätzliche Informationen:</strong> Ihre Profilinformationen werden verwendet, um Ihre Erfahrung mit KANVA zu personalisieren.
               </li>
             </ul>
             

@@ -15,7 +15,7 @@ export const MissionSection = () => {
             Jedes Team kann seine Fans begeistern – auch ohne Profi-Marketing.
             <br />
             <span className="text-foreground font-semibold">
-              Darum haben wir FanPost entwickelt.
+              Darum haben wir KANVA entwickelt.
             </span>
           </p>
         </div>
@@ -37,7 +37,7 @@ export const MissionSection = () => {
                 soll schnell ein Post online sein – aber wer hat Zeit für Design?
               </p>
               <p className="text-foreground font-medium text-lg">
-                FanPost macht professionelle Social-Media-Posts für jeden zugänglich. 
+                KANVA macht professionelle Social-Media-Posts für jeden zugänglich. 
                 Automatisch. In Sekunden. Ohne Vorkenntnisse.
               </p>
             </CardContent>
@@ -158,7 +158,7 @@ export const MissionSection = () => {
             </div>
             <CardTitle className="text-3xl mb-4">Fragen? Feedback? Ideen?</CardTitle>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Wir freuen uns, von dir zu hören! Gemeinsam machen wir FanPost noch besser.
+              Wir freuen uns, von dir zu hören! Gemeinsam machen wir KANVA noch besser.
             </p>
           </CardHeader>
           <CardContent>

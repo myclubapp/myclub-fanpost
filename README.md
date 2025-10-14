@@ -1,4 +1,4 @@
-## FanPost – Social-Media-Spielvorschauen für Vereine
+## Kanva – Social-Media-Spielvorschauen für Vereine
 
 Erstelle in Sekunden hochwertige Social-Media-Bilder zu Spielen deines Vereins. Wähle Sportart, Club, Team und Spiel(e) – die App generiert automatisch moderne Spielvorschauen zum Teilen.
 
@@ -54,7 +54,7 @@ Voraussetzungen: Node.js (empfohlen via nvm) und npm.
 
 ```bash
 git clone <REPO_URL>
-cd myclub-fanpost
+cd myclub-kanva
 npm install
 npm run dev
 ```

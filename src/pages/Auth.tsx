@@ -60,7 +60,7 @@ const Auth = () => {
       <div className="flex items-center justify-center p-4 py-20">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Willkommen bei Fanpost</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">Willkommen bei KANVA</CardTitle>
             <CardDescription className="text-center">
               Melden Sie sich mit Ihrer E-Mail-Adresse an
             </CardDescription>

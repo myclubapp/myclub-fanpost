@@ -15,7 +15,7 @@ const TermsAndConditionsDe = () => {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">Einführung</h2>
               <p className="text-muted-foreground mb-4">
-                Willkommen bei FanPost. Diese Nutzungsbedingungen ("Bedingungen") regeln Ihre Nutzung der FanPost-Website und Anwendung ("Dienst"). Durch den Zugriff auf oder die Nutzung unseres Dienstes erklären Sie sich mit diesen Bedingungen und unserer Datenschutzrichtlinie einverstanden.
+                Willkommen bei KANVA. Diese Nutzungsbedingungen ("Bedingungen") regeln Ihre Nutzung der KANVA-Website und Anwendung ("Dienst"). Durch den Zugriff auf oder die Nutzung unseres Dienstes erklären Sie sich mit diesen Bedingungen und unserer Datenschutzrichtlinie einverstanden.
               </p>
             </section>
             
@@ -35,7 +35,7 @@ const TermsAndConditionsDe = () => {
             
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">Urheberrechte</h2>
-              <p className="text-muted-foreground mb-2">a. Der Dienst und seine Originalinhalte, Funktionen und Funktionalität sind und bleiben das ausschliessliche Eigentum von FanPost und seinen Lizenzgebern.</p>
+              <p className="text-muted-foreground mb-2">a. Der Dienst und seine Originalinhalte, Funktionen und Funktionalität sind und bleiben das ausschliessliche Eigentum von KANVA und seinen Lizenzgebern.</p>
               <p className="text-muted-foreground mb-2">b. Sie dürfen keinen Teil unseres Dienstes oder der enthaltenen Software kopieren, modifizieren, verteilen, verkaufen oder vermieten.</p>
             </section>
             
@@ -53,7 +53,7 @@ const TermsAndConditionsDe = () => {
             
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">Haftungsbeschränkung</h2>
-              <p className="text-muted-foreground mb-2">In keinem Fall haften FanPost oder seine Direktoren, Mitarbeiter, Partner, Vertreter, Lieferanten oder verbundene Unternehmen für indirekte, zufällige, besondere, Folge- oder Strafschäden.</p>
+              <p className="text-muted-foreground mb-2">In keinem Fall haften KANVA oder seine Direktoren, Mitarbeiter, Partner, Vertreter, Lieferanten oder verbundene Unternehmen für indirekte, zufällige, besondere, Folge- oder Strafschäden.</p>
             </section>
             
             <section className="mb-8">

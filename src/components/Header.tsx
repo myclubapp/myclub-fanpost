@@ -5,7 +5,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useCredits } from '@/hooks/useCredits';
 import { useTheme } from '@/components/theme-provider';
-import { LogOut, User, FileText, Coins, Menu, X, Sun, Moon } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { LogOut, User, FileText, Coins, Menu, X, Sun, Moon, Languages } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,13 +30,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import logo from '@/assets/myclub-logo.png';
-
 export const Header = () => {
   const { user, signOut, loading } = useAuth();
   const { isPaidUser } = useUserRole();
   const { credits } = useCredits();
   const { theme, setTheme } = useTheme();
+  const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -104,53 +104,49 @@ export const Header = () => {
           : 'bg-background/60 backdrop-blur-sm'
       }`}
     >
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <button onClick={handleLogoClick} className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-          <img src={logo} alt="MyClub Logo" className="h-8 w-auto" />
-          <span className="font-bold text-xl">FanPost</span>
+      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <button onClick={handleLogoClick} className="hover:opacity-80 transition-opacity">
+          <span className="font-bold text-2xl tracking-tight">KANVA</span>
         </button>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-4">
-          <NavigationMenu>
-            <NavigationMenuList>
-              <NavigationMenuItem>
-                <Link to="/wizard">
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Wizard
-                  </NavigationMenuLink>
-                </Link>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                <a href="/#pricing" onClick={(e) => {
-                  e.preventDefault();
-                  if (window.location.pathname === '/') {
-                    document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
-                  } else {
-                    navigate('/#pricing');
-                  }
-                }}>
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Preise
-                  </NavigationMenuLink>
-                </a>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                <a href="/#about" onClick={(e) => {
-                  e.preventDefault();
-                  if (window.location.pathname === '/') {
-                    document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
-                  } else {
-                    navigate('/#about');
-                  }
-                }}>
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Über uns
-                  </NavigationMenuLink>
-                </a>
-              </NavigationMenuItem>
-            </NavigationMenuList>
-          </NavigationMenu>
+        <nav className="hidden md:flex items-center space-x-8">
+          <button
+            onClick={() => {
+              if (window.location.pathname === '/') {
+                document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+              } else {
+                navigate('/#pricing');
+              }
+            }}
+            className="text-foreground/80 hover:text-foreground transition-colors text-base"
+          >
+            {t.nav.pricing}
+          </button>
+          <button
+            onClick={() => {
+              if (window.location.pathname === '/') {
+                document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+              } else {
+                navigate('/#how-it-works');
+              }
+            }}
+            className="text-foreground/80 hover:text-foreground transition-colors text-base"
+          >
+            {t.nav.howItWorks}
+          </button>
+          <button
+            onClick={() => {
+              if (window.location.pathname === '/') {
+                document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
+              } else {
+                navigate('/#about');
+              }
+            }}
+            className="text-foreground/80 hover:text-foreground transition-colors text-base"
+          >
+            {t.nav.about}
+          </button>
 
           {!loading && (
             <>
@@ -162,7 +158,16 @@ export const Header = () => {
                       <span className="text-sm font-medium">{credits.credits_remaining}</span>
                     </div>
                   )}
-                  
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setLanguage(language === 'de' ? 'en' : 'de')}
+                    className="font-semibold"
+                  >
+                    {language.toUpperCase()}
+                  </Button>
+
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon">
@@ -176,11 +181,11 @@ export const Header = () => {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => navigate('/profile')}>
                         <User className="mr-2 h-4 w-4" />
-                        Mein Profil
+                        {t.nav.myProfile}
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => navigate('/templates')}>
                         <FileText className="mr-2 h-4 w-4" />
-                        Vorlagen
+                        {t.nav.templates}
                         {!isPaidUser && (
                           <Badge variant="secondary" className="ml-auto">Pro</Badge>
                         )}
@@ -188,15 +193,23 @@ export const Header = () => {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={handleSignOut}>
                         <LogOut className="mr-2 h-4 w-4" />
-                        Abmelden
+                        {t.nav.logout}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </>
               ) : (
                 <>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setLanguage(language === 'de' ? 'en' : 'de')}
+                    className="font-semibold"
+                  >
+                    {language.toUpperCase()}
+                  </Button>
+                  <Button
+                    variant="ghost"
                     size="icon"
                     onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                   >
@@ -207,7 +220,7 @@ export const Header = () => {
                     )}
                   </Button>
                   <Button asChild variant="default">
-                    <Link to="/auth">Login</Link>
+                    <Link to="/auth">{t.nav.login}</Link>
                   </Button>
                 </>
               )}
@@ -232,29 +245,36 @@ export const Header = () => {
             </SheetTrigger>
             <SheetContent side="right" className="w-[280px]">
               <SheetHeader>
-                <SheetTitle className="text-left">Navigation</SheetTitle>
+                <SheetTitle className="text-left">{t.nav.navigation}</SheetTitle>
               </SheetHeader>
               <div className="flex flex-col gap-4 mt-6">
                 <Button
                   variant="ghost"
                   className="justify-start"
-                  onClick={() => handleNavigate('/wizard')}
+                  onClick={() => handleNavigate('/#pricing')}
                 >
-                  Wizard
+                  {t.nav.pricing}
                 </Button>
                 <Button
                   variant="ghost"
                   className="justify-start"
-                  onClick={() => handleNavigate('/#pricing')}
+                  onClick={() => handleNavigate('/#how-it-works')}
                 >
-                  Preise
+                  {t.nav.howItWorks}
                 </Button>
                 <Button
                   variant="ghost"
                   className="justify-start"
                   onClick={() => handleNavigate('/#about')}
                 >
-                  Über uns
+                  {t.nav.about}
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-start"
+                  onClick={() => handleNavigate('/studio')}
+                >
+                  {t.nav.studio}
                 </Button>
                 
                 {!loading && (
@@ -271,7 +291,7 @@ export const Header = () => {
                             onClick={() => handleNavigate('/profile')}
                           >
                             <User className="mr-2 h-4 w-4" />
-                            Mein Profil
+                            {t.nav.myProfile}
                           </Button>
                           <Button
                             variant="ghost"
@@ -279,10 +299,18 @@ export const Header = () => {
                             onClick={() => handleNavigate('/templates')}
                           >
                             <FileText className="mr-2 h-4 w-4" />
-                            Vorlagen
+                            {t.nav.templates}
                             {!isPaidUser && (
                               <Badge variant="secondary" className="ml-auto">Pro</Badge>
                             )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            className="justify-start w-full"
+                            onClick={() => setLanguage(language === 'de' ? 'en' : 'de')}
+                          >
+                            <Languages className="mr-2 h-4 w-4" />
+                            {language.toUpperCase()}
                           </Button>
                           <Button
                             variant="ghost"
@@ -293,7 +321,7 @@ export const Header = () => {
                             }}
                           >
                             <LogOut className="mr-2 h-4 w-4" />
-                            Abmelden
+                            {t.nav.logout}
                           </Button>
                         </div>
                       </>
@@ -302,17 +330,25 @@ export const Header = () => {
                         <Button
                           variant="ghost"
                           className="justify-start w-full"
+                          onClick={() => setLanguage(language === 'de' ? 'en' : 'de')}
+                        >
+                          <Languages className="mr-2 h-4 w-4" />
+                          {language.toUpperCase()}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="justify-start w-full"
                           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                         >
                           {theme === 'dark' ? (
                             <>
                               <Sun className="mr-2 h-4 w-4" />
-                              Hell
+                              {t.nav.light}
                             </>
                           ) : (
                             <>
                               <Moon className="mr-2 h-4 w-4" />
-                              Dunkel
+                              {t.nav.dark}
                             </>
                           )}
                         </Button>
@@ -320,7 +356,7 @@ export const Header = () => {
                           className="w-full"
                           onClick={() => handleNavigate('/auth')}
                         >
-                          Login
+                          {t.nav.login}
                         </Button>
                       </>
                     )}
