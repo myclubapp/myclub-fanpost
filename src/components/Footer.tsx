@@ -42,9 +42,13 @@ const Footer = () => {
                 <span className="sr-only">Twitter</span>
                 <Twitter className="h-6 w-6" />
               </a>
-              <a href="https://www.instagram.com/p/CD2LeTkJisD/" className="text-muted-foreground hover:text-primary transition-colors">
+              <a href="https://www.instagram.com/getkanva.io/?igsh=d3Y2bnJ2bWNjY2Yw" className="text-muted-foreground hover:text-primary transition-colors">
                 <span className="sr-only">Instagram</span>
                 <Instagram className="h-6 w-6" />
+              </a>
+              <a href="https://www.linkedin.com/company/myclub-thenextgeneration/" className="text-muted-foreground hover:text-primary transition-colors">
+                <span className="sr-only">LinkedIn</span>
+                <Linkedin className="h-6 w-6" />
               </a>
             </div>
             {/* Swiss Made Software Logo */}
@@ -98,7 +102,7 @@ const Footer = () => {
             <ul className="space-y-3">
               <li><a href="https://github.com/myclubapp" className="text-muted-foreground hover:text-primary transition-colors">GitHub</a></li>
               <li><a href="https://twitter.com/my_club_app" className="text-muted-foreground hover:text-primary transition-colors">Twitter</a></li>
-              <li><a href="https://www.instagram.com/p/CD2LeTkJisD/" className="text-muted-foreground hover:text-primary transition-colors">Instagram</a></li>
+              <li><a href="https://www.instagram.com/getkanva.io/?igsh=d3Y2bnJ2bWNjY2Yw" className="text-muted-foreground hover:text-primary transition-colors">Instagram</a></li>
               <li><a href="https://www.facebook.com/myclubthenextgeneration" className="text-muted-foreground hover:text-primary transition-colors">Facebook</a></li>
               <li><a href="https://www.linkedin.com/company/myclub-thenextgeneration/" className="text-muted-foreground hover:text-primary transition-colors">LinkedIn</a></li>
             </ul>
