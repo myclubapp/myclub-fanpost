@@ -61,7 +61,6 @@ const Index = () => {
   const [gamesData, setGamesData] = useState<any[]>([]);
   const [rememberLastSelection, setRememberLastSelection] = useState(true);
   const [loadedLastSelection, setLoadedLastSelection] = useState(false);
-  const [instagramUsername, setInstagramUsername] = useState<string | null>(null);
   const gamePreviewRef = useRef<{ triggerDownload: () => void; triggerInstagramShare: () => void } | null>(null);
 
   // Load last selection from profile on mount
