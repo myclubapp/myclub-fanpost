@@ -112,6 +112,12 @@ export const Header = () => {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
           <button
+            onClick={() => navigate('/studio')}
+            className="text-primary hover:text-primary/80 transition-colors text-base font-semibold"
+          >
+            {t.nav.studio}
+          </button>
+          <button
             onClick={() => {
               if (window.location.pathname === '/') {
                 document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });

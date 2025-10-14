@@ -1,8 +1,21 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Github, Linkedin } from 'lucide-react';
 
 const Footer = () => {
+  const navigate = useNavigate();
+
+  const handleNavigate = (section: string) => {
+    if (window.location.pathname === '/') {
+      document.getElementById(section)?.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      navigate('/');
+      setTimeout(() => {
+        document.getElementById(section)?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  };
+
   return (
     <footer className="bg-background border-t pt-16 pb-8">
       <div className="container mx-auto px-4">
@@ -39,9 +52,38 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Produkt</h3>
             <ul className="space-y-3">
-              <li><a href="/#how-it-works" className="text-muted-foreground hover:text-primary transition-colors">Funktionen</a></li>
-              <li><a href="/#pricing" className="text-muted-foreground hover:text-primary transition-colors">Preise</a></li>
-              <li><a href="/#about" className="text-muted-foreground hover:text-primary transition-colors">Über uns</a></li>
+              <li>
+                <button 
+                  onClick={() => navigate('/studio')} 
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Studio
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => handleNavigate('how-it-works')} 
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Funktionen
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => handleNavigate('pricing')} 
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Preise
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => handleNavigate('about')} 
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Über uns
+                </button>
+              </li>
             </ul>
           </div>
 

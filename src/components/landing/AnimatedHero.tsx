@@ -15,7 +15,8 @@ const mockPosts = [
     colorOpponent: "#fc4349",
     scoreOpponent: "3",
     gradient: "from-[#f89828] to-[#fc4349]",
-    
+    likes: "1,2k",
+    caption: "Dein Sportmoment in wenigen Sekunden",
   },
   {
     id: 2,
@@ -27,7 +28,8 @@ const mockPosts = [
     colorOpponent: "#003eaa",
     scoreOpponent: "3",
     gradient: "from-[#ff8f00] to-[#e1241b]",
-  
+    likes: "847",
+    caption: "Auswärtssieg in Schaffhausen! 🥳",
   },
   {
     id: 3,
@@ -38,9 +40,9 @@ const mockPosts = [
     opponent: "Wacher Thun",
     colorOpponent: "#0F7973",
     scoreOpponent: "30",
-   
     gradient: "from-[#eb6000] to-[#ec1919]",
- 
+    likes: "2,4k",
+    caption: "Heimsieg in der BBC Arena! 🔥",
   }
 ];
 
@@ -53,6 +55,22 @@ export const AnimatedHero = () => {
 
   // Determine if we should show light mode (check system preference if theme is 'system')
   const isDarkMode = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+  // Get current date formatted in German
+  const getCurrentDate = () => {
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('de-DE', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+    const formatted = formatter.format(now);
+    // Capitalize first letter of weekday
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  };
+
+  const currentDate = getCurrentDate();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -142,7 +160,7 @@ export const AnimatedHero = () => {
                       </svg>
                     </button>
                     <div className="flex-1 text-center">
-                      <p className={`${isDarkMode ? 'text-white' : 'text-black'} font-semibold text-sm`}>Montag 13. Oktober 2025</p>
+                      <p className={`${isDarkMode ? 'text-white' : 'text-black'} font-semibold text-sm`}>{currentDate}</p>
                       <p className={`${isDarkMode ? 'text-white' : 'text-black'} font-bold text-base`}>KANVA</p>
                     </div>
                     <div className="w-6" />
@@ -191,8 +209,16 @@ export const AnimatedHero = () => {
                   {/* Instagram Actions */}
                   <div className={`px-4 py-3 ${isDarkMode ? 'bg-[#000000]' : 'bg-white'} transition-colors duration-300`}>
                     <div className="flex items-center gap-4 mb-3">
-                      <button className={isDarkMode ? 'text-white' : 'text-black'}>
-                        <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <button className={currentPost.id === 1 ? 'text-red-500' : (isDarkMode ? 'text-white' : 'text-black')}>
+                        <svg 
+                          width="24" 
+                          height="24" 
+                          fill={currentPost.id === 1 ? 'currentColor' : 'none'} 
+                          stroke="currentColor" 
+                          strokeWidth="2" 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round"
+                        >
                           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                         </svg>
                       </button>
@@ -215,10 +241,10 @@ export const AnimatedHero = () => {
                     </div>
 
                     <p className={`${isDarkMode ? 'text-white' : 'text-black'} text-sm mb-1`}>
-                      <span className="font-semibold">1,2k Likes</span>
+                      <span className="font-semibold">{currentPost.likes} Likes</span>
                     </p>
                     <p className={`${isDarkMode ? 'text-white' : 'text-black'} text-sm`}>
-                      <span className="font-semibold">KANVA</span> Dein Sportmoment in wenigen Sekunden
+                      <span className="font-semibold">KANVA</span> {currentPost.caption}
                     </p>
                     <p className="text-gray-500 text-xs mt-1"></p>
                   </div>
