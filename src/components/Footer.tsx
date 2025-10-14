@@ -5,14 +5,20 @@ import { Facebook, Twitter, Instagram, Github, Linkedin } from 'lucide-react';
 const Footer = () => {
   const navigate = useNavigate();
 
-  const handleNavigate = (section: string) => {
+  const handleSectionNavigate = (sectionId: string) => {
     if (window.location.pathname === '/') {
-      document.getElementById(section)?.scrollIntoView({ behavior: 'smooth' });
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     } else {
       navigate('/');
       setTimeout(() => {
-        document.getElementById(section)?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+        const element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 200);
     }
   };
 
@@ -55,31 +61,31 @@ const Footer = () => {
               <li>
                 <button 
                   onClick={() => navigate('/studio')} 
-                  className="text-muted-foreground hover:text-primary transition-colors"
+                  className="text-muted-foreground hover:text-primary transition-colors text-left"
                 >
                   Studio
                 </button>
               </li>
               <li>
                 <button 
-                  onClick={() => handleNavigate('how-it-works')} 
-                  className="text-muted-foreground hover:text-primary transition-colors"
+                  onClick={() => handleSectionNavigate('how-it-works')} 
+                  className="text-muted-foreground hover:text-primary transition-colors text-left"
                 >
                   Funktionen
                 </button>
               </li>
               <li>
                 <button 
-                  onClick={() => handleNavigate('pricing')} 
-                  className="text-muted-foreground hover:text-primary transition-colors"
+                  onClick={() => handleSectionNavigate('pricing')} 
+                  className="text-muted-foreground hover:text-primary transition-colors text-left"
                 >
                   Preise
                 </button>
               </li>
               <li>
                 <button 
-                  onClick={() => handleNavigate('about')} 
-                  className="text-muted-foreground hover:text-primary transition-colors"
+                  onClick={() => handleSectionNavigate('about')} 
+                  className="text-muted-foreground hover:text-primary transition-colors text-left"
                 >
                   Über uns
                 </button>
