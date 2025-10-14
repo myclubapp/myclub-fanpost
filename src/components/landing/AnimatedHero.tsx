@@ -17,6 +17,7 @@ const mockPosts = [
     gradient: "from-[#f89828] to-[#fc4349]",
     likes: "1,2k",
     caption: "Dein Sportmoment in wenigen Sekunden",
+    backgroundImage: "/mockup/kadetten-winu.JPG",
   },
   {
     id: 2,
@@ -30,6 +31,7 @@ const mockPosts = [
     gradient: "from-[#ff8f00] to-[#e1241b]",
     likes: "847",
     caption: "Auswärtssieg in Schaffhausen! 🥳",
+    backgroundImage: "/mockup/vbcsh-aadorf.jpg",
   },
   {
     id: 3,
@@ -43,6 +45,7 @@ const mockPosts = [
     gradient: "from-[#eb6000] to-[#ec1919]",
     likes: "2,4k",
     caption: "Heimsieg in der BBC Arena! 🔥",
+    backgroundImage: "/mockup/kadetten-wacker.jpg",
   }
 ];
 
@@ -175,6 +178,11 @@ export const AnimatedHero = () => {
                     className={`aspect-[4/5] ${isDarkMode ? 'bg-gradient-to-br from-slate-800 to-slate-900' : 'bg-gradient-to-br from-blue-50 to-purple-50'} flex items-center justify-center transition-all duration-500 ${
                       isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
                     } relative`}
+                    style={currentPost.backgroundImage ? {
+                      backgroundImage: `url(${currentPost.backgroundImage})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center'
+                    } : {}}
                   >
                     {/* Sport Label */}
                     <div className="absolute top-4 sm:top-8 left-4 sm:left-8">
