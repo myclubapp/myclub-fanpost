@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Download, Instagram } from "lucide-react";
+import { ChevronLeft, Download } from "lucide-react";
 import myclubLogo from "@/assets/myclub-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -641,36 +641,14 @@ const Index = () => {
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border shadow-lg animate-fade-in">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between gap-4 max-w-4xl mx-auto">
-              {instagramUsername ? (
-                <>
-                  <Button
-                    onClick={() => gamePreviewRef.current?.triggerDownload()}
-                    className="flex-1 gap-2"
-                    size="lg"
-                    variant="outline"
-                  >
-                    <Download className="h-4 w-4" />
-                    {t.studio.export}
-                  </Button>
-                  <Button
-                    onClick={() => gamePreviewRef.current?.triggerInstagramShare()}
-                    className="flex-1 gap-2"
-                    size="lg"
-                  >
-                    <Instagram className="h-4 w-4" />
-                    {t.studio.instagramStory}
-                  </Button>
-                </>
-              ) : (
-                <Button
-                  onClick={() => gamePreviewRef.current?.triggerDownload()}
-                  className="w-full gap-2"
-                  size="lg"
-                >
-                  <Download className="h-4 w-4" />
-                  {t.studio.exportAsImage}
-                </Button>
-              )}
+              <Button
+                onClick={() => gamePreviewRef.current?.triggerInstagramShare()}
+                className="w-full gap-2"
+                size="lg"
+              >
+                <Download className="h-4 w-4" />
+                {t.studio.exportAsImage}
+              </Button>
             </div>
           </div>
         </div>

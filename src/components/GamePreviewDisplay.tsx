@@ -563,7 +563,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     const notifySuccess = () =>
       toast({
         title: "Erfolgreich!",
-        description: "Bild wurde heruntergeladen. Möchten Sie Instagram öffnen?",
+        description: "Bild wurde heruntergeladen. 1 Credit wurde verbraucht.",
       });
     const notifyError = () =>
       toast({
@@ -651,7 +651,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       const pngUri = await svg.svgAsPngUri(svgElement, options);
       const response = await fetch(pngUri);
       const blob = await response.blob();
-      const fileName = `instagram-story-${gameId}-${Date.now()}.png`;
+      const fileName = `kanva-${activeTab}-${gameId}-${Date.now()}.png`;
 
       // Build game URL and template info for credit consumption
       const gameUrl = studioUrl || window.location.pathname;
@@ -676,11 +676,11 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       link.href = pngUri;
       link.click();
 
-      // Show dialog asking if user wants to open Instagram
-      setShowConfirmDialog(true);
+      // Show success message without Instagram dialog
+      notifySuccess();
 
     } catch (error) {
-      console.error("Instagram share failed:", error);
+      console.error("Export failed:", error);
       notifyError();
     }
   };
