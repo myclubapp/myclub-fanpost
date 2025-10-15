@@ -21,6 +21,10 @@ export const SUBSCRIPTION_PRICES = {
     monthly: 'price_1SIQuuKI9ikURwOtmsNwB6fV',
     yearly: 'price_1SIQuvKI9ikURwOtjwIPbmBd',
   },
+  premium: {
+    monthly: 'price_1SIRg1KI9ikURwOtToNZITTO',
+    yearly: 'price_1SIRg4KI9ikURwOtbu3duvKP',
+  },
 };
 
 export const useSubscription = () => {

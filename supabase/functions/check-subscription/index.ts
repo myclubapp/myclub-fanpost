@@ -18,6 +18,8 @@ const PRODUCT_TIER_MAP: Record<string, string> = {
   "prod_TEukTBPn9VgmJl": "amateur", // Amateur Yearly
   "prod_TEukWstrpclktK": "pro",     // Pro Monthly
   "prod_TEukITesXgN8eo": "pro",     // Pro Yearly
+  "prod_TEvXw2pzaGZtWn": "premium", // Premium Monthly
+  "prod_TEvXqoBBBLDyst": "premium", // Premium Yearly
 };
 
 serve(async (req) => {

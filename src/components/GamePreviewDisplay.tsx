@@ -16,7 +16,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { useCredits } from "@/hooks/useCredits";
 import { useUserRole } from "@/hooks/useUserRole";
 import * as svg from "save-svg-as-png";
 import { Share } from "@capacitor/share";
@@ -126,7 +125,6 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { credits, hasCredits, consumeCredit, loading: creditsLoading } = useCredits();
   const { isPaidUser } = useUserRole();
   
   const [selectedTheme, setSelectedTheme] = useState(initialTheme);
@@ -527,16 +525,6 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       return;
     }
 
-    // Check if user has credits
-    if (!hasCredits) {
-      toast({
-        title: "Keine Credits verfügbar",
-        description: "Sie haben keine Credits mehr. Kaufen Sie zusätzliche Credits oder upgraden Sie auf Pro.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     // Show confirmation dialog
     setShowConfirmDialog(true);
   };
@@ -557,7 +545,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     const notifySuccess = () =>
       toast({
         title: "Erfolgreich!",
-        description: "Bild wurde heruntergeladen. 1 Credit wurde verbraucht.",
+        description: "Bild wurde heruntergeladen.",
       });
     const notifyError = () =>
       toast({
@@ -647,22 +635,11 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       const blob = await response.blob();
       const fileName = `kanva-${activeTab}-${gameId}-${Date.now()}.png`;
 
-      // Build game URL and template info for credit consumption
+      // Build game URL and template info
       const gameUrl = studioUrl || window.location.pathname;
       const templateInfo = selectedCustomTemplate
         ? `template=${selectedCustomTemplate.id}`
         : `theme=${selectedTheme}`;
-
-      // Consume credit BEFORE download
-      const creditConsumed = await consumeCredit(gameUrl, templateInfo);
-      if (!creditConsumed) {
-        toast({
-          title: "Fehler",
-          description: "Credit konnte nicht verbraucht werden. Bitte versuchen Sie es erneut.",
-          variant: "destructive",
-        });
-        return;
-      }
 
       // Download the image
       const link = document.createElement('a');
@@ -718,7 +695,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     const notifySuccess = (isShare: boolean) =>
       toast({
         title: "Erfolgreich!",
-        description: isShare ? "Das Bild wurde geteilt. 1 Credit wurde verbraucht." : "Das Bild wurde heruntergeladen. 1 Credit wurde verbraucht.",
+        description: isShare ? "Das Bild wurde geteilt." : "Das Bild wurde heruntergeladen.",
       });
 
     const notifyError = () =>
@@ -846,24 +823,11 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       // Check if running on native platform (iOS/Android)
       const isNative = Capacitor.isNativePlatform();
 
-      // Build game URL and template info for credit consumption
+      // Build game URL and template info
       const gameUrl = studioUrl || window.location.pathname;
       const templateInfo = selectedCustomTemplate
         ? `template=${selectedCustomTemplate.id}`
         : `theme=${selectedTheme}`;
-
-      // Consume credit BEFORE share/download to ensure it's always consumed
-      console.log("Consuming credit...");
-      const creditConsumed = await consumeCredit(gameUrl, templateInfo);
-      if (!creditConsumed) {
-        toast({
-          title: "Fehler",
-          description: "Credit konnte nicht verbraucht werden. Bitte versuchen Sie es erneut.",
-          variant: "destructive",
-        });
-        return;
-      }
-      console.log("Credit consumed successfully");
 
       if (isNative) {
         // Use Capacitor Share for native platforms
@@ -894,12 +858,11 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
           notifySuccess(true);
         } catch (error) {
           console.error("Capacitor share failed:", error);
-          // Credit was already consumed, so we don't throw error
           // User might have cancelled the share dialog
           if ((error as Error).name === 'AbortError') {
             toast({
               title: "Abgebrochen",
-              description: "Der Share-Dialog wurde abgebrochen. Der Credit wurde bereits verbraucht.",
+              description: "Der Share-Dialog wurde abgebrochen.",
             });
           } else {
             throw error;
@@ -921,11 +884,11 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
 
             notifySuccess(true);
           } catch (error) {
-            // Credit was already consumed
+            // User cancelled the share dialog
             if ((error as Error).name === 'AbortError') {
               toast({
                 title: "Abgebrochen",
-                description: "Der Share-Dialog wurde abgebrochen. Der Credit wurde bereits verbraucht.",
+                description: "Der Share-Dialog wurde abgebrochen.",
               });
             } else {
               throw error;

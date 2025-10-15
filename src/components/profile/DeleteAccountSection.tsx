@@ -78,8 +78,8 @@ export const DeleteAccountSection = () => {
         <div className="bg-destructive/10 rounded-lg p-4">
           <h4 className="font-semibold mb-2 text-destructive">Profil löschen</h4>
           <p className="text-sm text-muted-foreground mb-4">
-            Das Löschen Ihres Profils ist dauerhaft und kann nicht rückgängig gemacht werden. 
-            Alle Ihre Daten, Templates und Credits gehen unwiderruflich verloren.
+          Das Löschen Ihres Profils ist dauerhaft und kann nicht rückgängig gemacht werden. 
+            Alle Ihre Daten, Templates und Abonnements gehen unwiderruflich verloren.
           </p>
           <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
             <AlertDialogTrigger asChild>
@@ -96,7 +96,7 @@ export const DeleteAccountSection = () => {
                   <ul className="list-disc list-inside mt-2 space-y-1">
                     <li>Alle persönlichen Daten</li>
                     <li>Alle erstellten Templates</li>
-                    <li>Alle Credits und Transaktionen</li>
+                    <li>Alle Team-Slots</li>
                     <li>Ihre Subscription (falls vorhanden)</li>
                   </ul>
                   <div className="mt-4 p-3 bg-destructive/10 rounded-md">

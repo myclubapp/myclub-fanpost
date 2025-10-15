@@ -3,10 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
-import { useCredits } from '@/hooks/useCredits';
+
 import { useTheme } from '@/components/theme-provider';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { LogOut, User, FileText, Coins, Menu, X, Sun, Moon, Languages } from 'lucide-react';
+import { LogOut, User, FileText, Menu, X, Sun, Moon, Languages } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,14 +33,12 @@ import {
 export const Header = () => {
   const { user, signOut, loading } = useAuth();
   const { isPaidUser } = useUserRole();
-  const { credits } = useCredits();
+  
   const { theme, setTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [prevCredits, setPrevCredits] = useState<number | null>(null);
-  const [showPop, setShowPop] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -82,18 +80,6 @@ export const Header = () => {
     }
   };
 
-  // Pop effect when credits change (decrease)
-  useEffect(() => {
-    if (credits && prevCredits !== null) {
-      if (credits.credits_remaining < prevCredits) {
-        setShowPop(true);
-        setTimeout(() => setShowPop(false), 600);
-      }
-    }
-    if (credits) {
-      setPrevCredits(credits.credits_remaining);
-    }
-  }, [credits?.credits_remaining]);
 
 
   return (
@@ -158,13 +144,6 @@ export const Header = () => {
             <>
               {user ? (
                 <>
-                  {credits && (
-                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary ${showPop ? 'animate-blob' : ''}`}>
-                      <Coins className="h-4 w-4" />
-                      <span className="text-sm font-medium">{credits.credits_remaining}</span>
-                    </div>
-                  )}
-
                   <Button
                     variant="ghost"
                     size="sm"
@@ -236,13 +215,6 @@ export const Header = () => {
 
         {/* Mobile Navigation */}
         <div className="flex md:hidden items-center gap-2">
-          {!loading && user && credits && (
-            <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 text-primary ${showPop ? 'animate-blob' : ''}`}>
-              <Coins className="h-3.5 w-3.5" />
-              <span className="text-xs font-medium">{credits.credits_remaining}</span>
-            </div>
-          )}
-          
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
