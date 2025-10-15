@@ -154,6 +154,17 @@ export const Header = () => {
                   >
                     {language.toUpperCase()}
                   </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  >
+                    {theme === 'dark' ? (
+                      <Sun className="h-5 w-5" />
+                    ) : (
+                      <Moon className="h-5 w-5" />
+                    )}
+                  </Button>
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -270,6 +281,37 @@ export const Header = () => {
                 >
                   {t.nav.about}
                 </Button>
+
+                {/* Language & Theme toggles in general menu (mobile) */}
+                <Button
+                  variant="ghost"
+                  className="justify-start"
+                  onClick={() => setLanguage(language === 'de' ? 'en' : 'de')}
+                >
+                  <Languages className="mr-2 h-4 w-4" />
+                  {language.toUpperCase()}
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-start"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setTheme(theme === 'dark' ? 'light' : 'dark');
+                  }}
+                >
+                  {theme === 'dark' ? (
+                    <>
+                      <Sun className="mr-2 h-4 w-4" />
+                      {t.nav.light}
+                    </>
+                  ) : (
+                    <>
+                      <Moon className="mr-2 h-4 w-4" />
+                      {t.nav.dark}
+                    </>
+                  )}
+                </Button>
                 
                 {!loading && (
                   <>
@@ -311,35 +353,6 @@ export const Header = () => {
                           </Button>
                           <Button
                             variant="ghost"
-                            className="justify-start w-full"
-                            onClick={() => setLanguage(language === 'de' ? 'en' : 'de')}
-                          >
-                            <Languages className="mr-2 h-4 w-4" />
-                            {language.toUpperCase()}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            className="justify-start w-full"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setTheme(theme === 'dark' ? 'light' : 'dark');
-                            }}
-                          >
-                            {theme === 'dark' ? (
-                              <>
-                                <Sun className="mr-2 h-4 w-4" />
-                                {t.nav.light}
-                              </>
-                            ) : (
-                              <>
-                                <Moon className="mr-2 h-4 w-4" />
-                                {t.nav.dark}
-                              </>
-                            )}
-                          </Button>
-                          <Button
-                            variant="ghost"
                             className="justify-start w-full text-destructive"
                             onClick={() => {
                               setMobileMenuOpen(false);
@@ -353,35 +366,6 @@ export const Header = () => {
                       </>
                     ) : (
                       <>
-                        <Button
-                          variant="ghost"
-                          className="justify-start w-full"
-                          onClick={() => setLanguage(language === 'de' ? 'en' : 'de')}
-                        >
-                          <Languages className="mr-2 h-4 w-4" />
-                          {language.toUpperCase()}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          className="justify-start w-full"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setTheme(theme === 'dark' ? 'light' : 'dark');
-                          }}
-                        >
-                          {theme === 'dark' ? (
-                            <>
-                              <Sun className="mr-2 h-4 w-4" />
-                              {t.nav.light}
-                            </>
-                          ) : (
-                            <>
-                              <Moon className="mr-2 h-4 w-4" />
-                              {t.nav.dark}
-                            </>
-                          )}
-                        </Button>
                         <Button
                           className="w-full"
                           onClick={() => handleNavigate('/auth')}
