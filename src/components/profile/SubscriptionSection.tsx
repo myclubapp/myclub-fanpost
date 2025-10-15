@@ -192,7 +192,7 @@ export function SubscriptionSection() {
       )}
 
       {/* Available Plans */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+      <div className="grid md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
         {plans.map((plan) => (
           <div
             key={plan.id}
