@@ -200,7 +200,7 @@ export const translations = {
     // Pricing Section
     pricing: {
       title: 'Pricing',
-      subtitle: 'Choose the right plan for your team',
+      subtitle: 'Choose the Right Plan for Your Team',
       billingToggle: {
         monthly: 'Monthly Billing',
         yearly: 'Yearly Billing',
@@ -220,10 +220,9 @@ export const translations = {
         templateNote: '(with KANVA branding)',
         games: '1 Game',
         features: [
-          'Automatic posts (2 per game: announcement + result)',
+          'Standard templates',
           'No custom branding',
-          'No template upload',
-          'Team change only every 24h',
+          'Team change only every 7 days',
           'Manual sharing on social media',
         ],
         cta: 'Get Started',
@@ -238,14 +237,11 @@ export const translations = {
         period: '/month',
         periodYearly: '/year',
         teams: 'up to 3 Teams',
-        templates: 'up to 3 custom templates',
-        games: '1 Game (via API)',
+        templates: 'up to 2 custom templates',
+        games: '2 Games (via API)',
         features: [
           'All Free features',
-          'Custom colors & logo customization',
-          'Access to league data (schedules)',
-          'Standard branding (small "Made with KANVA")',
-          'Manual or automatic posting (social export)',
+          'Create and manage your own templates with the KANVA designer',
         ],
         cta: 'Get Started',
         popular: false,
@@ -259,15 +255,11 @@ export const translations = {
         period: '/month',
         periodYearly: '/year',
         teams: 'up to 6 Teams',
-        templates: 'up to 6 custom templates',
-        games: 'up to 2 Games (via API)',
+        templates: 'up to 5 custom templates',
+        games: 'up to 3 Games (via API)',
         features: [
           'All Amateur features',
-          'Custom templates & colors',
-          'Club branding (without KANVA logo)',
-          'Automatic social export (Instagram, Facebook, WhatsApp)',
-          'Access to premium designs (Matchday, Scoreboard, Highlight)',
-          'Statistics & Insights',
+          'Custom logo management for sponsors, teams and clubs',
         ],
         cta: 'Get Started',
         popular: true,
@@ -283,15 +275,10 @@ export const translations = {
         priceNote: '(or custom for leagues/associations)',
         teams: 'Unlimited Teams',
         templates: 'Unlimited custom templates',
-        games: 'up to 3 Games (via API)',
+        games: 'Unlimited Games (via API)',
         features: [
           'All Pro features',
-          'White label (no KANVA branding)',
-          'Multi-admin access',
-          'API integration for leagues',
-          'Automatic upload & scheduling',
           'Priority support',
-          'Custom template creation by KANVA team possible',
         ],
         cta: 'Contact Us',
         popular: false,
@@ -301,7 +288,7 @@ export const translations = {
     // How It Works Section
     howItWorks: {
       title: 'How It Works',
-      subtitle: 'Three simple steps to the perfect post',
+      subtitle: 'Three Simple Steps to the Perfect Post',
       step1: {
         title: 'Select Game',
         description: 'Choose your game or create a new one with all details.',
@@ -324,8 +311,8 @@ export const translations = {
 
     // Studio Page
     studio: {
-      title: 'Social Media Posts for your Team',
-      subtitle: 'Create professional social media posts for your games in seconds',
+      title: 'Social Media Posts for Your Team',
+      subtitle: 'Create Professional Social Media Posts for Your Games in Seconds',
       selectClub: 'Select Club',
       selectTeam: 'Select Team',
       selectGame: 'Select Game',
