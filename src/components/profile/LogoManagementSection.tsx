@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -254,33 +255,118 @@ export function LogoManagementSection() {
             <p>Noch keine Logos hochgeladen</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {logos.map((logo) => (
-              <div key={logo.id} className="relative group border rounded-lg p-4">
-                <div className="aspect-square bg-muted rounded-md mb-2 flex items-center justify-center overflow-hidden">
-                  {logo.file_url ? (
-                    <img
-                      src={logo.file_url}
-                      alt={logo.name}
-                      className="max-w-full max-h-full object-contain"
-                    />
-                  ) : (
-                    <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                  )}
+          <Tabs defaultValue="sponsor" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="sponsor">Sponsoren</TabsTrigger>
+              <TabsTrigger value="club">Verein</TabsTrigger>
+              <TabsTrigger value="team">Team</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="sponsor" className="mt-4">
+              {logos.filter(logo => logo.logo_type === 'sponsor').length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Keine Sponsoren-Logos gefunden
                 </div>
-                <div className="text-sm font-medium truncate">{logo.name}</div>
-                <div className="text-xs text-muted-foreground capitalize">{logo.logo_type}</div>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => deleteLogo(logo)}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </div>
-            ))}
-          </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {logos.filter(logo => logo.logo_type === 'sponsor').map((logo) => (
+                    <div key={logo.id} className="relative group border rounded-lg p-4">
+                      <div className="aspect-square bg-muted rounded-md mb-2 flex items-center justify-center overflow-hidden">
+                        {logo.file_url ? (
+                          <img
+                            src={logo.file_url}
+                            alt={logo.name}
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        ) : (
+                          <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="text-sm font-medium truncate">{logo.name}</div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => deleteLogo(logo)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="club" className="mt-4">
+              {logos.filter(logo => logo.logo_type === 'club').length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Keine Vereins-Logos gefunden
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {logos.filter(logo => logo.logo_type === 'club').map((logo) => (
+                    <div key={logo.id} className="relative group border rounded-lg p-4">
+                      <div className="aspect-square bg-muted rounded-md mb-2 flex items-center justify-center overflow-hidden">
+                        {logo.file_url ? (
+                          <img
+                            src={logo.file_url}
+                            alt={logo.name}
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        ) : (
+                          <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="text-sm font-medium truncate">{logo.name}</div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => deleteLogo(logo)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="team" className="mt-4">
+              {logos.filter(logo => logo.logo_type === 'team').length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Keine Team-Logos gefunden
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {logos.filter(logo => logo.logo_type === 'team').map((logo) => (
+                    <div key={logo.id} className="relative group border rounded-lg p-4">
+                      <div className="aspect-square bg-muted rounded-md mb-2 flex items-center justify-center overflow-hidden">
+                        {logo.file_url ? (
+                          <img
+                            src={logo.file_url}
+                            alt={logo.name}
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        ) : (
+                          <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="text-sm font-medium truncate">{logo.name}</div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => deleteLogo(logo)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         )}
       </CardContent>
     </Card>
