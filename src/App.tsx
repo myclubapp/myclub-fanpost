@@ -2,12 +2,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { TemplateRedirect } from "@/components/TemplateRedirect";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
-import Templates from "./pages/Templates";
 import TemplateEditor from "./pages/TemplateEditor";
 import Studio from "./pages/Studio";
 import Impressum from "./pages/Impressum";
@@ -30,9 +30,13 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/profile/*" element={<Profile />} />
-            <Route path="/templates" element={<Templates />} />
-            <Route path="/templates/new" element={<TemplateEditor />} />
-            <Route path="/templates/edit/:id" element={<TemplateEditor />} />
+            <Route path="/profile/templates/new" element={<TemplateEditor />} />
+            <Route path="/profile/templates/edit/:id" element={<TemplateEditor />} />
+            {/* Redirect old /templates routes to /profile/templates */}
+            <Route path="/templates" element={<Navigate to="/profile/templates" replace />} />
+            <Route path="/templates/new" element={<Navigate to="/profile/templates/new" replace />} />
+            <Route path="/templates/edit/:id" element={<TemplateRedirect />} />
+            <Route path="/templates/:id" element={<TemplateRedirect />} />
             <Route path="/studio" element={<Studio />} />
             <Route path="/studio/:sport" element={<Studio />} />
             <Route path="/studio/:sport/:clubId" element={<Studio />} />

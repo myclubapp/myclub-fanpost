@@ -141,7 +141,7 @@ export function TemplateManagementSection() {
       <CardContent className="space-y-4">
         {templates.length < maxCustomTemplates && (
           <Button
-            onClick={() => navigate('/templates/new')}
+            onClick={() => navigate('/profile/templates/new')}
             className="w-full gap-2"
           >
             <Plus className="h-4 w-4" />
@@ -172,7 +172,7 @@ export function TemplateManagementSection() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => navigate(`/templates/${template.id}`)}
+                    onClick={() => navigate(`/profile/templates/edit/${template.id}`)}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>

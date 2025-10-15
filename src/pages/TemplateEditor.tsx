@@ -39,7 +39,7 @@ const TemplateEditor = () => {
       navigate('/auth');
     }
     if (!roleLoading && !isPaidUser) {
-      navigate('/templates');
+      navigate('/profile/templates');
     }
   }, [authLoading, roleLoading, user, isPaidUser, navigate]);
 
@@ -75,7 +75,7 @@ const TemplateEditor = () => {
         description: error.message,
         variant: "destructive",
       });
-      navigate('/templates');
+      navigate('/profile/templates');
     } finally {
       setLoading(false);
     }
@@ -189,7 +189,7 @@ const TemplateEditor = () => {
         });
       }
 
-      navigate('/templates');
+      navigate('/profile/templates');
     } catch (error: any) {
       toast({
         title: "Fehler beim Speichern",
@@ -224,7 +224,7 @@ const TemplateEditor = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => navigate('/templates')}
+                onClick={() => navigate('/profile/templates')}
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
