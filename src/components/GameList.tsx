@@ -42,7 +42,7 @@ export const GameList = ({ sportType, teamId, clubId, onGameSelect, initialSelec
   const [selectedGameIds, setSelectedGameIds] = useState<string[]>(initialSelectedGameIds);
   const [showPastGames, setShowPastGames] = useState(false);
   const { toast } = useToast();
-  const { maxGamesPerTemplate } = useSubscriptionLimits();
+  const { maxGamesPerTemplate, loading: limitsLoading } = useSubscriptionLimits();
 
   // Group games by date
   const groupedGames = games.reduce((acc, game) => {
@@ -165,7 +165,7 @@ export const GameList = ({ sportType, teamId, clubId, onGameSelect, initialSelec
     fetchGames();
   }, [sportType, teamId, clubId, showPastGames, toast]);
 
-  if (loading) {
+  if (loading || limitsLoading) {
     return (
       <Card className="shadow-[var(--shadow-card)]">
         <CardContent className="pt-6">
