@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Clock, ChevronRight, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useSubscriptionLimits } from "@/hooks/useSubscriptionLimits";
 
 type SportType = "unihockey" | "volleyball" | "handball";
 
@@ -41,6 +42,7 @@ export const GameList = ({ sportType, teamId, clubId, onGameSelect, initialSelec
   const [selectedGameIds, setSelectedGameIds] = useState<string[]>(initialSelectedGameIds);
   const [showPastGames, setShowPastGames] = useState(false);
   const { toast } = useToast();
+  const { maxGamesPerTemplate } = useSubscriptionLimits();
 
   // Group games by date
   const groupedGames = games.reduce((acc, game) => {
@@ -56,10 +58,10 @@ export const GameList = ({ sportType, teamId, clubId, onGameSelect, initialSelec
       if (prev.includes(gameId)) {
         return prev.filter((id) => id !== gameId);
       } else {
-        if (prev.length >= 3) {
+        if (prev.length >= maxGamesPerTemplate) {
           toast({
             title: "Maximum erreicht",
-            description: "Du kannst maximal 3 Spiele auswählen",
+            description: `Ihr Abo erlaubt maximal ${maxGamesPerTemplate} ${maxGamesPerTemplate === 1 ? 'Spiel' : 'Spiele'}`,
             variant: "destructive",
           });
           return prev;
@@ -197,7 +199,7 @@ export const GameList = ({ sportType, teamId, clubId, onGameSelect, initialSelec
             Verfügbare Spiele
           </CardTitle>
           <CardDescription className="text-xs sm:text-sm md:text-base text-muted-foreground">
-            Wähle ein oder mehrere Spiele vom gleichen Tag aus
+            Wähle bis zu {maxGamesPerTemplate} {maxGamesPerTemplate === 1 ? 'Spiel' : 'Spiele'} vom gleichen Tag aus
           </CardDescription>
         </CardHeader>
         <CardContent className="px-4 sm:px-6">
