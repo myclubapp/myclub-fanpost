@@ -33,7 +33,11 @@ export const EmotionalPricing = () => {
 
   const handleCTA = (plan: string) => {
     if (plan === "Free" || plan === "Amateur" || plan === "Pro") {
-      navigate('/auth');
+      // Save selected plan and billing interval to localStorage
+      const planTier = plan.toLowerCase() as 'free' | 'amateur' | 'pro';
+      localStorage.setItem('selectedPlan', planTier);
+      localStorage.setItem('selectedBillingInterval', isYearly ? 'yearly' : 'monthly');
+      navigate('/auth?redirect=subscription');
     } else {
       document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
     }

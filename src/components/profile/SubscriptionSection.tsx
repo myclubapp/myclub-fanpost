@@ -19,6 +19,27 @@ export function SubscriptionSection() {
   const [selectedPlan, setSelectedPlan] = useState<'amateur' | 'pro' | 'premium'>('pro');
   const [isYearly, setIsYearly] = useState(false);
 
+  // Check for pre-selected plan from landing page
+  useEffect(() => {
+    const savedPlan = localStorage.getItem('selectedPlan');
+    const savedInterval = localStorage.getItem('selectedBillingInterval');
+    
+    if (savedPlan && (savedPlan === 'amateur' || savedPlan === 'pro')) {
+      setSelectedPlan(savedPlan);
+      setIsYearly(savedInterval === 'yearly');
+      
+      // Clear from localStorage after reading
+      localStorage.removeItem('selectedPlan');
+      localStorage.removeItem('selectedBillingInterval');
+      
+      // Show toast to inform user
+      toast({
+        title: "Abo vorausgewählt",
+        description: `Das ${savedPlan === 'amateur' ? 'Amateur' : 'Pro'}-Abo wurde für Sie vorausgewählt.`,
+      });
+    }
+  }, [toast]);
+
   useEffect(() => {
     const success = searchParams.get('success');
     const canceled = searchParams.get('canceled');
@@ -150,8 +171,8 @@ export function SubscriptionSection() {
         )}
       </Card>
 
-      {/* Billing Interval Toggle (only for non-subscribers) */}
-      {!subscriptionLoading && !isSubscribed && (
+      {/* Billing Interval Toggle */}
+      {!subscriptionLoading && (
         <Card>
           <CardHeader>
             <CardTitle>Zahlungsintervall</CardTitle>
