@@ -12,7 +12,7 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
-// Map Stripe product IDs to subscription tiers
+// Map Stripe product and price IDs to subscription tiers
 const PRODUCT_TIER_MAP: Record<string, string> = {
   "prod_TEvmhiwsigA8wE": "amateur", // Amateur Monthly (CHF 6.90)
   "prod_TEvmFwrDTxQYrT": "amateur", // Amateur Yearly (CHF 66.00)
@@ -20,6 +20,18 @@ const PRODUCT_TIER_MAP: Record<string, string> = {
   "prod_TEvm1qgmfSNKDz": "pro",     // Pro Yearly (CHF 144.00)
   "prod_TEvmUk7MYUf9XQ": "premium", // Premium Monthly (CHF 30.00)
   "prod_TEvmj6Pr2p7wxV": "premium", // Premium Yearly (CHF 288.00)
+};
+
+const PRICE_TIER_MAP: Record<string, string> = {
+  // Amateur
+  "price_1SIRuvKI9ikURwOtHJlPvWXi": "amateur",
+  "price_1SIRuwKI9ikURwOtZ2mOiFez": "amateur",
+  // Pro
+  "price_1SIRuxKI9ikURwOt7b4The9K": "pro",
+  "price_1SIRuyKI9ikURwOtULpzBAq9": "pro",
+  // Premium
+  "price_1SIRv0KI9ikURwOtLFiqFLz8": "premium",
+  "price_1SIRv1KI9ikURwOtMmQIpToZ": "premium",
 };
 
 serve(async (req) => {
@@ -114,12 +126,16 @@ serve(async (req) => {
         }
       }
       
+      const priceId = subscription.items.data[0].price.id as string;
       stripeProductId = subscription.items.data[0].price.product as string;
-      tier = PRODUCT_TIER_MAP[stripeProductId] || 'free';
+
+      // Determine tier preferring price mapping, fallback to product mapping
+      tier = PRICE_TIER_MAP[priceId] || PRODUCT_TIER_MAP[stripeProductId] || 'free';
       
       logStep("Active subscription found", { 
         subscriptionId: subscription.id,
         productId: stripeProductId,
+        priceId,
         tier,
         endDate: subscriptionEnd 
       });
