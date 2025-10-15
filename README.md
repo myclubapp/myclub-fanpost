@@ -11,7 +11,7 @@ Erstelle in Sekunden hochwertige Social-Media-Bilder zu Spielen deines Vereins. 
 - **Sportarten**: Unihockey (Volleyball/Handball geplant)
 - **Geführter Flow**: Sportart → Club → Team → Spielauswahl
 - **Mehrfachauswahl**: Mehrere Spiele gleichzeitig auswählen
-- **Automatische Vorschau**: Hochwertige Visualisierung mit `myclub-game-preview`
+- **Automatische Vorschau**: Hochwertige Visualisierung mit `kanva-web-components`
 - **Saubere URLs**: Teilbare Deep-Links inkl. Mehrfach-Spiel-IDs
 - **UI-Komponenten**: Moderne Oberfläche mit shadcn-ui, Tailwind CSS und Radix UI
 
@@ -23,7 +23,7 @@ Erstelle in Sekunden hochwertige Social-Media-Bilder zu Spielen deines Vereins. 
 - UI: shadcn-ui, Radix UI, Tailwind CSS
 - State & Data: React Query
 - Routing: React Router v6
-- Preview/Render: `myclub-game-preview`
+- Preview/Render: `kanva-web-components`
 
 ---
 

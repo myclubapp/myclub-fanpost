@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "re
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Image as ImageIcon, FileText, Palette, Upload, X } from "lucide-react";
+import { defineCustomElements } from "kanva-web-components/loader";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,10 +61,10 @@ export interface GamePreviewDisplayRef {
 }
 
 const STANDARD_THEMES = [
-  { value: "myclub", label: "myclub" },
+  { value: "kanva", label: "KANVA" },
+  { value: "kanva-light", label: "KANVA Light" },
+  { value: "kanva-dark", label: "KANVA Dark" },
   { value: "kadetten-unihockey", label: "Kadetten Unihockey" },
-  { value: "myclub-light", label: "myclub light" },
-  { value: "myclub-dark", label: "myclub dark" },
 ];
 
 interface CustomTemplate {
@@ -108,7 +109,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     gamesHaveResults = [],
     gamesData = [],
     studioUrl, 
-    selectedTheme: initialTheme = "myclub", 
+    selectedTheme: initialTheme = "kanva", 
     onThemeChange,
     activeTab: initialActiveTab = "preview",
     onTabChange,
@@ -328,15 +329,8 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   }, []);
 
   useEffect(() => {
-    // Load the web component script
-    const script = document.createElement('script');
-    script.type = 'module';
-    script.src = 'https://unpkg.com/myclub-game-preview@1.4.1/dist/myclub-game-preview/myclub-game-preview.esm.js';
-    document.head.appendChild(script);
-
-    return () => {
-      document.head.removeChild(script);
-    };
+    // Load the web components from the npm package
+    defineCustomElements();
   }, []);
 
   const handleBackgroundImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {

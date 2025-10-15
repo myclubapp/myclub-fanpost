@@ -364,14 +364,14 @@ const Index = () => {
     const finalDetail = overrides.detail ?? showResultDetail;
     
     // Check if it's a custom template (not a standard myclub theme)
-    const isCustomTemplate = !['myclub', 'kadetten-unihockey', 'myclub-light', 'myclub-dark'].includes(finalTheme);
+    const isCustomTemplate = !['kanva','kanva-light', 'kanva-dark', 'kadetten-unihockey' ].includes(finalTheme);
     
     if (isCustomTemplate) {
       // For custom templates, only set the template parameter
       params.set('template', finalTheme);
     } else {
       // For standard themes
-      if (finalTheme !== 'myclub') params.set('theme', finalTheme);
+      if (finalTheme !== 'kanva') params.set('theme', finalTheme);
       if (finalTab !== 'preview') params.set('tab', finalTab);
       
       // Only add home parameter if preview tab is active
