@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,13 +17,21 @@ const Auth = () => {
   const { signInWithMagicLink, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     // Redirect if already logged in
     if (user) {
-      navigate('/');
+      const redirect = searchParams.get('redirect');
+      const selectedPlan = localStorage.getItem('selectedPlan');
+      
+      if (redirect === 'subscription' && selectedPlan) {
+        navigate('/profile/subscription');
+      } else {
+        navigate('/');
+      }
     }
-  }, [user, navigate]);
+  }, [user, navigate, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

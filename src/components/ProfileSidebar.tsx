@@ -1,6 +1,8 @@
 import { User, Crown, Users, Image, Settings, Trash2, FileText } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const menuItems = [
   { title: "Profil", url: "/profile", icon: User },
@@ -13,26 +15,37 @@ const menuItems = [
 ];
 
 export function ProfileSidebar() {
+  const { tier } = useSubscription();
+  
   return (
     <Card className="p-4">
       <nav className="space-y-1">
-        {menuItems.map((item) => (
-          <NavLink
-            key={item.title}
-            to={item.url}
-            end={item.url === "/profile"}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                isActive
-                  ? "bg-primary/10 text-primary font-medium"
-                  : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
-              }`
-            }
-          >
-            <item.icon className="h-4 w-4" />
-            <span>{item.title}</span>
-          </NavLink>
-        ))}
+        {menuItems.map((item) => {
+          const showUpgradeBadge = 
+            (item.title === "Vorlagen" && tier === 'free') ||
+            (item.title === "Logo-Verwaltung" && (tier === 'free' || tier === 'amateur'));
+          
+          return (
+            <NavLink
+              key={item.title}
+              to={item.url}
+              end={item.url === "/profile"}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                  isActive
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                }`
+              }
+            >
+              <item.icon className="h-4 w-4" />
+              <span className="flex-1">{item.title}</span>
+              {showUpgradeBadge && (
+                <Badge variant="secondary" className="ml-auto">Upgrade</Badge>
+              )}
+            </NavLink>
+          );
+        })}
       </nav>
     </Card>
   );

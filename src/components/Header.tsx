@@ -3,10 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useSubscription } from '@/hooks/useSubscription';
 
 import { useTheme } from '@/components/theme-provider';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { LogOut, User, FileText, Menu, X, Sun, Moon, Languages } from 'lucide-react';
+import { LogOut, User, FileText, Menu, X, Sun, Moon, Languages, Image } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +34,7 @@ import {
 export const Header = () => {
   const { user, signOut, loading } = useAuth();
   const { isPaidUser } = useUserRole();
+  const { tier } = useSubscription();
   
   const { theme, setTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
@@ -168,11 +170,18 @@ export const Header = () => {
                         <User className="mr-2 h-4 w-4" />
                         {t.nav.myProfile}
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/templates')}>
+                      <DropdownMenuItem onClick={() => navigate('/profile/templates')}>
                         <FileText className="mr-2 h-4 w-4" />
                         {t.nav.templates}
-                        {!isPaidUser && (
-                          <Badge variant="secondary" className="ml-auto">Pro</Badge>
+                        {tier === 'free' && (
+                          <Badge variant="secondary" className="ml-auto">Upgrade</Badge>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/profile/logos')}>
+                        <Image className="mr-2 h-4 w-4" />
+                        Logos
+                        {(tier === 'free' || tier === 'amateur') && (
+                          <Badge variant="secondary" className="ml-auto">Upgrade</Badge>
                         )}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
@@ -274,12 +283,23 @@ export const Header = () => {
                           <Button
                             variant="ghost"
                             className="justify-start w-full"
-                            onClick={() => handleNavigate('/templates')}
+                            onClick={() => handleNavigate('/profile/templates')}
                           >
                             <FileText className="mr-2 h-4 w-4" />
                             {t.nav.templates}
-                            {!isPaidUser && (
-                              <Badge variant="secondary" className="ml-auto">Pro</Badge>
+                            {tier === 'free' && (
+                              <Badge variant="secondary" className="ml-auto">Upgrade</Badge>
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            className="justify-start w-full"
+                            onClick={() => handleNavigate('/profile/logos')}
+                          >
+                            <Image className="mr-2 h-4 w-4" />
+                            Logos
+                            {(tier === 'free' || tier === 'amateur') && (
+                              <Badge variant="secondary" className="ml-auto">Upgrade</Badge>
                             )}
                           </Button>
                           <Button

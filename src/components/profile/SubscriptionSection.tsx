@@ -12,12 +12,33 @@ import { Label } from '@/components/ui/label';
 
 export function SubscriptionSection() {
   const [loading, setLoading] = useState(false);
-  const { subscription, tier, isSubscribed, checkSubscription, createCheckout, openCustomerPortal } = useSubscription();
+  const { subscription, tier, isSubscribed, checkSubscription, createCheckout, openCustomerPortal, loading: subscriptionLoading } = useSubscription();
   const { toast } = useToast();
   const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedPlan, setSelectedPlan] = useState<'amateur' | 'pro' | 'premium'>('pro');
   const [isYearly, setIsYearly] = useState(false);
+
+  // Check for pre-selected plan from landing page
+  useEffect(() => {
+    const savedPlan = localStorage.getItem('selectedPlan');
+    const savedInterval = localStorage.getItem('selectedBillingInterval');
+    
+    if (savedPlan && (savedPlan === 'amateur' || savedPlan === 'pro')) {
+      setSelectedPlan(savedPlan);
+      setIsYearly(savedInterval === 'yearly');
+      
+      // Clear from localStorage after reading
+      localStorage.removeItem('selectedPlan');
+      localStorage.removeItem('selectedBillingInterval');
+      
+      // Show toast to inform user
+      toast({
+        title: "Abo vorausgewählt",
+        description: `Das ${savedPlan === 'amateur' ? 'Amateur' : 'Pro'}-Abo wurde für Sie vorausgewählt.`,
+      });
+    }
+  }, [toast]);
 
   useEffect(() => {
     const success = searchParams.get('success');
@@ -150,8 +171,8 @@ export function SubscriptionSection() {
         )}
       </Card>
 
-      {/* Billing Interval Toggle (only for non-subscribers) */}
-      {!isSubscribed && (
+      {/* Billing Interval Toggle */}
+      {!subscriptionLoading && (
         <Card>
           <CardHeader>
             <CardTitle>Zahlungsintervall</CardTitle>
@@ -192,7 +213,7 @@ export function SubscriptionSection() {
       )}
 
       {/* Available Plans */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+      <div className="grid md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
         {plans.map((plan) => (
           <div
             key={plan.id}
