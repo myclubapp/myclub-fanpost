@@ -171,6 +171,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   // Check if selected theme is a myclub theme
   const isMyClubTheme = STANDARD_THEMES.some(t => t.value === selectedTheme);
   const selectedCustomTemplate = customTemplates.find(t => t.value === selectedTheme);
+  const isCustomTemplate = !!selectedCustomTemplate;
 
   // Load custom templates for paid users
   useEffect(() => {
@@ -404,10 +405,19 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         className="max-w-full h-auto"
       >
         {/* Background */}
-        <rect width={canvasWidth} height={canvasHeight} fill={config.backgroundColor || '#1a1a1a'} />
+        {config.useBackgroundPlaceholder && backgroundImage ? (
+          <image
+            href={backgroundImage}
+            width={canvasWidth}
+            height={canvasHeight}
+            preserveAspectRatio="xMidYMid slice"
+          />
+        ) : (
+          <rect width={canvasWidth} height={canvasHeight} fill={config.backgroundColor || '#1a1a1a'} />
+        )}
         
-        {/* Background image if set */}
-        {backgroundImage && (
+        {/* Background image overlay if not using placeholder (for standard themes compatibility) */}
+        {!config.useBackgroundPlaceholder && backgroundImage && (
           <image
             href={backgroundImage}
             width={canvasWidth}
@@ -952,89 +962,75 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {/* Template Selection - First */}
-        <div className="flex items-center gap-2 mb-6">
-          <Palette className="h-4 w-4 text-muted-foreground" />
-          <Label htmlFor="theme-select" className="text-sm text-muted-foreground">Vorlage:</Label>
-          <Select value={selectedTheme} onValueChange={(value) => {
-            setSelectedTheme(value);
-            onThemeChange?.(value);
-          }}>
-            <SelectTrigger id="theme-select" className="w-[220px] border-border">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border">
-              {STANDARD_THEMES.map((theme) => (
-                <SelectItem key={theme.value} value={theme.value}>
-                  {theme.label}
-                </SelectItem>
-              ))}
-              {isPaidUser && customTemplates.length > 0 && (
-                <>
-                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                    Eigene Vorlagen
-                  </div>
-                  {customTemplates.map((template) => (
-                    <SelectItem key={template.value} value={template.value}>
-                      {template.name} ({template.supported_games} {template.supported_games === 1 ? 'Spiel' : 'Spiele'})
-                    </SelectItem>
-                  ))}
-                </>
-              )}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Template Selection with Options */}
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Palette className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <Label htmlFor="theme-select" className="text-sm text-muted-foreground">Vorlage:</Label>
+            <Select value={selectedTheme} onValueChange={(value) => {
+              setSelectedTheme(value);
+              onThemeChange?.(value);
+            }}>
+              <SelectTrigger id="theme-select" className="w-[220px] border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border">
+                {STANDARD_THEMES.map((theme) => (
+                  <SelectItem key={theme.value} value={theme.value}>
+                    {theme.label}
+                  </SelectItem>
+                ))}
+                {isPaidUser && customTemplates.length > 0 && (
+                  <>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                      Eigene Vorlagen
+                    </div>
+                    {customTemplates.map((template) => (
+                      <SelectItem key={template.value} value={template.value}>
+                        {template.name} ({template.supported_games} {template.supported_games === 1 ? 'Spiel' : 'Spiele'})
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
 
-        {isMyClubTheme ? (
-          <Tabs value={activeTab} onValueChange={(value) => {
-            setActiveTab(value);
-            onTabChange?.(value);
-          }} className="w-full">
-            <div className="flex flex-col gap-4 mb-6">
-              <TabsList className="grid w-full grid-cols-2 bg-muted/50">
-              <TabsTrigger value="preview" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <ImageIcon className="h-4 w-4" />
-                Spielvorschau
-              </TabsTrigger>
-              <TabsTrigger value="result" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <FileText className="h-4 w-4" />
-                Resultat
-              </TabsTrigger>
-            </TabsList>
-            
-            <div className="flex items-center gap-4 flex-wrap">
-              {activeTab === "preview" && (
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="home-game"
-                    checked={isHomeGame}
-                    onCheckedChange={(checked) => {
-                      const value = checked as boolean;
-                      setIsHomeGame(value);
-                      onHomeGameChange?.(value);
-                    }}
-                  />
-                  <Label htmlFor="home-game" className="text-sm text-muted-foreground cursor-pointer">
-                    Ist Heimspiel
-                  </Label>
-                </div>
-              )}
-              {activeTab === "result" && (
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="result-detail"
-                    checked={showResultDetail}
-                    onCheckedChange={(checked) => {
-                      const value = checked as boolean;
-                      setShowResultDetail(value);
-                      onResultDetailChange?.(value);
-                    }}
-                  />
-                  <Label htmlFor="result-detail" className="text-sm text-muted-foreground cursor-pointer">
-                    Details anzeigen
-                  </Label>
-                </div>
-              )}
+          {/* Options next to template selection */}
+          <div className="flex items-center gap-4 flex-wrap">
+            {isMyClubTheme && activeTab === "preview" && (
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="home-game"
+                  checked={isHomeGame}
+                  onCheckedChange={(checked) => {
+                    const value = checked as boolean;
+                    setIsHomeGame(value);
+                    onHomeGameChange?.(value);
+                  }}
+                />
+                <Label htmlFor="home-game" className="text-sm text-muted-foreground cursor-pointer">
+                  Ist Heimspiel
+                </Label>
+              </div>
+            )}
+            {isMyClubTheme && activeTab === "result" && (
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="result-detail"
+                  checked={showResultDetail}
+                  onCheckedChange={(checked) => {
+                    const value = checked as boolean;
+                    setShowResultDetail(value);
+                    onResultDetailChange?.(value);
+                  }}
+                />
+                <Label htmlFor="result-detail" className="text-sm text-muted-foreground cursor-pointer">
+                  Details anzeigen
+                </Label>
+              </div>
+            )}
+            {(isMyClubTheme || (isCustomTemplate && selectedCustomTemplate?.config?.useBackgroundPlaceholder)) && (
               <div className="flex items-center gap-2">
                 <Input
                   ref={fileInputRef}
@@ -1062,8 +1058,25 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
                   </Button>
                 )}
               </div>
-            </div>
+            )}
           </div>
+        </div>
+
+        {isMyClubTheme ? (
+          <Tabs value={activeTab} onValueChange={(value) => {
+            setActiveTab(value);
+            onTabChange?.(value);
+          }} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 bg-muted/50">
+              <TabsTrigger value="preview" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <ImageIcon className="h-4 w-4" />
+                Spielvorschau
+              </TabsTrigger>
+              <TabsTrigger value="result" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <FileText className="h-4 w-4" />
+                Resultat
+              </TabsTrigger>
+            </TabsList>
             
           <TabsContent value="preview" className="mt-0">
             <div

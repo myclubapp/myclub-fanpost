@@ -89,6 +89,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   const [expandedGame, setExpandedGame] = useState<number | null>(1);
   const [cropperFormat, setCropperFormat] = useState<'4:5' | '1:1' | 'free'>(format as '4:5' | '1:1');
   const [backgroundColor, setBackgroundColor] = useState(config.backgroundColor || '#1a1a1a');
+  const [useBackgroundPlaceholder, setUseBackgroundPlaceholder] = useState(config.useBackgroundPlaceholder || false);
   const [logos, setLogos] = useState<Logo[]>([]);
   const [showLogoDialog, setShowLogoDialog] = useState(false);
   const [loadingLogos, setLoadingLogos] = useState(false);
@@ -151,8 +152,8 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
 
   // Sync elements and format with config
   useEffect(() => {
-    onChange({ ...config, elements, format, backgroundColor });
-  }, [elements, format, backgroundColor]);
+    onChange({ ...config, elements, format, backgroundColor, useBackgroundPlaceholder });
+  }, [elements, format, backgroundColor, useBackgroundPlaceholder]);
 
   const handleMouseDown = (e: React.MouseEvent, elementId: string) => {
     e.stopPropagation();
@@ -690,7 +691,32 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
               onMouseLeave={handleMouseUp}
             >
               {/* Background */}
-              <rect width={canvasDimensions.width} height={canvasDimensions.height} fill={backgroundColor} />
+              <rect width={canvasDimensions.width} height={canvasDimensions.height} fill={useBackgroundPlaceholder ? '#333333' : backgroundColor} />
+              
+              {useBackgroundPlaceholder && (
+                <>
+                  <text
+                    x={canvasDimensions.width / 2}
+                    y={canvasDimensions.height / 2 - 20}
+                    fontSize={32}
+                    fontFamily="sans-serif"
+                    fill="#888888"
+                    textAnchor="middle"
+                  >
+                    Hintergrundbild-Platzhalter
+                  </text>
+                  <text
+                    x={canvasDimensions.width / 2}
+                    y={canvasDimensions.height / 2 + 20}
+                    fontSize={16}
+                    fontFamily="sans-serif"
+                    fill="#666666"
+                    textAnchor="middle"
+                  >
+                    Hier wird im Studio das hochgeladene Bild angezeigt
+                  </text>
+                </>
+              )}
               
               {/* Grid for reference */}
               <defs>
@@ -834,27 +860,46 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Hintergrundfarbe</CardTitle>
+            <CardTitle>Hintergrund</CardTitle>
             <CardDescription>
-              Wählen Sie die Hintergrundfarbe für das Template
+              Wählen Sie eine feste Farbe oder einen Platzhalter für Hintergrundbilder
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="flex gap-2">
-              <Input
-                type="color"
-                value={backgroundColor}
-                onChange={(e) => setBackgroundColor(e.target.value)}
-                className="w-16 p-1 h-10"
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="background-placeholder" 
+                checked={useBackgroundPlaceholder}
+                onCheckedChange={(checked) => setUseBackgroundPlaceholder(checked as boolean)}
               />
-              <Input
-                type="text"
-                value={backgroundColor}
-                onChange={(e) => setBackgroundColor(e.target.value)}
-                className="flex-1"
-                placeholder="#1a1a1a"
-              />
+              <Label htmlFor="background-placeholder" className="text-sm cursor-pointer">
+                Hintergrundbild-Platzhalter verwenden
+              </Label>
             </div>
+            
+            {!useBackgroundPlaceholder && (
+              <div className="flex gap-2">
+                <Input
+                  type="color"
+                  value={backgroundColor}
+                  onChange={(e) => setBackgroundColor(e.target.value)}
+                  className="w-16 p-1 h-10"
+                />
+                <Input
+                  type="text"
+                  value={backgroundColor}
+                  onChange={(e) => setBackgroundColor(e.target.value)}
+                  className="flex-1"
+                  placeholder="#1a1a1a"
+                />
+              </div>
+            )}
+            
+            {useBackgroundPlaceholder && (
+              <p className="text-xs text-muted-foreground">
+                Im Studio kann dann ein Hintergrundbild hochgeladen werden, das automatisch eingefügt wird.
+              </p>
+            )}
           </CardContent>
         </Card>
 
