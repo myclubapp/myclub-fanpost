@@ -962,9 +962,9 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {/* Template Selection with Options */}
-        <div className="flex flex-col gap-4 mb-6">
-          <div className="flex items-center gap-2 flex-wrap">
+        {/* Template Selection with Options - All in one row */}
+        <div className="flex items-center gap-4 mb-6 flex-wrap">
+          <div className="flex items-center gap-2">
             <Palette className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             <Label htmlFor="theme-select" className="text-sm text-muted-foreground">Vorlage:</Label>
             <Select value={selectedTheme} onValueChange={(value) => {
@@ -996,70 +996,72 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
             </Select>
           </div>
 
-          {/* Options next to template selection */}
-          <div className="flex items-center gap-4 flex-wrap">
-            {isMyClubTheme && activeTab === "preview" && (
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="home-game"
-                  checked={isHomeGame}
-                  onCheckedChange={(checked) => {
-                    const value = checked as boolean;
-                    setIsHomeGame(value);
-                    onHomeGameChange?.(value);
-                  }}
-                />
-                <Label htmlFor="home-game" className="text-sm text-muted-foreground cursor-pointer">
-                  Ist Heimspiel
-                </Label>
-              </div>
-            )}
-            {isMyClubTheme && activeTab === "result" && (
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="result-detail"
-                  checked={showResultDetail}
-                  onCheckedChange={(checked) => {
-                    const value = checked as boolean;
-                    setShowResultDetail(value);
-                    onResultDetailChange?.(value);
-                  }}
-                />
-                <Label htmlFor="result-detail" className="text-sm text-muted-foreground cursor-pointer">
-                  Details anzeigen
-                </Label>
-              </div>
-            )}
-            {(isMyClubTheme || (isCustomTemplate && selectedCustomTemplate?.config?.useBackgroundPlaceholder)) && (
-              <div className="flex items-center gap-2">
-                <Input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleBackgroundImageUpload}
-                  className="hidden"
-                  id="background-upload"
-                />
-                <Label
-                  htmlFor="background-upload"
-                  className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-md border border-border bg-background hover:bg-muted/50 text-sm transition-colors"
+          {/* Background image upload - before checkboxes */}
+          {(isMyClubTheme || (isCustomTemplate && selectedCustomTemplate?.config?.useBackgroundPlaceholder)) && (
+            <div className="flex items-center gap-2">
+              <Input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleBackgroundImageUpload}
+                className="hidden"
+                id="background-upload"
+              />
+              <Label
+                htmlFor="background-upload"
+                className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-background hover:bg-muted/50 text-sm transition-colors h-10"
+              >
+                <Upload className="h-4 w-4" />
+                Hintergrundbild
+              </Label>
+              {backgroundImage && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleRemoveBackgroundImage}
+                  className="h-10 w-10"
                 >
-                  <Upload className="h-4 w-4" />
-                  Hintergrundbild
-                </Label>
-                {backgroundImage && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleRemoveBackgroundImage}
-                    className="h-9 w-9"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Home game checkbox */}
+          {isMyClubTheme && activeTab === "preview" && (
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="home-game"
+                checked={isHomeGame}
+                onCheckedChange={(checked) => {
+                  const value = checked as boolean;
+                  setIsHomeGame(value);
+                  onHomeGameChange?.(value);
+                }}
+              />
+              <Label htmlFor="home-game" className="text-sm text-muted-foreground cursor-pointer">
+                Ist Heimspiel
+              </Label>
+            </div>
+          )}
+
+          {/* Result detail checkbox */}
+          {isMyClubTheme && activeTab === "result" && (
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="result-detail"
+                checked={showResultDetail}
+                onCheckedChange={(checked) => {
+                  const value = checked as boolean;
+                  setShowResultDetail(value);
+                  onResultDetailChange?.(value);
+                }}
+              />
+              <Label htmlFor="result-detail" className="text-sm text-muted-foreground cursor-pointer">
+                Details anzeigen
+              </Label>
+            </div>
+          )}
         </div>
 
         {isMyClubTheme ? (
