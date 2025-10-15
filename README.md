@@ -1,4 +1,4 @@
-## Kanva – Social-Media-Spielvorschauen für Vereine
+## KANVA – Social-Media-Spielvorschauen für Vereine
 
 Erstelle in Sekunden hochwertige Social-Media-Bilder zu Spielen deines Vereins. Wähle Sportart, Club, Team und Spiel(e) – die App generiert automatisch moderne Spielvorschauen zum Teilen.
 
