@@ -14,12 +14,12 @@ const logStep = (step: string, details?: any) => {
 
 // Map Stripe product IDs to subscription tiers
 const PRODUCT_TIER_MAP: Record<string, string> = {
-  "prod_TEujbdq7kGjbl4": "amateur", // Amateur Monthly
-  "prod_TEukTBPn9VgmJl": "amateur", // Amateur Yearly
-  "prod_TEukWstrpclktK": "pro",     // Pro Monthly
-  "prod_TEukITesXgN8eo": "pro",     // Pro Yearly
-  "prod_TEvXw2pzaGZtWn": "premium", // Premium Monthly
-  "prod_TEvXqoBBBLDyst": "premium", // Premium Yearly
+  "prod_TEvmhiwsigA8wE": "amateur", // Amateur Monthly (CHF 6.90)
+  "prod_TEvmFwrDTxQYrT": "amateur", // Amateur Yearly (CHF 66.00)
+  "prod_TEvmWCaGHNS17q": "pro",     // Pro Monthly (CHF 15.00)
+  "prod_TEvm1qgmfSNKDz": "pro",     // Pro Yearly (CHF 144.00)
+  "prod_TEvmUk7MYUf9XQ": "premium", // Premium Monthly (CHF 30.00)
+  "prod_TEvmj6Pr2p7wxV": "premium", // Premium Yearly (CHF 288.00)
 };
 
 serve(async (req) => {

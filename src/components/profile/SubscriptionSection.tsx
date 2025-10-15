@@ -6,14 +6,18 @@ import { useSubscription, SUBSCRIPTION_PRICES } from '@/hooks/useSubscription';
 import { Crown, User, Loader2, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSearchParams } from 'react-router-dom';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 export function SubscriptionSection() {
   const [loading, setLoading] = useState(false);
   const { subscription, tier, isSubscribed, checkSubscription, createCheckout, openCustomerPortal } = useSubscription();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedPlan, setSelectedPlan] = useState<'amateur' | 'pro'>('pro');
-  const [selectedInterval, setSelectedInterval] = useState<'monthly' | 'yearly'>('monthly');
+  const [selectedPlan, setSelectedPlan] = useState<'amateur' | 'pro' | 'premium'>('pro');
+  const [isYearly, setIsYearly] = useState(false);
 
   useEffect(() => {
     const success = searchParams.get('success');
@@ -36,10 +40,16 @@ export function SubscriptionSection() {
     }
   }, [searchParams, setSearchParams, checkSubscription, toast]);
 
-  const handleUpgrade = async () => {
+  const handleUpgrade = async (planId: 'amateur' | 'pro' | 'premium') => {
+    if (planId === 'premium') {
+      window.location.href = 'mailto:info@fanpost.ch';
+      return;
+    }
+    
     setLoading(true);
     try {
-      const priceId = SUBSCRIPTION_PRICES[selectedPlan][selectedInterval];
+      const interval = isYearly ? 'yearly' : 'monthly';
+      const priceId = SUBSCRIPTION_PRICES[planId][interval];
       const url = await createCheckout(priceId);
       if (url) {
         window.open(url, '_blank');
@@ -84,34 +94,22 @@ export function SubscriptionSection() {
   const plans = [
     {
       id: 'free' as const,
-      name: 'Free',
-      price: '0',
-      yearlyPrice: '0',
-      features: ['1 Team', '5 Templates (Vorinstalliert)', '1 Spiel pro Vorlage'],
+      ...t.pricing.free,
       isCurrent: tier === 'free',
     },
     {
       id: 'amateur' as const,
-      name: 'Amateur',
-      price: '5',
-      yearlyPrice: '48',
-      features: ['3 Teams', '20 Templates', '3 Spiele pro Vorlage'],
+      ...t.pricing.amateur,
       isCurrent: tier === 'amateur',
     },
     {
       id: 'pro' as const,
-      name: 'Pro',
-      price: '12',
-      yearlyPrice: '115.20',
-      features: ['10 Teams', 'Unbegrenzte Templates', '5 Spiele pro Vorlage', '5 Eigene Vorlagen', 'Logo-Upload'],
+      ...t.pricing.pro,
       isCurrent: tier === 'pro',
     },
     {
       id: 'premium' as const,
-      name: 'Premium',
-      price: 'Custom',
-      yearlyPrice: 'Custom',
-      features: ['Individuelle Lösung', 'Persönliche Beratung', 'Prioritäts-Support'],
+      ...t.pricing.premium,
       isCurrent: tier === 'premium',
     },
   ];
@@ -152,65 +150,6 @@ export function SubscriptionSection() {
         )}
       </Card>
 
-      {/* Available Plans */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {plans.map((plan) => (
-          <Card key={plan.id} className={plan.isCurrent ? 'border-primary shadow-lg' : ''}>
-            <CardHeader>
-              <div className="flex items-center justify-between mb-2">
-                <CardTitle className="text-xl">{plan.name}</CardTitle>
-                {plan.isCurrent && <Badge variant="default">Aktuell</Badge>}
-              </div>
-              <div className="space-y-1">
-                <div className="text-3xl font-bold">
-                  {plan.price !== 'Custom' && 'CHF '}
-                  {plan.price !== 'Custom' 
-                    ? (selectedInterval === 'monthly' ? plan.price : (parseFloat(plan.yearlyPrice) / 12).toFixed(2))
-                    : 'Custom'
-                  }
-                </div>
-                {plan.price !== 'Custom' && (
-                  <div className="text-sm text-muted-foreground">
-                    pro Monat
-                    {selectedInterval === 'yearly' && (
-                      <span className="block">(CHF {plan.yearlyPrice} jährlich)</span>
-                    )}
-                  </div>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ul className="space-y-2">
-                {plan.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-sm">
-                    <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              {!plan.isCurrent && plan.id !== 'premium' && plan.id !== 'free' && (
-                <Button
-                  className="w-full"
-                  onClick={() => {
-                    setSelectedPlan(plan.id);
-                    handleUpgrade();
-                  }}
-                  disabled={loading}
-                >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  {tier === 'free' ? 'Upgraden' : 'Wechseln'}
-                </Button>
-              )}
-              {plan.id === 'premium' && (
-                <Button variant="outline" className="w-full" onClick={() => window.location.href = 'mailto:info@fanpost.ch'}>
-                  Kontakt aufnehmen
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
       {/* Billing Interval Toggle (only for non-subscribers) */}
       {!isSubscribed && (
         <Card>
@@ -219,25 +158,121 @@ export function SubscriptionSection() {
             <CardDescription>Wählen Sie, wie oft Sie zahlen möchten</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4">
-              <Button
-                variant={selectedInterval === 'monthly' ? 'default' : 'outline'}
-                onClick={() => setSelectedInterval('monthly')}
-                className="flex-1"
+            <div className="flex items-center justify-center gap-3 sm:gap-4">
+              <Label 
+                htmlFor="billing-toggle-profile" 
+                className={`text-sm sm:text-base font-semibold transition-colors cursor-pointer ${
+                  !isYearly ? 'text-foreground' : 'text-foreground/50'
+                }`}
               >
-                Monatlich
-              </Button>
-              <Button
-                variant={selectedInterval === 'yearly' ? 'default' : 'outline'}
-                onClick={() => setSelectedInterval('yearly')}
-                className="flex-1"
+                {t.pricing.billingToggle.monthly}
+              </Label>
+              <Switch
+                id="billing-toggle-profile"
+                checked={isYearly}
+                onCheckedChange={setIsYearly}
+                className="data-[state=checked]:bg-primary"
+              />
+              <Label 
+                htmlFor="billing-toggle-profile" 
+                className={`text-sm sm:text-base font-semibold transition-colors cursor-pointer ${
+                  isYearly ? 'text-foreground' : 'text-foreground/50'
+                }`}
               >
-                Jährlich (-20%)
-              </Button>
+                {t.pricing.billingToggle.yearly}
+              </Label>
+              {isYearly && (
+                <span className="ml-1 sm:ml-2 bg-destructive text-white text-xs font-bold px-2 sm:px-3 py-1 rounded-full">
+                  -20%
+                </span>
+              )}
             </div>
           </CardContent>
         </Card>
       )}
+
+      {/* Available Plans */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {plans.map((plan) => (
+          <Card key={plan.id} className={plan.isCurrent ? 'border-primary shadow-lg' : ''}>
+            <CardHeader>
+              <div className="flex items-center justify-between mb-2">
+                <CardTitle className="text-xl flex items-center gap-2">
+                  {plan.emoji} {plan.name}
+                </CardTitle>
+                {plan.isCurrent && <Badge variant="default">Aktuell</Badge>}
+              </div>
+              <CardDescription className="text-sm">{plan.subtitle}</CardDescription>
+              <div className="space-y-1">
+                <div className="text-3xl font-bold">
+                  CHF {isYearly 
+                    ? parseFloat(plan.priceYearly) === 0 
+                      ? '0' 
+                      : (parseFloat(plan.priceYearly) / 12).toFixed(2)
+                    : plan.price
+                  }
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {plan.period}
+                  {isYearly && parseFloat(plan.priceYearly) > 0 && (
+                    <span className="block text-xs">
+                      ({t.pricing.billedYearly} {plan.priceYearly})
+                    </span>
+                  )}
+                </div>
+                {'priceNote' in plan && plan.priceNote && (
+                  <p className="text-xs text-muted-foreground italic">{plan.priceNote}</p>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Key Features */}
+              <div className="space-y-2 pb-2 border-b">
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm font-bold">{plan.teams}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold">{plan.templates}</p>
+                    {'templateNote' in plan && plan.templateNote && (
+                      <p className="text-xs text-muted-foreground">{plan.templateNote}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm font-semibold">{plan.games}</span>
+                </div>
+              </div>
+
+              {/* Additional Features */}
+              <ul className="space-y-2">
+                {plan.features.map((feature, idx) => (
+                  <li key={idx} className="flex items-start gap-2 text-sm">
+                    <Check className="h-3.5 w-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <span className="text-foreground/80">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* CTA Button */}
+              {!plan.isCurrent && plan.id !== 'free' && (
+                <Button
+                  className="w-full"
+                  variant={plan.id === 'premium' ? 'outline' : 'default'}
+                  onClick={() => handleUpgrade(plan.id)}
+                  disabled={loading}
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {plan.cta}
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
