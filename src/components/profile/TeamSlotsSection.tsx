@@ -55,7 +55,22 @@ export function TeamSlotsSection() {
     }
   };
 
-  const deleteTeamSlot = async (slotId: string) => {
+  const deleteTeamSlot = async (slotId: string, lastChangedAt: string) => {
+    // Check if 7 days have passed
+    const lastChange = new Date(lastChangedAt);
+    const now = new Date();
+    const daysSinceChange = Math.floor((now.getTime() - lastChange.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysSinceChange < 7) {
+      const daysRemaining = 7 - daysSinceChange;
+      toast({
+        title: 'Löschen nicht möglich',
+        description: `Team-Slots können nur 1x pro Woche geändert werden. Sie können diesen Slot in ${daysRemaining} Tag${daysRemaining !== 1 ? 'en' : ''} löschen.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('user_team_slots')
@@ -83,11 +98,18 @@ export function TeamSlotsSection() {
   const daysUntilChange = (lastChangedAt: string) => {
     const lastChange = new Date(lastChangedAt);
     const nextChangeDate = new Date(lastChange);
-    nextChangeDate.setDate(nextChangeDate.getDate() + 30);
+    nextChangeDate.setDate(nextChangeDate.getDate() + 7); // 7 days instead of 30
     const now = new Date();
     const diffTime = nextChangeDate.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays > 0 ? diffDays : 0;
+  };
+
+  const canDeleteSlot = (lastChangedAt: string) => {
+    const lastChange = new Date(lastChangedAt);
+    const now = new Date();
+    const daysSinceChange = Math.floor((now.getTime() - lastChange.getTime()) / (1000 * 60 * 60 * 24));
+    return daysSinceChange >= 7;
   };
 
   if (loading || limitsLoading) {
@@ -133,6 +155,7 @@ export function TeamSlotsSection() {
           <div className="space-y-3">
             {teamSlots.map((slot) => {
               const days = daysUntilChange(slot.last_changed_at);
+              const canDelete = canDeleteSlot(slot.last_changed_at);
               return (
                 <div key={slot.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex-1">
@@ -147,9 +170,11 @@ export function TeamSlotsSection() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => deleteTeamSlot(slot.id)}
+                    onClick={() => deleteTeamSlot(slot.id, slot.last_changed_at)}
+                    disabled={!canDelete}
+                    title={!canDelete ? `Löschbar in ${days} Tag${days !== 1 ? 'en' : ''}` : 'Team-Slot löschen'}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className={`h-4 w-4 ${!canDelete ? 'opacity-50' : ''}`} />
                   </Button>
                 </div>
               );
