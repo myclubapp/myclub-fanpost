@@ -226,7 +226,14 @@ export const Header = () => {
         <div className="flex md:hidden items-center gap-2">
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMobileMenuOpen(true);
+                }}
+              >
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
@@ -312,6 +319,27 @@ export const Header = () => {
                           </Button>
                           <Button
                             variant="ghost"
+                            className="justify-start w-full"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setTheme(theme === 'dark' ? 'light' : 'dark');
+                            }}
+                          >
+                            {theme === 'dark' ? (
+                              <>
+                                <Sun className="mr-2 h-4 w-4" />
+                                {t.nav.light}
+                              </>
+                            ) : (
+                              <>
+                                <Moon className="mr-2 h-4 w-4" />
+                                {t.nav.dark}
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
                             className="justify-start w-full text-destructive"
                             onClick={() => {
                               setMobileMenuOpen(false);
@@ -336,7 +364,11 @@ export const Header = () => {
                         <Button
                           variant="ghost"
                           className="justify-start w-full"
-                          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setTheme(theme === 'dark' ? 'light' : 'dark');
+                          }}
                         >
                           {theme === 'dark' ? (
                             <>
