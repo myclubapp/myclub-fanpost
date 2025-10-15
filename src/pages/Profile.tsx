@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useSubscription } from '@/hooks/useSubscription';
+import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { Header } from '@/components/Header';
 import { ProfileSidebar } from '@/components/ProfileSidebar';
 import { ProfileInfo } from '@/components/profile/ProfileInfo';
@@ -15,7 +15,7 @@ import { Loader2 } from 'lucide-react';
 
 const Profile = () => {
   const { user, loading: authLoading } = useAuth();
-  const { loading: subscriptionLoading } = useSubscription();
+  const { loading: limitsLoading } = useSubscriptionLimits();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,7 +24,7 @@ const Profile = () => {
     }
   }, [authLoading, user, navigate]);
 
-  if (authLoading || subscriptionLoading || !user) {
+  if (authLoading || limitsLoading || !user) {
     return (
       <div className="min-h-screen bg-background pt-16">
         <Header />

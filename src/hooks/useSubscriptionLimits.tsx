@@ -11,7 +11,7 @@ interface SubscriptionLimits {
 }
 
 export const useSubscriptionLimits = () => {
-  const { tier } = useSubscription();
+  const { tier, loading: subscriptionLoading } = useSubscription();
 
   const { data: limits, isLoading } = useQuery({
     queryKey: ['subscription-limits', tier],
@@ -25,12 +25,14 @@ export const useSubscriptionLimits = () => {
       if (error) throw error;
       return data as SubscriptionLimits;
     },
-    enabled: !!tier,
+    enabled: !!tier && !subscriptionLoading,
   });
+
+  const isLoadingAll = subscriptionLoading || isLoading;
 
   return {
     limits,
-    loading: isLoading,
+    loading: isLoadingAll,
     maxTeams: limits?.max_teams || 1,
     maxCustomTemplates: limits?.max_custom_templates || 0,
     maxGamesPerTemplate: limits?.max_games_per_template || 1,
