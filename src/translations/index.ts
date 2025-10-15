@@ -137,7 +137,7 @@ export const translations = {
     // About Section
     about: {
       title: 'Über uns',
-      description: 'KANVA macht aus jedem Spiel eine Story – und aus jedem Team eine Marke. Sportvereine befähigen, ihre Emotionen, Erfolge und Momente in professionelle Social Media Posts zu verwandeln.',
+      description: 'KANVA macht aus jedem Spiel eine Story – und aus deinem Team eine Marke. Wir befähigen dich, deine Emotionen, Erfolge und Momente in professionelle Social Media Posts zu verwandeln.',
     },
 
     // Studio Page
@@ -163,9 +163,9 @@ export const translations = {
     // Wording from Design Concept
     wording: {
       claim: 'Design your win.',
-      youPlayWePost: 'Ihr spielt. Wir posten.',
-      turnEveryMatch: 'Macht aus jedem Spiel einen Moment.',
-      fansWillLove: 'Eure Fans werden euren Feed lieben.',
+      youPlayWePost: 'Du spielst. Wir posten.',
+      turnEveryMatch: 'Mach aus jedem Spiel einen Moment.',
+      fansWillLove: 'Deine Fans werden deinen Feed lieben.',
       smartDesign: 'Intelligentes Design für echte Emotionen.',
     },
   },
@@ -194,7 +194,7 @@ export const translations = {
       subtitle: 'Create stunning social media posts for your team - automatically.',
       description: 'KANVA turns your game data into ready-to-share posts for Instagram, WhatsApp & more.',
       ctaPrimary: 'Get Started Free',
-      ctaSecondary: 'Watch Demo',
+      ctaSecondary: 'Watch the Demo',
     },
 
     // Pricing Section
@@ -290,12 +290,12 @@ export const translations = {
       title: 'How It Works',
       subtitle: 'Three Simple Steps to the Perfect Post',
       step1: {
-        title: 'Select Game',
+        title: 'Choose Game',
         description: 'Choose your game or create a new one with all details.',
       },
       step2: {
         title: 'Choose Template',
-        description: 'Select from professional templates or create your own.',
+        description: 'Choose from professional templates or create your own.',
       },
       step3: {
         title: 'Share Emotions',
@@ -313,19 +313,19 @@ export const translations = {
     studio: {
       title: 'Social Media Posts for Your Team',
       subtitle: 'Create Professional Social Media Posts for Your Games in Seconds',
-      selectClub: 'Select Club',
-      selectTeam: 'Select Team',
-      selectGame: 'Select Game',
-      selectSport: 'Select Sport',
+      selectClub: 'Choose Club',
+      selectTeam: 'Choose Team',
+      selectGame: 'Choose Game',
+      selectSport: 'Choose Sport',
       selectSportDescription: 'Choose your sport',
       selectSportPlaceholder: 'Choose a sport...',
       selectClubDescription: 'Choose your club',
       selectTeamDescription: 'Choose your team',
-      selectGameDescription: 'Select the game and create your post',
+      selectGameDescription: 'Choose the game and create your post',
       back: 'Back',
-      backToGameSelection: 'Back to game selection',
+      backToGameSelection: 'Back to Game Selection',
       export: 'Export',
-      exportAsImage: 'Export as Image',
+      exportAsImage: 'Export Image',
       instagramStory: 'Instagram Story',
     },
 
