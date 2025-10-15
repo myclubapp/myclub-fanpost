@@ -120,7 +120,7 @@ export function TeamSlotsSection() {
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Sie haben das Maximum an Team-Slots erreicht. Upgraden Sie Ihr Abo für mehr Slots.
+            Du hast das Maximum von 1 Team‑Slot erreicht. Um für weitere Teams zu exportieren, upgrade dein Abo oder lösche einen bestehenden Slot in deinem Profil.
             </AlertDescription>
           </Alert>
         )}

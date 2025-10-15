@@ -105,13 +105,13 @@ export function TemplateManagementSection() {
             <CardTitle>Vorlagen-Verwaltung</CardTitle>
           </div>
           <CardDescription>
-            Diese Funktion ist nur für Pro- und Premium-Abonnenten verfügbar
+            Diese Funktion ist nur für Amateur- ,Pro- und Premium-Abonnenten verfügbar
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert>
             <AlertDescription>
-              Upgraden Sie auf Amateur, Pro oder Premium, um eigene Vorlagen zu erstellen und zu verwalten.
+              Upgrade auf Amateur, Pro oder Premium, um eigene Vorlagen zu erstellen und zu verwalten.
             </AlertDescription>
           </Alert>
           <Button onClick={handleUpgrade} disabled={upgrading} className="w-full">

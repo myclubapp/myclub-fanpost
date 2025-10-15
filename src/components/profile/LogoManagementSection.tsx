@@ -177,7 +177,7 @@ export function LogoManagementSection() {
         <CardContent className="space-y-4">
           <Alert>
             <AlertDescription>
-              Upgraden Sie auf Pro oder Premium, um eigene Logos hochzuladen und in Ihren Vorlagen zu verwenden.
+              Upgrade auf Pro oder Premium, um eigene Logos hochzuladen und in Ihren Vorlagen zu verwenden.
             </AlertDescription>
           </Alert>
           <Button onClick={handleUpgrade} className="w-full">
