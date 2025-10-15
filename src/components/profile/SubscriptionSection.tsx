@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 
 export function SubscriptionSection() {
   const [loading, setLoading] = useState(false);
-  const { subscription, tier, isSubscribed, checkSubscription, createCheckout, openCustomerPortal } = useSubscription();
+  const { subscription, tier, isSubscribed, checkSubscription, createCheckout, openCustomerPortal, loading: subscriptionLoading } = useSubscription();
   const { toast } = useToast();
   const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -151,7 +151,7 @@ export function SubscriptionSection() {
       </Card>
 
       {/* Billing Interval Toggle (only for non-subscribers) */}
-      {!isSubscribed && (
+      {!subscriptionLoading && !isSubscribed && (
         <Card>
           <CardHeader>
             <CardTitle>Zahlungsintervall</CardTitle>
