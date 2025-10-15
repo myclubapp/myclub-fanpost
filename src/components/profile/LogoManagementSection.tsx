@@ -180,8 +180,7 @@ export function LogoManagementSection() {
               Upgraden Sie auf Pro oder Premium, um eigene Logos hochzuladen und in Ihren Vorlagen zu verwenden.
             </AlertDescription>
           </Alert>
-          <Button onClick={handleUpgrade} disabled={upgrading} className="w-full">
-            {upgrading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+          <Button onClick={handleUpgrade} className="w-full">
             Upgraden
           </Button>
         </CardContent>

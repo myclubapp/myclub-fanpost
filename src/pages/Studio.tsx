@@ -5,13 +5,16 @@ import { ClubSearch } from "@/components/ClubSearch";
 import { TeamSearch } from "@/components/TeamSearch";
 import { GameList } from "@/components/GameList";
 import { GamePreviewDisplay } from "@/components/GamePreviewDisplay";
+import { TeamSlotDialog } from "@/components/TeamSlotDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Download } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ChevronLeft, Download, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useTeamSlots } from "@/hooks/useTeamSlots";
 import { supabase } from "@/integrations/supabase/client";
 
 export type SportType = "unihockey" | "volleyball" | "handball";
@@ -58,7 +61,17 @@ const Index = () => {
   const [gamesData, setGamesData] = useState<any[]>([]);
   const [rememberLastSelection, setRememberLastSelection] = useState(true);
   const [loadedLastSelection, setLoadedLastSelection] = useState(false);
+  const [showTeamSlotDialog, setShowTeamSlotDialog] = useState(false);
+  const [pendingExport, setPendingExport] = useState(false);
   const gamePreviewRef = useRef<{ triggerDownload: () => void; triggerInstagramShare: () => void } | null>(null);
+  
+  const {
+    isTeamInSlot,
+    canAddSlot,
+    addTeamSlot,
+    getDaysUntilChange,
+    maxTeams,
+  } = useTeamSlots();
 
   // Load last selection from profile on mount
   useEffect(() => {
@@ -334,6 +347,45 @@ const Index = () => {
       navigate(`/studio/${selectedSport}/${selectedClubId}/${teamId}`);
     }
   };
+
+  const handleExportClick = () => {
+    // Check if team is in a slot
+    if (isTeamInSlot(selectedTeamId)) {
+      // Team is already saved, proceed with export
+      gamePreviewRef.current?.triggerInstagramShare();
+    } else {
+      // Team not in slot, show dialog
+      setShowTeamSlotDialog(true);
+      setPendingExport(true);
+    }
+  };
+
+  const handleConfirmTeamSlot = async () => {
+    setShowTeamSlotDialog(false);
+    
+    if (selectedSport && selectedClubId && selectedTeamId && selectedTeamName) {
+      const success = await addTeamSlot(
+        selectedTeamId,
+        selectedTeamName,
+        selectedSport,
+        selectedClubId
+      );
+      
+      if (success && pendingExport) {
+        // Export after saving team
+        gamePreviewRef.current?.triggerInstagramShare();
+      }
+    }
+    
+    setPendingExport(false);
+  };
+
+  const handleCancelTeamSlot = () => {
+    setShowTeamSlotDialog(false);
+    setPendingExport(false);
+  };
+
+  const canExport = isTeamInSlot(selectedTeamId) || canAddSlot();
 
   const handleGameSelect = (gameIds: string[], hasResults: boolean[], games?: any[]) => {
     setSelectedGameIds(gameIds);
@@ -631,15 +683,29 @@ const Index = () => {
         </div>
       </div>
 
+      {/* Team Slot Warning - Show when team is not in slot and no slots available */}
+      {selectedSport && selectedClubId && selectedTeamId && selectedGameIds.length > 0 && !editSelection && !canExport && (
+        <div className="max-w-4xl mx-auto mb-4">
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Sie haben das Maximum von {maxTeams} Team-Slot{maxTeams !== 1 ? 's' : ''} erreicht. 
+              Um für weitere Teams zu exportieren, upgraden Sie Ihr Abo oder löschen Sie einen bestehenden Slot im Profil.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+
       {/* Sticky Footer for Export - Show when preview is displayed */}
       {selectedSport && selectedClubId && selectedTeamId && selectedGameIds.length > 0 && !editSelection && (
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border shadow-lg animate-fade-in">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between gap-4 max-w-4xl mx-auto">
               <Button
-                onClick={() => gamePreviewRef.current?.triggerInstagramShare()}
+                onClick={handleExportClick}
                 className="w-full gap-2"
                 size="lg"
+                disabled={!canExport}
               >
                 <Download className="h-4 w-4" />
                 {t.studio.exportAsImage}
@@ -648,6 +714,15 @@ const Index = () => {
           </div>
         </div>
       )}
+
+      {/* Team Slot Dialog */}
+      <TeamSlotDialog
+        open={showTeamSlotDialog}
+        onOpenChange={setShowTeamSlotDialog}
+        teamName={selectedTeamName}
+        onConfirm={handleConfirmTeamSlot}
+        onCancel={handleCancelTeamSlot}
+      />
     </main>
   );
 };
