@@ -5,7 +5,8 @@ import { Header } from '@/components/Header';
 import { ProfileSidebar } from '@/components/ProfileSidebar';
 import { ProfileInfo } from '@/components/profile/ProfileInfo';
 import { SubscriptionSection } from '@/components/profile/SubscriptionSection';
-import { CreditsSection } from '@/components/profile/CreditsSection';
+import { TeamSlotsSection } from '@/components/profile/TeamSlotsSection';
+import { LogoManagementSection } from '@/components/profile/LogoManagementSection';
 import { SettingsSection } from '@/components/profile/SettingsSection';
 import { DeleteAccountSection } from '@/components/profile/DeleteAccountSection';
 import { Loader2 } from 'lucide-react';
@@ -46,7 +47,8 @@ const Profile = () => {
               <Routes>
                 <Route index element={<ProfileInfo />} />
                 <Route path="subscription" element={<SubscriptionSection />} />
-                <Route path="credits" element={<CreditsSection />} />
+                <Route path="teams" element={<TeamSlotsSection />} />
+                <Route path="logos" element={<LogoManagementSection />} />
                 <Route path="settings" element={<SettingsSection />} />
                 <Route path="delete" element={<DeleteAccountSection />} />
                 <Route path="*" element={<Navigate to="/profile" replace />} />

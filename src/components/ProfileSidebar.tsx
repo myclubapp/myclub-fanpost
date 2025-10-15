@@ -1,11 +1,12 @@
-import { User, Crown, Coins, Settings, Trash2 } from "lucide-react";
+import { User, Crown, Users, Image, Settings, Trash2 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 
 const menuItems = [
   { title: "Profil", url: "/profile", icon: User },
   { title: "Abonnement", url: "/profile/subscription", icon: Crown },
-  { title: "Credits", url: "/profile/credits", icon: Coins },
+  { title: "Meine Teams", url: "/profile/teams", icon: Users },
+  { title: "Logo-Verwaltung", url: "/profile/logos", icon: Image },
   { title: "Einstellungen", url: "/profile/settings", icon: Settings },
   { title: "Account löschen", url: "/profile/delete", icon: Trash2 },
 ];
