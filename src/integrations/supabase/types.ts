@@ -89,6 +89,36 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_limits: {
+        Row: {
+          can_upload_logos: boolean
+          can_use_custom_templates: boolean
+          created_at: string
+          max_custom_templates: number
+          max_games_per_template: number
+          max_teams: number
+          tier: Database["public"]["Enums"]["subscription_tier"]
+        }
+        Insert: {
+          can_upload_logos?: boolean
+          can_use_custom_templates?: boolean
+          created_at?: string
+          max_custom_templates: number
+          max_games_per_template: number
+          max_teams: number
+          tier: Database["public"]["Enums"]["subscription_tier"]
+        }
+        Update: {
+          can_upload_logos?: boolean
+          can_use_custom_templates?: boolean
+          created_at?: string
+          max_custom_templates?: number
+          max_games_per_template?: number
+          max_teams?: number
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+        }
+        Relationships: []
+      }
       templates: {
         Row: {
           created_at: string
@@ -149,6 +179,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_logos: {
+        Row: {
+          created_at: string
+          file_path: string
+          file_url: string | null
+          id: string
+          logo_type: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_path: string
+          file_url?: string | null
+          id?: string
+          logo_type?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_path?: string
+          file_url?: string | null
+          id?: string
+          logo_type?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -170,6 +233,75 @@ export type Database = {
         }
         Relationships: []
       }
+      user_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          stripe_customer_id: string | null
+          stripe_product_id: string | null
+          stripe_subscription_id: string | null
+          subscription_end: string | null
+          tier: Database["public"]["Enums"]["subscription_tier"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          stripe_customer_id?: string | null
+          stripe_product_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_end?: string | null
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          stripe_customer_id?: string | null
+          stripe_product_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_end?: string | null
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_team_slots: {
+        Row: {
+          club_id: string | null
+          created_at: string
+          id: string
+          last_changed_at: string
+          sport: string | null
+          team_id: string
+          team_name: string | null
+          user_id: string
+        }
+        Insert: {
+          club_id?: string | null
+          created_at?: string
+          id?: string
+          last_changed_at?: string
+          sport?: string | null
+          team_id: string
+          team_name?: string | null
+          user_id: string
+        }
+        Update: {
+          club_id?: string | null
+          created_at?: string
+          id?: string
+          last_changed_at?: string
+          sport?: string | null
+          team_id?: string
+          team_name?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -178,6 +310,14 @@ export type Database = {
       add_purchased_credits: {
         Args: { p_amount: number; p_user_id: string }
         Returns: undefined
+      }
+      can_add_team_slot: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
+      can_change_team_slot: {
+        Args: { p_team_id: string; p_user_id: string }
+        Returns: boolean
       }
       consume_credit: {
         Args:
@@ -200,6 +340,7 @@ export type Database = {
         | "purchase"
         | "consumption"
         | "subscription_grant"
+      subscription_tier: "free" | "amateur" | "pro" | "premium"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -334,6 +475,7 @@ export const Constants = {
         "consumption",
         "subscription_grant",
       ],
+      subscription_tier: ["free", "amateur", "pro", "premium"],
     },
   },
 } as const
