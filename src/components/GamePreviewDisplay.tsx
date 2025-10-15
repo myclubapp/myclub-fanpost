@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "re
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Image as ImageIcon, FileText, Palette, Upload, X } from "lucide-react";
-import { defineCustomElements } from "kanva-web-components/loader";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -327,8 +326,24 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   }, []);
 
   useEffect(() => {
-    // Load the web components from the npm package
-    defineCustomElements();
+    // Load the web component script with fixed version to avoid conflicts
+    const script = document.createElement('script');
+    script.type = 'module';
+    // Use fixed version from package.json instead of @latest
+    script.src = 'https://unpkg.com/kanva-web-components@1.5.0/dist/kanva-web-components/kanva-web-components.esm.js';
+    
+    // Only add if not already loaded
+    const existingScript = document.querySelector(`script[src="${script.src}"]`);
+    if (!existingScript) {
+      document.head.appendChild(script);
+    }
+
+    return () => {
+      // Only remove if we added it
+      if (!existingScript && script.parentNode) {
+        document.head.removeChild(script);
+      }
+    };
   }, []);
 
   const handleBackgroundImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
