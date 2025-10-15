@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save, ArrowLeft, Eye } from 'lucide-react';
+import { Loader2, Save, ArrowLeft, Eye, Plus, Minus } from 'lucide-react';
 import { TemplateDesigner } from '@/components/templates/TemplateDesigner';
 import { z } from 'zod';
 
@@ -287,21 +287,32 @@ const TemplateEditor = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="games">Anzahl Spiele</Label>
-                  <Select
-                    value={supportedGames.toString()}
-                    onValueChange={(value) => setSupportedGames(parseInt(value))}
-                  >
-                    <SelectTrigger id="games">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: Math.min(maxGamesPerTemplate, 3) }, (_, i) => i + 1).map((num) => (
-                        <SelectItem key={num} value={num.toString()}>
-                          {num} {num === 1 ? 'Spiel' : 'Spiele'}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setSupportedGames(Math.max(1, supportedGames - 1))}
+                      disabled={supportedGames <= 1}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <div className="flex-1 text-center">
+                      <div className="text-2xl font-bold">{supportedGames}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {supportedGames === 1 ? 'Spiel' : 'Spiele'}
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setSupportedGames(Math.min(maxGamesPerTemplate, supportedGames + 1))}
+                      disabled={supportedGames >= maxGamesPerTemplate}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
                   {errors.supported_games && (
                     <p className="text-sm text-destructive">{errors.supported_games}</p>
                   )}
