@@ -72,8 +72,7 @@ export const translations = {
         games: '2 Spiele (via API)',
         features: [
           'Alle Free-Features',
-          'Eigene Vorlagen mit dem Designer von KANVA',
-         
+          'Eigene Vorlagen mit dem Designer von KANVA erstellen und verwalten',
         ],
         cta: 'Jetzt starten',
         popular: false,
@@ -91,7 +90,7 @@ export const translations = {
         games: 'bis zu 3 Spiele (via API)',
         features: [
           'Alle Amateur-Features',
-          'Eigene Logoverwaltung',     
+          'Eigene Logoverwaltung für Sponsoren, Teams und Vereine',     
         ],
         cta: 'Jetzt starten',
         popular: true,
