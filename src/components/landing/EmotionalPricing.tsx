@@ -148,7 +148,7 @@ export const EmotionalPricing = () => {
                       </p>
                     )}
                     <p className="text-[10px] sm:text-xs text-muted-foreground">{t.pricing.vatNote}</p>
-                    {plan.priceNote && (
+                    {('priceNote' in plan) && plan.priceNote && (
                       <p className="text-[10px] sm:text-xs text-muted-foreground italic">{plan.priceNote}</p>
                     )}
                   </div>
@@ -164,7 +164,7 @@ export const EmotionalPricing = () => {
                         <Check className="w-4 h-4 sm:w-5 sm:h-5 text-foreground flex-shrink-0 mt-0.5" />
                         <div>
                           <p className="text-sm font-semibold text-foreground">{plan.templates}</p>
-                          {plan.templateNote && (
+                          {('templateNote' in plan) && plan.templateNote && (
                             <p className="text-xs text-muted-foreground mt-0.5 sm:mt-1">{plan.templateNote}</p>
                           )}
                         </div>

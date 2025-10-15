@@ -129,7 +129,7 @@ const Index = () => {
     }
   }, [user, rememberLastSelection, selectedSport, selectedClubId, selectedTeamId, loadedLastSelection]);
 
-  // Load remember setting and Instagram username from profile
+  // Load remember setting from profile (Instagram username handling is in GamePreviewDisplay)
   useEffect(() => {
     const loadProfileSettings = async () => {
       if (!user) return;
@@ -145,7 +145,6 @@ const Index = () => {
 
         if (data) {
           setRememberLastSelection((data as any).remember_last_selection ?? true);
-          setInstagramUsername((data as any).instagram_username || null);
         }
       } catch (error) {
         console.error('Error loading profile settings:', error);

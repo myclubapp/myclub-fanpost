@@ -12,6 +12,14 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
+// Map Stripe product IDs to subscription tiers
+const PRODUCT_TIER_MAP: Record<string, string> = {
+  "prod_TEujbdq7kGjbl4": "amateur", // Amateur Monthly
+  "prod_TEukTBPn9VgmJl": "amateur", // Amateur Yearly
+  "prod_TEukWstrpclktK": "pro",     // Pro Monthly
+  "prod_TEukITesXgN8eo": "pro",     // Pro Yearly
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -35,8 +43,6 @@ serve(async (req) => {
     logStep("Authorization header found");
 
     const token = authHeader.replace("Bearer ", "");
-    logStep("Authenticating user with token");
-    
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
     const user = userData.user;
@@ -47,8 +53,25 @@ serve(async (req) => {
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     
     if (customers.data.length === 0) {
-      logStep("No customer found");
-      return new Response(JSON.stringify({ subscribed: false }), {
+      logStep("No customer found, setting to free tier");
+      
+      // Update user_subscriptions to free tier
+      await supabaseClient
+        .from('user_subscriptions')
+        .upsert({
+          user_id: user.id,
+          tier: 'free',
+          stripe_customer_id: null,
+          stripe_subscription_id: null,
+          stripe_product_id: null,
+          subscription_end: null,
+        });
+
+      return new Response(JSON.stringify({ 
+        subscribed: false,
+        tier: 'free',
+        subscription_end: null 
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
@@ -62,145 +85,50 @@ serve(async (req) => {
       status: "active",
       limit: 1,
     });
+    
     const hasActiveSub = subscriptions.data.length > 0;
-    let productId = null;
+    let tier = 'free';
     let subscriptionEnd = null;
+    let stripeProductId = null;
+    let stripeSubscriptionId = null;
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
+      stripeSubscriptionId = subscription.id;
+      subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      stripeProductId = subscription.items.data[0].price.product as string;
+      tier = PRODUCT_TIER_MAP[stripeProductId] || 'free';
       
-      // Safely handle subscription end date
-      if (subscription.current_period_end) {
-        try {
-          subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-        } catch (dateError) {
-          logStep("Error parsing date", { error: String(dateError) });
-        }
-      }
-      
-      logStep("Active subscription found", { subscriptionId: subscription.id, endDate: subscriptionEnd });
-      
-      // Safely extract product ID
-      if (subscription.items?.data?.[0]?.price?.product) {
-        productId = String(subscription.items.data[0].price.product);
-      }
-      
-      logStep("Determined subscription product", { productId });
-
-      // Update user role to paid_user if they have active subscription
-      const { data: roleData } = await supabaseClient
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .single();
-
-      if (roleData?.role !== 'paid_user' && roleData?.role !== 'admin') {
-        logStep("Updating user role to paid_user (first time)");
-        await supabaseClient
-          .from('user_roles')
-          .update({ role: 'paid_user' })
-          .eq('user_id', user.id);
-        
-        // Only refill credits when upgrading to paid for the first time
-        logStep("Initial credit refill for new paid user");
-        await supabaseClient
-          .from('user_credits')
-          .update({ 
-            credits_remaining: 10,
-            credits_purchased: 0,
-            last_reset_date: new Date().toISOString().split('T')[0],
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', user.id);
-        
-        // Log the credit transaction
-        await supabaseClient
-          .from('credit_transactions')
-          .insert({
-            user_id: user.id,
-            amount: 10,
-            transaction_type: 'subscription_grant',
-            description: 'Pro Abo aktiviert: +10 Credits'
-          });
-      } else if (roleData?.role === 'paid_user') {
-        // For existing paid users, only refill credits if it's a new billing period
-        // Check if subscription period has renewed since last credit reset
-        const { data: creditsData } = await supabaseClient
-          .from('user_credits')
-          .select('last_reset_date')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (creditsData && subscriptionEnd) {
-          const lastResetDate = new Date(creditsData.last_reset_date);
-          const subscriptionEndDate = new Date(subscriptionEnd);
-          const currentDate = new Date();
-          
-          // Calculate subscription start (one month before end)
-          const subscriptionStartDate = new Date(subscriptionEndDate);
-          subscriptionStartDate.setMonth(subscriptionStartDate.getMonth() - 1);
-          
-          // Only refill if:
-          // 1. Last reset was before the current billing period started
-          // 2. We are currently within the billing period
-          if (lastResetDate < subscriptionStartDate && currentDate >= subscriptionStartDate) {
-            logStep("Refilling credits for new billing period", {
-              lastReset: lastResetDate.toISOString(),
-              periodStart: subscriptionStartDate.toISOString(),
-              periodEnd: subscriptionEndDate.toISOString()
-            });
-            
-            await supabaseClient
-              .from('user_credits')
-              .update({ 
-                credits_remaining: 10,
-                credits_purchased: 0,
-                last_reset_date: new Date().toISOString().split('T')[0],
-                updated_at: new Date().toISOString()
-              })
-              .eq('user_id', user.id);
-            
-            // Log the credit transaction
-            await supabaseClient
-              .from('credit_transactions')
-              .insert({
-                user_id: user.id,
-                amount: 10,
-                transaction_type: 'monthly_reset',
-                description: 'Pro Abo erneuert: Credits aufgefüllt +10'
-              });
-          } else {
-            logStep("No credit refill needed - not a new billing period", {
-              lastReset: lastResetDate.toISOString(),
-              periodStart: subscriptionStartDate.toISOString(),
-              currentDate: currentDate.toISOString()
-            });
-          }
-        }
-      }
+      logStep("Active subscription found", { 
+        subscriptionId: subscription.id,
+        productId: stripeProductId,
+        tier,
+        endDate: subscriptionEnd 
+      });
     } else {
       logStep("No active subscription found");
-      
-      // Update user role back to free_user if no active subscription
-      const { data: roleData } = await supabaseClient
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .single();
-
-      if (roleData?.role === 'paid_user') {
-        logStep("Updating user role to free_user");
-        await supabaseClient
-          .from('user_roles')
-          .update({ role: 'free_user' })
-          .eq('user_id', user.id);
-      }
+      tier = 'free';
     }
+
+    // Update user_subscriptions table
+    await supabaseClient
+      .from('user_subscriptions')
+      .upsert({
+        user_id: user.id,
+        tier: tier,
+        stripe_customer_id: customerId,
+        stripe_subscription_id: stripeSubscriptionId,
+        stripe_product_id: stripeProductId,
+        subscription_end: subscriptionEnd,
+      });
+
+    logStep("Updated user subscription", { tier });
 
     return new Response(JSON.stringify({
       subscribed: hasActiveSub,
-      product_id: productId,
-      subscription_end: subscriptionEnd
+      tier: tier,
+      subscription_end: subscriptionEnd,
+      product_id: stripeProductId
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

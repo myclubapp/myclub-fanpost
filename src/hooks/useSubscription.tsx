@@ -2,11 +2,26 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
+export type SubscriptionTier = 'free' | 'amateur' | 'pro' | 'premium';
+
 interface SubscriptionStatus {
   subscribed: boolean;
-  product_id: string | null;
+  tier: SubscriptionTier;
   subscription_end: string | null;
+  product_id: string | null;
 }
+
+// Price IDs mapping
+export const SUBSCRIPTION_PRICES = {
+  amateur: {
+    monthly: 'price_1SIQu7KI9ikURwOtTOpttY8V',
+    yearly: 'price_1SIQueKI9ikURwOtNzNFHpHr',
+  },
+  pro: {
+    monthly: 'price_1SIQuuKI9ikURwOtmsNwB6fV',
+    yearly: 'price_1SIQuvKI9ikURwOtjwIPbmBd',
+  },
+};
 
 export const useSubscription = () => {
   const { user } = useAuth();
@@ -31,7 +46,7 @@ export const useSubscription = () => {
       setSubscription(data);
     } catch (error) {
       console.error('Error checking subscription:', error);
-      setSubscription({ subscribed: false, product_id: null, subscription_end: null });
+      setSubscription({ subscribed: false, tier: 'free', subscription_end: null, product_id: null });
     } finally {
       setLoading(false);
     }
@@ -46,11 +61,12 @@ export const useSubscription = () => {
     return () => clearInterval(interval);
   }, [checkSubscription]);
 
-  const createCheckout = async () => {
+  const createCheckout = async (priceId: string) => {
     if (!user) return null;
 
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { price_id: priceId },
         headers: {
           Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
         },
@@ -85,6 +101,7 @@ export const useSubscription = () => {
   return {
     subscription,
     loading,
+    tier: subscription?.tier || 'free',
     isSubscribed: subscription?.subscribed || false,
     checkSubscription,
     createCheckout,

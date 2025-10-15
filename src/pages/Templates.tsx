@@ -1,20 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useUserRole } from '@/hooks/useUserRole';
-import { useSubscription } from '@/hooks/useSubscription';
+import { useSubscription, SUBSCRIPTION_PRICES } from '@/hooks/useSubscription';
+import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Plus, Loader2, Lock, Sparkles } from 'lucide-react';
 import { TemplateList } from '@/components/templates/TemplateList';
 import { useToast } from '@/hooks/use-toast';
 
 const Templates = () => {
   const { user, loading: authLoading } = useAuth();
-  const { isPaidUser, loading: roleLoading } = useUserRole();
-  const { createCheckout } = useSubscription();
+  const { tier, createCheckout } = useSubscription();
+  const { canUseCustomTemplates, loading: limitsLoading } = useSubscriptionLimits();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
@@ -33,7 +32,9 @@ const Templates = () => {
   const handleUpgrade = async () => {
     setLoading(true);
     try {
-      const url = await createCheckout();
+      // Default to Pro monthly
+      const priceId = SUBSCRIPTION_PRICES.pro.monthly;
+      const url = await createCheckout(priceId);
       if (url) {
         window.open(url, '_blank');
         toast({
@@ -54,7 +55,7 @@ const Templates = () => {
     }
   };
 
-  if (authLoading || roleLoading || !mounted) {
+  if (authLoading || limitsLoading || !mounted) {
     return (
       <div className="min-h-screen bg-background pt-16">
         <Header />
@@ -65,7 +66,7 @@ const Templates = () => {
     );
   }
 
-  if (!isPaidUser) {
+  if (!canUseCustomTemplates) {
     return (
       <div className="min-h-screen bg-background pt-16">
         <Header />
@@ -92,13 +93,14 @@ const Templates = () => {
                   <div className="flex-1">
                     <h3 className="font-semibold mb-2">Mit Pro Features erhalten Sie:</h3>
                     <ul className="space-y-1 text-sm text-muted-foreground ml-4 mb-3">
-                      <li>• Unbegrenzte Custom Templates</li>
-                      <li>• WYSIWYG Template Editor</li>
-                      <li>• 10 Credits pro Monat</li>
-                      <li>• Erweiterte Anpassungsoptionen</li>
+                      <li>• 10 Teams</li>
+                      <li>• Unbegrenzte Templates</li>
+                      <li>• 5 Spiele pro Vorlage</li>
+                      <li>• 5 Eigene Vorlagen</li>
+                      <li>• Logo-Upload</li>
                     </ul>
                     <p className="text-lg font-bold text-primary">
-                      Nur CHF 9.- / Monat
+                      Nur CHF 12.- / Monat
                     </p>
                   </div>
                 </div>
