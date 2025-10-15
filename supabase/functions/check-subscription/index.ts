@@ -69,7 +69,13 @@ serve(async (req) => {
           subscription_end: null,
         });
 
-      return new Response(JSON.stringify({ 
+      // Sync user role to free_user
+      await supabaseClient
+        .from('user_roles')
+        .update({ role: 'free_user' })
+        .eq('user_id', user.id);
+
+      return new Response(JSON.stringify({
         subscribed: false,
         tier: 'free',
         subscription_end: null 
@@ -135,6 +141,21 @@ serve(async (req) => {
       });
 
     logStep("Updated user subscription", { tier });
+
+    // Sync user role based on subscription tier
+    const newRole = (tier === 'free') ? 'free_user' : 'paid_user';
+    logStep("Syncing user role", { newRole, tier });
+
+    const { error: roleError } = await supabaseClient
+      .from('user_roles')
+      .update({ role: newRole })
+      .eq('user_id', user.id);
+
+    if (roleError) {
+      logStep("ERROR updating user_roles", { error: roleError.message });
+    } else {
+      logStep("Successfully synced user role");
+    }
 
     return new Response(JSON.stringify({
       subscribed: hasActiveSub,
