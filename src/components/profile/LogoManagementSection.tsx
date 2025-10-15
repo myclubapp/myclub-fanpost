@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscription, SUBSCRIPTION_PRICES } from '@/hooks/useSubscription';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -21,11 +22,13 @@ interface Logo {
 
 export function LogoManagementSection() {
   const { user } = useAuth();
+  const { tier, createCheckout } = useSubscription();
   const { canUploadLogos, loading: limitsLoading } = useSubscriptionLimits();
   const { toast } = useToast();
   const [logos, setLogos] = useState<Logo[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
   const [logoName, setLogoName] = useState('');
   const [logoType, setLogoType] = useState('sponsor');
 
@@ -144,6 +147,31 @@ export function LogoManagementSection() {
     }
   };
 
+  const handleUpgrade = async () => {
+    setUpgrading(true);
+    try {
+      const priceId = SUBSCRIPTION_PRICES.pro.monthly;
+      const url = await createCheckout(priceId);
+      if (url) {
+        window.open(url, '_blank');
+        toast({
+          title: "Checkout geöffnet",
+          description: "Schließen Sie den Kaufvorgang ab, um zu Pro zu upgraden.",
+        });
+      } else {
+        throw new Error('Checkout URL konnte nicht erstellt werden');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Fehler",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUpgrading(false);
+    }
+  };
+
   if (limitsLoading) {
     return (
       <Card>
@@ -166,12 +194,16 @@ export function LogoManagementSection() {
             Diese Funktion ist nur für Pro- und Premium-Abonnenten verfügbar
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <Alert>
             <AlertDescription>
               Upgraden Sie auf Pro oder Premium, um eigene Logos hochzuladen und in Ihren Vorlagen zu verwenden.
             </AlertDescription>
           </Alert>
+          <Button onClick={handleUpgrade} disabled={upgrading} className="w-full">
+            {upgrading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            Auf Pro upgraden
+          </Button>
         </CardContent>
       </Card>
     );

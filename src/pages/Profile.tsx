@@ -6,6 +6,7 @@ import { ProfileSidebar } from '@/components/ProfileSidebar';
 import { ProfileInfo } from '@/components/profile/ProfileInfo';
 import { SubscriptionSection } from '@/components/profile/SubscriptionSection';
 import { TeamSlotsSection } from '@/components/profile/TeamSlotsSection';
+import { TemplateManagementSection } from '@/components/profile/TemplateManagementSection';
 import { LogoManagementSection } from '@/components/profile/LogoManagementSection';
 import { SettingsSection } from '@/components/profile/SettingsSection';
 import { DeleteAccountSection } from '@/components/profile/DeleteAccountSection';
@@ -48,6 +49,7 @@ const Profile = () => {
                 <Route index element={<ProfileInfo />} />
                 <Route path="subscription" element={<SubscriptionSection />} />
                 <Route path="teams" element={<TeamSlotsSection />} />
+                <Route path="templates" element={<TemplateManagementSection />} />
                 <Route path="logos" element={<LogoManagementSection />} />
                 <Route path="settings" element={<SettingsSection />} />
                 <Route path="delete" element={<DeleteAccountSection />} />
