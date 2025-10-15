@@ -685,8 +685,8 @@ const Index = () => {
 
       {/* Team Slot Warning - Show when team is not in slot and no slots available */}
       {selectedSport && selectedClubId && selectedTeamId && selectedGameIds.length > 0 && !editSelection && !canExport && (
-        <div className="max-w-4xl mx-auto mb-4">
-          <Alert>
+        <div className="max-w-4xl mx-auto mb-28">
+          <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               Sie haben das Maximum von {maxTeams} Team-Slot{maxTeams !== 1 ? 's' : ''} erreicht. 
