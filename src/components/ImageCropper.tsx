@@ -10,8 +10,8 @@ interface ImageCropperProps {
   open: boolean;
   onClose: () => void;
   onCropComplete: (croppedImage: string) => void;
-  format?: '4:5' | '1:1';
-  onFormatChange?: (format: '4:5' | '1:1') => void;
+  format?: '4:5' | '1:1' | 'free';
+  onFormatChange?: (format: '4:5' | '1:1' | 'free') => void;
 }
 
 const createImage = (url: string): Promise<HTMLImageElement> =>
@@ -54,7 +54,7 @@ export const ImageCropper = ({ image, open, onClose, onCropComplete, format = '4
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   
-  const aspectRatio = format === '4:5' ? 1080 / 1350 : 1;
+  const aspectRatio = format === '4:5' ? 1080 / 1350 : format === '1:1' ? 1 : undefined;
 
   const onCropChange = useCallback((crop: { x: number; y: number }) => {
     setCrop(crop);
@@ -69,9 +69,16 @@ export const ImageCropper = ({ image, open, onClose, onCropComplete, format = '4
   }, []);
 
   const handleCrop = async () => {
-    if (!croppedAreaPixels) return;
-
     try {
+      // If free format, use original image without cropping
+      if (format === 'free') {
+        onCropComplete(image);
+        onClose();
+        return;
+      }
+
+      if (!croppedAreaPixels) return;
+
       const croppedImage = await getCroppedImg(image, croppedAreaPixels);
       onCropComplete(croppedImage);
       onClose();
@@ -90,62 +97,76 @@ export const ImageCropper = ({ image, open, onClose, onCropComplete, format = '4
         {onFormatChange && (
           <div className="space-y-2">
             <Label className="text-sm text-muted-foreground">Format</Label>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <Button
                 type="button"
                 size="sm"
                 variant={format === '4:5' ? 'default' : 'outline'}
                 onClick={() => onFormatChange('4:5')}
-                className="flex-1"
               >
-                4:5 (1080x1350)
+                4:5
               </Button>
               <Button
                 type="button"
                 size="sm"
                 variant={format === '1:1' ? 'default' : 'outline'}
                 onClick={() => onFormatChange('1:1')}
-                className="flex-1"
               >
-                1:1 (1080x1080)
+                1:1
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={format === 'free' ? 'default' : 'outline'}
+                onClick={() => onFormatChange('free')}
+              >
+                Frei
               </Button>
             </div>
           </div>
         )}
         
         <div className="relative w-full h-[400px] bg-muted/10 rounded-lg overflow-hidden">
-          <Cropper
-            image={image}
-            crop={crop}
-            zoom={zoom}
-            aspect={aspectRatio}
-            onCropChange={onCropChange}
-            onCropComplete={onCropCompleteCallback}
-            onZoomChange={onZoomChange}
-          />
-        </div>
-        <div className="space-y-4 pt-4">
-          <div className="space-y-2">
-            <Label htmlFor="zoom" className="text-sm text-muted-foreground">
-              Zoom
-            </Label>
-            <Slider
-              id="zoom"
-              min={1}
-              max={3}
-              step={0.1}
-              value={[zoom]}
-              onValueChange={(values) => setZoom(values[0])}
-              className="w-full"
+          {format === 'free' ? (
+            <div className="w-full h-full flex items-center justify-center p-4">
+              <img src={image} alt="Preview" className="max-w-full max-h-full object-contain" />
+            </div>
+          ) : (
+            <Cropper
+              image={image}
+              crop={crop}
+              zoom={zoom}
+              aspect={aspectRatio}
+              onCropChange={onCropChange}
+              onCropComplete={onCropCompleteCallback}
+              onZoomChange={onZoomChange}
             />
-          </div>
+          )}
         </div>
+        {format !== 'free' && (
+          <div className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label htmlFor="zoom" className="text-sm text-muted-foreground">
+                Zoom
+              </Label>
+              <Slider
+                id="zoom"
+                min={1}
+                max={3}
+                step={0.1}
+                value={[zoom]}
+                onValueChange={(values) => setZoom(values[0])}
+                className="w-full"
+              />
+            </div>
+          </div>
+        )}
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onClose} className="border-border">
             Abbrechen
           </Button>
           <Button onClick={handleCrop} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            Zuschneiden
+            {format === 'free' ? 'Übernehmen' : 'Zuschneiden'}
           </Button>
         </DialogFooter>
       </DialogContent>

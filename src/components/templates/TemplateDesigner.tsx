@@ -6,10 +6,20 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Trash2, Move, Type, ImageIcon, Database, Upload, ChevronDown, ChevronUp, RectangleHorizontal, Square } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { ImageCropper } from '@/components/ImageCropper';
+
+interface Logo {
+  id: string;
+  name: string;
+  logo_type: string;
+  file_url: string | null;
+  file_path: string;
+}
 
 interface SVGElement {
   id: string;
@@ -66,6 +76,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   const svgRef = useRef<SVGSVGElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
   const [elements, setElements] = useState<SVGElement[]>(config.elements || []);
   const [selectedElement, setSelectedElement] = useState<string | null>(null);
   const [draggingElement, setDraggingElement] = useState<string | null>(null);
@@ -75,13 +86,67 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   const [showCropper, setShowCropper] = useState(false);
   const [lockAspectRatio, setLockAspectRatio] = useState(true);
   const [expandedGame, setExpandedGame] = useState<number | null>(1);
-  const [cropperFormat, setCropperFormat] = useState<'4:5' | '1:1'>(format);
+  const [cropperFormat, setCropperFormat] = useState<'4:5' | '1:1' | 'free'>(format as '4:5' | '1:1');
   const [backgroundColor, setBackgroundColor] = useState(config.backgroundColor || '#1a1a1a');
+  const [logos, setLogos] = useState<Logo[]>([]);
+  const [showLogoDialog, setShowLogoDialog] = useState(false);
+  const [loadingLogos, setLoadingLogos] = useState(false);
 
   // Canvas dimensions based on format
   const canvasDimensions = format === '4:5' 
     ? { width: 1080, height: 1350 } 
     : { width: 1080, height: 1080 };
+
+  // Load logos on mount
+  useEffect(() => {
+    if (user) {
+      loadLogos();
+    }
+  }, [user]);
+
+  const loadLogos = async () => {
+    if (!user) return;
+    
+    setLoadingLogos(true);
+    try {
+      const { data, error } = await supabase
+        .from('user_logos')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setLogos(data || []);
+    } catch (error: any) {
+      console.error('Error loading logos:', error);
+    } finally {
+      setLoadingLogos(false);
+    }
+  };
+
+  const addLogoElement = (logo: Logo) => {
+    if (!logo.file_url) return;
+    
+    const maxZIndex = Math.max(0, ...elements.map(el => el.zIndex ?? 0));
+    const newElement: SVGElement = {
+      id: `logo-${Date.now()}`,
+      type: 'image',
+      x: canvasDimensions.width / 2 - 100,
+      y: 100,
+      width: 200,
+      height: 200,
+      href: logo.file_url,
+      zIndex: maxZIndex + 1
+    };
+    setElements(prev => [...prev, newElement]);
+    setSelectedElement(newElement.id);
+    setShowLogoDialog(false);
+    
+    toast({
+      title: 'Logo hinzugefügt',
+      description: `${logo.name} wurde zum Template hinzugefügt.`,
+    });
+  };
 
   // Sync elements and format with config
   useEffect(() => {
@@ -376,6 +441,49 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
           onFormatChange={setCropperFormat}
         />
       )}
+
+      {/* Logo Selection Dialog */}
+      <Dialog open={showLogoDialog} onOpenChange={setShowLogoDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Logo auswählen</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {loadingLogos ? (
+              <div className="text-center py-8 text-muted-foreground">Logos werden geladen...</div>
+            ) : logos.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Keine Logos gefunden. Laden Sie zuerst Logos in der Logo-Verwaltung hoch.
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-4">
+                {logos.map((logo) => (
+                  <button
+                    key={logo.id}
+                    onClick={() => addLogoElement(logo)}
+                    className="group relative border rounded-lg p-4 hover:border-primary transition-colors"
+                  >
+                    <div className="aspect-square bg-muted rounded-md mb-2 flex items-center justify-center overflow-hidden">
+                      {logo.file_url ? (
+                        <img
+                          src={logo.file_url}
+                          alt={logo.name}
+                          className="max-w-full max-h-full object-contain"
+                        />
+                      ) : (
+                        <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="text-sm font-medium truncate">{logo.name}</div>
+                    <div className="text-xs text-muted-foreground capitalize">{logo.logo_type}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="grid lg:grid-cols-[1fr_350px] gap-6">
       {/* Canvas */}
       <Card>
@@ -390,6 +498,16 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
             <Button onClick={addTextElement} size="sm" variant="outline" className="gap-2" disabled={previewMode}>
               <Type className="h-4 w-4" />
               Statischer Text
+            </Button>
+            <Button
+              onClick={() => setShowLogoDialog(true)}
+              size="sm"
+              variant="outline"
+              className="gap-2"
+              disabled={previewMode}
+            >
+              <ImageIcon className="h-4 w-4" />
+              Logo auswählen
             </Button>
             <Button
               onClick={() => fileInputRef.current?.click()}
