@@ -40,7 +40,7 @@ const Index = () => {
   const detailParam = searchParams.get('detail') === 'true';
 
   const [selectedSport, setSelectedSport] = useState<SportType | "">(sport || "");
-  const [selectedTheme, setSelectedTheme] = useState<string>(themeParam || "myclub");
+  const [selectedTheme, setSelectedTheme] = useState<string>(themeParam || "kanva");
   const [activeTab, setActiveTab] = useState<string>(tabParam);
   const [isHomeGame, setIsHomeGame] = useState<boolean>(homeParam);
   const [showResultDetail, setShowResultDetail] = useState<boolean>(detailParam);
@@ -341,7 +341,7 @@ const Index = () => {
     setGamesData(games || []);
     const gameIdsParam = gameIds.join(',');
     const params = new URLSearchParams();
-    if (selectedTheme !== 'myclub') params.set('theme', selectedTheme);
+    if (selectedTheme !== 'kanva') params.set('theme', selectedTheme);
     if (activeTab !== 'preview') params.set('tab', activeTab);
     if (isHomeGame) params.set('home', 'true');
     if (showResultDetail) params.set('detail', 'true');
@@ -609,7 +609,7 @@ const Index = () => {
                 gamesData={gamesData}
                 studioUrl={(() => {
                   const params = new URLSearchParams();
-                  if (selectedTheme !== 'myclub') params.set('theme', selectedTheme);
+                  if (selectedTheme !== 'kanva') params.set('theme', selectedTheme);
                   if (activeTab !== 'preview') params.set('tab', activeTab);
                   if (isHomeGame) params.set('home', 'true');
                   if (showResultDetail) params.set('detail', 'true');
