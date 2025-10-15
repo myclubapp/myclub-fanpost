@@ -149,7 +149,7 @@ export function LogoManagementSection() {
   };
 
   const handleUpgrade = () => {
-    navigate('/profile?tab=subscription');
+    navigate('/profile/subscription');
   };
 
   if (limitsLoading) {

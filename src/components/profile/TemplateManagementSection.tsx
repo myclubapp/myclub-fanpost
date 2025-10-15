@@ -83,7 +83,7 @@ export function TemplateManagementSection() {
   };
 
   const handleUpgrade = () => {
-    navigate('/profile?tab=subscription');
+    navigate('/profile/subscription');
   };
 
   if (limitsLoading) {
