@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trash2, Move, Type, ImageIcon, Database, Upload, ChevronDown, ChevronUp, RectangleHorizontal, Square } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -456,29 +457,106 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                 Keine Logos gefunden. Laden Sie zuerst Logos in der Logo-Verwaltung hoch.
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-4">
-                {logos.map((logo) => (
-                  <button
-                    key={logo.id}
-                    onClick={() => addLogoElement(logo)}
-                    className="group relative border rounded-lg p-4 hover:border-primary transition-colors"
-                  >
-                    <div className="aspect-square bg-muted rounded-md mb-2 flex items-center justify-center overflow-hidden">
-                      {logo.file_url ? (
-                        <img
-                          src={logo.file_url}
-                          alt={logo.name}
-                          className="max-w-full max-h-full object-contain"
-                        />
-                      ) : (
-                        <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                      )}
+              <Tabs defaultValue="sponsor" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="sponsor">Sponsoren</TabsTrigger>
+                  <TabsTrigger value="club">Verein</TabsTrigger>
+                  <TabsTrigger value="team">Team</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="sponsor" className="mt-4">
+                  {logos.filter(logo => logo.logo_type === 'sponsor').length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Keine Sponsoren-Logos gefunden
                     </div>
-                    <div className="text-sm font-medium truncate">{logo.name}</div>
-                    <div className="text-xs text-muted-foreground capitalize">{logo.logo_type}</div>
-                  </button>
-                ))}
-              </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-4">
+                      {logos.filter(logo => logo.logo_type === 'sponsor').map((logo) => (
+                        <button
+                          key={logo.id}
+                          onClick={() => addLogoElement(logo)}
+                          className="group relative border rounded-lg p-4 hover:border-primary transition-colors"
+                        >
+                          <div className="aspect-square bg-muted rounded-md mb-2 flex items-center justify-center overflow-hidden">
+                            {logo.file_url ? (
+                              <img
+                                src={logo.file_url}
+                                alt={logo.name}
+                                className="max-w-full max-h-full object-contain"
+                              />
+                            ) : (
+                              <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div className="text-sm font-medium truncate">{logo.name}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="club" className="mt-4">
+                  {logos.filter(logo => logo.logo_type === 'club').length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Keine Vereins-Logos gefunden
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-4">
+                      {logos.filter(logo => logo.logo_type === 'club').map((logo) => (
+                        <button
+                          key={logo.id}
+                          onClick={() => addLogoElement(logo)}
+                          className="group relative border rounded-lg p-4 hover:border-primary transition-colors"
+                        >
+                          <div className="aspect-square bg-muted rounded-md mb-2 flex items-center justify-center overflow-hidden">
+                            {logo.file_url ? (
+                              <img
+                                src={logo.file_url}
+                                alt={logo.name}
+                                className="max-w-full max-h-full object-contain"
+                              />
+                            ) : (
+                              <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div className="text-sm font-medium truncate">{logo.name}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="team" className="mt-4">
+                  {logos.filter(logo => logo.logo_type === 'team').length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Keine Team-Logos gefunden
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-4">
+                      {logos.filter(logo => logo.logo_type === 'team').map((logo) => (
+                        <button
+                          key={logo.id}
+                          onClick={() => addLogoElement(logo)}
+                          className="group relative border rounded-lg p-4 hover:border-primary transition-colors"
+                        >
+                          <div className="aspect-square bg-muted rounded-md mb-2 flex items-center justify-center overflow-hidden">
+                            {logo.file_url ? (
+                              <img
+                                src={logo.file_url}
+                                alt={logo.name}
+                                className="max-w-full max-h-full object-contain"
+                              />
+                            ) : (
+                              <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div className="text-sm font-medium truncate">{logo.name}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             )}
           </div>
         </DialogContent>
