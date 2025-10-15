@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
@@ -14,15 +15,11 @@ import { Loader2, Save, ArrowLeft, Eye } from 'lucide-react';
 import { TemplateDesigner } from '@/components/templates/TemplateDesigner';
 import { z } from 'zod';
 
-const templateSchema = z.object({
-  name: z.string().min(1, 'Name ist erforderlich').max(100, 'Name zu lang'),
-  supported_games: z.number().min(1).max(3),
-});
-
 const TemplateEditor = () => {
   const { id } = useParams<{ id: string }>();
   const { user, loading: authLoading } = useAuth();
   const { isPaidUser, loading: roleLoading } = useUserRole();
+  const { maxGamesPerTemplate, loading: limitsLoading } = useSubscriptionLimits();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -139,8 +136,13 @@ const TemplateEditor = () => {
   const handleSave = async () => {
     if (!user) return;
 
-    // Validate
+    // Validate with dynamic max based on subscription
     setErrors({});
+    const templateSchema = z.object({
+      name: z.string().min(1, 'Name ist erforderlich').max(100, 'Name zu lang'),
+      supported_games: z.number().min(1).max(maxGamesPerTemplate, `Maximal ${maxGamesPerTemplate} ${maxGamesPerTemplate === 1 ? 'Spiel' : 'Spiele'} erlaubt`),
+    });
+
     const validation = templateSchema.safeParse({ name, supported_games: supportedGames });
     if (!validation.success) {
       const newErrors: { [key: string]: string } = {};
@@ -199,7 +201,7 @@ const TemplateEditor = () => {
     }
   };
 
-  if (authLoading || roleLoading) {
+  if (authLoading || roleLoading || limitsLoading) {
     return (
       <div className="min-h-screen bg-background pt-16">
         <Header />
@@ -293,14 +295,19 @@ const TemplateEditor = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">1 Spiel</SelectItem>
-                      <SelectItem value="2">2 Spiele</SelectItem>
-                      <SelectItem value="3">3 Spiele</SelectItem>
+                      {Array.from({ length: Math.min(maxGamesPerTemplate, 3) }, (_, i) => i + 1).map((num) => (
+                        <SelectItem key={num} value={num.toString()}>
+                          {num} {num === 1 ? 'Spiel' : 'Spiele'}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   {errors.supported_games && (
                     <p className="text-sm text-destructive">{errors.supported_games}</p>
                   )}
+                  <p className="text-xs text-muted-foreground">
+                    Ihr Abo erlaubt max. {maxGamesPerTemplate} {maxGamesPerTemplate === 1 ? 'Spiel' : 'Spiele'} pro Template
+                  </p>
                 </div>
 
                 <div className="space-y-2">
