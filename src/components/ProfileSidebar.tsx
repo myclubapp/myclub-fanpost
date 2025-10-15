@@ -21,9 +21,6 @@ export function ProfileSidebar() {
     <Card className="p-4">
       <nav className="space-y-1">
         {menuItems.map((item) => {
-          const showUpgradeBadge = 
-            (item.title === "Vorlagen" && tier === 'free') ||
-            (item.title === "Logo-Verwaltung" && (tier === 'free' || tier === 'amateur'));
           
           return (
             <NavLink
@@ -40,9 +37,6 @@ export function ProfileSidebar() {
             >
               <item.icon className="h-4 w-4" />
               <span className="flex-1">{item.title}</span>
-              {showUpgradeBadge && (
-                <Badge variant="secondary" className="ml-auto">Upgrade</Badge>
-              )}
             </NavLink>
           );
         })}

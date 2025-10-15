@@ -36,7 +36,7 @@ export function TemplateManagementSection() {
 
   const loadTemplates = async () => {
     if (!user) return;
-    
+
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -82,29 +82,8 @@ export function TemplateManagementSection() {
     }
   };
 
-  const handleUpgrade = async () => {
-    setUpgrading(true);
-    try {
-      const priceId = SUBSCRIPTION_PRICES.pro.monthly;
-      const url = await createCheckout(priceId);
-      if (url) {
-        window.open(url, '_blank');
-        toast({
-          title: "Checkout geöffnet",
-          description: "Schließen Sie den Kaufvorgang ab, um zu Pro zu upgraden.",
-        });
-      } else {
-        throw new Error('Checkout URL konnte nicht erstellt werden');
-      }
-    } catch (error: any) {
-      toast({
-        title: "Fehler",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setUpgrading(false);
-    }
+  const handleUpgrade = () => {
+    navigate('/profile?tab=subscription');
   };
 
   if (limitsLoading) {
@@ -132,12 +111,12 @@ export function TemplateManagementSection() {
         <CardContent className="space-y-4">
           <Alert>
             <AlertDescription>
-              Upgraden Sie auf Pro oder Premium, um eigene Vorlagen zu erstellen und zu verwalten.
+              Upgraden Sie auf Amateur, Pro oder Premium, um eigene Vorlagen zu erstellen und zu verwalten.
             </AlertDescription>
           </Alert>
           <Button onClick={handleUpgrade} disabled={upgrading} className="w-full">
             {upgrading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            Auf Pro upgraden
+            Upgraden
           </Button>
         </CardContent>
       </Card>
@@ -161,8 +140,8 @@ export function TemplateManagementSection() {
       </CardHeader>
       <CardContent className="space-y-4">
         {templates.length < maxCustomTemplates && (
-          <Button 
-            onClick={() => navigate('/templates/new')} 
+          <Button
+            onClick={() => navigate('/templates/new')}
             className="w-full gap-2"
           >
             <Plus className="h-4 w-4" />

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,10 +26,10 @@ export function LogoManagementSection() {
   const { tier, createCheckout } = useSubscription();
   const { canUploadLogos, loading: limitsLoading } = useSubscriptionLimits();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [logos, setLogos] = useState<Logo[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [upgrading, setUpgrading] = useState(false);
   const [logoName, setLogoName] = useState('');
   const [logoType, setLogoType] = useState('sponsor');
 
@@ -147,29 +148,8 @@ export function LogoManagementSection() {
     }
   };
 
-  const handleUpgrade = async () => {
-    setUpgrading(true);
-    try {
-      const priceId = SUBSCRIPTION_PRICES.pro.monthly;
-      const url = await createCheckout(priceId);
-      if (url) {
-        window.open(url, '_blank');
-        toast({
-          title: "Checkout geöffnet",
-          description: "Schließen Sie den Kaufvorgang ab, um zu Pro zu upgraden.",
-        });
-      } else {
-        throw new Error('Checkout URL konnte nicht erstellt werden');
-      }
-    } catch (error: any) {
-      toast({
-        title: "Fehler",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setUpgrading(false);
-    }
+  const handleUpgrade = () => {
+    navigate('/profile?tab=subscription');
   };
 
   if (limitsLoading) {
@@ -202,7 +182,7 @@ export function LogoManagementSection() {
           </Alert>
           <Button onClick={handleUpgrade} disabled={upgrading} className="w-full">
             {upgrading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            Auf Pro upgraden
+            Upgraden
           </Button>
         </CardContent>
       </Card>
