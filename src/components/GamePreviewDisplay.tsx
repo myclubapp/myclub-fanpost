@@ -347,6 +347,52 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     };
   }, []);
 
+  // Compress image for mobile compatibility
+  const compressImage = (dataUrl: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(dataUrl);
+          return;
+        }
+
+        // Set max dimensions (mobile-friendly)
+        const MAX_WIDTH = 1920;
+        const MAX_HEIGHT = 1920;
+        
+        let width = img.width;
+        let height = img.height;
+
+        // Calculate new dimensions maintaining aspect ratio
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height = (height * MAX_WIDTH) / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width = (width * MAX_HEIGHT) / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        // Draw image with compression
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to data URL with 0.85 quality for better mobile performance
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        resolve(compressedDataUrl);
+      };
+      img.src = dataUrl;
+    });
+  };
+
   const handleBackgroundImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -368,8 +414,10 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     }
   };
 
-  const handleCropComplete = (croppedImage: string) => {
-    setBackgroundImage(croppedImage);
+  const handleCropComplete = async (croppedImage: string) => {
+    // Compress the image for mobile compatibility
+    const compressedImage = await compressImage(croppedImage);
+    setBackgroundImage(compressedImage);
     setTempImage(null);
     toast({
       title: "Hintergrundbild zugeschnitten",
