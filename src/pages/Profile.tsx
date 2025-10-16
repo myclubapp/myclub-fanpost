@@ -38,10 +38,10 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
       
-      <div className="container mx-auto px-4 py-8 pt-24">
+      <div className="container mx-auto px-4 py-8 pt-24 flex-grow">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-3xl font-bold mb-8">Mein Profil</h1>
           
