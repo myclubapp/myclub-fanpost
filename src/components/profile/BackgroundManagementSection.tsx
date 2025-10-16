@@ -90,6 +90,11 @@ export function BackgroundManagementSection() {
 
   const deleteBackground = async (background: BackgroundImage) => {
     setDeleting(background.name);
+
+    // Optimistic UI update
+    const prevBackgrounds = backgrounds;
+    setBackgrounds(prev => prev.filter(b => b.path !== background.path));
+
     try {
       const { error } = await supabase.storage
         .from('game-backgrounds')
@@ -102,8 +107,11 @@ export function BackgroundManagementSection() {
         description: 'Hintergrundbild gelöscht',
       });
 
+      // Re-sync to be safe
       await loadBackgrounds();
     } catch (error: any) {
+      // Revert optimistic update on error
+      setBackgrounds(prevBackgrounds);
       toast({
         title: 'Fehler',
         description: error.message,
