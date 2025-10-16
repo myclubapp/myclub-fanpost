@@ -9,6 +9,7 @@ import { SubscriptionSection } from '@/components/profile/SubscriptionSection';
 import { TeamSlotsSection } from '@/components/profile/TeamSlotsSection';
 import { TemplateManagementSection } from '@/components/profile/TemplateManagementSection';
 import { LogoManagementSection } from '@/components/profile/LogoManagementSection';
+import { BackgroundManagementSection } from '@/components/profile/BackgroundManagementSection';
 import { SettingsSection } from '@/components/profile/SettingsSection';
 import { DeleteAccountSection } from '@/components/profile/DeleteAccountSection';
 import { Loader2 } from 'lucide-react';
@@ -53,6 +54,7 @@ const Profile = () => {
                 <Route path="teams" element={<TeamSlotsSection />} />
                 <Route path="templates" element={<TemplateManagementSection />} />
                 <Route path="logos" element={<LogoManagementSection />} />
+                <Route path="backgrounds" element={<BackgroundManagementSection />} />
                 <Route path="settings" element={<SettingsSection />} />
                 <Route path="delete" element={<DeleteAccountSection />} />
                 <Route path="*" element={<Navigate to="/profile" replace />} />

@@ -1,4 +1,4 @@
-import { User, Crown, Users, Image, Settings, Trash2, FileText } from "lucide-react";
+import { User, Crown, Users, Image, Settings, Trash2, FileText, ImageIcon } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ const menuItems = [
   { title: "Meine Teams", url: "/profile/teams", icon: Users },
   { title: "Vorlagen", url: "/profile/templates", icon: FileText },
   { title: "Logo-Verwaltung", url: "/profile/logos", icon: Image },
+  { title: "Hintergrundbilder", url: "/profile/backgrounds", icon: ImageIcon },
   { title: "Einstellungen", url: "/profile/settings", icon: Settings },
   { title: "Account löschen", url: "/profile/delete", icon: Trash2 },
 ];
