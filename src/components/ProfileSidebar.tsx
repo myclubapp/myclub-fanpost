@@ -9,7 +9,7 @@ const menuItems = [
   { title: "Abonnement", url: "/profile/subscription", icon: Crown },
   { title: "Meine Teams", url: "/profile/teams", icon: Users },
   { title: "Vorlagen", url: "/profile/templates", icon: FileText },
-  { title: "Logo-Verwaltung", url: "/profile/logos", icon: Image },
+  { title: "Logos und Bilder", url: "/profile/logos", icon: Image },
   { title: "Hintergrundbilder", url: "/profile/backgrounds", icon: ImageIcon },
   { title: "Einstellungen", url: "/profile/settings", icon: Settings },
   { title: "Account löschen", url: "/profile/delete", icon: Trash2 },

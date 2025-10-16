@@ -166,21 +166,21 @@ export function LogoManagementSection() {
   if (!canUploadLogos) {
     return (
       <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Lock className="h-5 w-5 text-muted-foreground" />
-            <CardTitle>Logo-Upload</CardTitle>
-          </div>
-          <CardDescription>
-            Diese Funktion ist nur für Pro- und Premium-Abonnenten verfügbar
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Alert>
-            <AlertDescription>
-              Upgrade auf Pro oder Premium, um eigene Logos hochzuladen und in Ihren Vorlagen zu verwenden.
-            </AlertDescription>
-          </Alert>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Lock className="h-5 w-5 text-muted-foreground" />
+          <CardTitle>Logos und Bilder</CardTitle>
+        </div>
+        <CardDescription>
+          Diese Funktion ist nur für Pro- und Premium-Abonnenten verfügbar
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Alert>
+          <AlertDescription>
+            Upgrade auf Pro oder Premium, um eigene Logos und Bilder hochzuladen und in Ihren Vorlagen zu verwenden.
+          </AlertDescription>
+        </Alert>
           <Button onClick={handleUpgrade} className="w-full">
             Upgraden
           </Button>
@@ -192,9 +192,9 @@ export function LogoManagementSection() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Logo-Verwaltung</CardTitle>
+        <CardTitle>Logos und Bilder</CardTitle>
         <CardDescription>
-          Laden Sie Ihre eigenen Logos hoch und verwenden Sie sie in Ihren Vorlagen
+          Laden Sie Ihre eigenen Logos und Bilder hoch und verwenden Sie sie in Ihren Vorlagen
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -219,6 +219,7 @@ export function LogoManagementSection() {
                 <SelectItem value="sponsor">Sponsor</SelectItem>
                 <SelectItem value="club">Verein</SelectItem>
                 <SelectItem value="team">Team</SelectItem>
+                <SelectItem value="other">Andere</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -256,10 +257,11 @@ export function LogoManagementSection() {
           </div>
         ) : (
           <Tabs defaultValue="sponsor" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="sponsor">Sponsoren</TabsTrigger>
               <TabsTrigger value="club">Verein</TabsTrigger>
               <TabsTrigger value="team">Team</TabsTrigger>
+              <TabsTrigger value="other">Andere</TabsTrigger>
             </TabsList>
             
             <TabsContent value="sponsor" className="mt-4">
@@ -340,6 +342,41 @@ export function LogoManagementSection() {
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {logos.filter(logo => logo.logo_type === 'team').map((logo) => (
+                    <div key={logo.id} className="relative group border rounded-lg p-4">
+                      <div className="aspect-square bg-muted rounded-md mb-2 flex items-center justify-center overflow-hidden">
+                        {logo.file_url ? (
+                          <img
+                            src={logo.file_url}
+                            alt={logo.name}
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        ) : (
+                          <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="text-sm font-medium truncate">{logo.name}</div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => deleteLogo(logo)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="other" className="mt-4">
+              {logos.filter(logo => logo.logo_type === 'other').length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Keine anderen Bilder gefunden
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {logos.filter(logo => logo.logo_type === 'other').map((logo) => (
                     <div key={logo.id} className="relative group border rounded-lg p-4">
                       <div className="aspect-square bg-muted rounded-md mb-2 flex items-center justify-center overflow-hidden">
                         {logo.file_url ? (

@@ -97,7 +97,6 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
     config.backgroundImageUrl ? 'image' : config.useBackgroundPlaceholder ? 'placeholder' : 'color'
   );
   const [showBackgroundGallery, setShowBackgroundGallery] = useState(false);
-  const [showImageGalleryDialog, setShowImageGalleryDialog] = useState(false);
   const [logos, setLogos] = useState<Logo[]>([]);
   const [showLogoDialog, setShowLogoDialog] = useState(false);
   const [loadingLogos, setLoadingLogos] = useState(false);
@@ -153,42 +152,20 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
     setShowLogoDialog(false);
     
     toast({
-      title: 'Logo hinzugefügt',
+      title: logo.logo_type === 'other' ? 'Bild hinzugefügt' : 'Logo hinzugefügt',
       description: `${logo.name} wurde zum Template hinzugefügt.`,
     });
   };
 
-  const addImageFromGallery = (imageUrl: string, imageName: string) => {
-    const maxZIndex = Math.max(0, ...elements.map(el => el.zIndex ?? 0));
-    const newElement: SVGElement = {
-      id: `image-${Date.now()}`,
-      type: 'image',
-      x: canvasDimensions.width / 2 - 200,
-      y: 100,
-      width: 400,
-      height: 400,
-      href: imageUrl,
-      zIndex: maxZIndex + 1
-    };
-    setElements(prev => [...prev, newElement]);
-    setSelectedElement(newElement.id);
-    setShowImageGalleryDialog(false);
-    
-    toast({
-      title: 'Bild hinzugefügt',
-      description: `${imageName} wurde zum Template hinzugefügt.`,
-    });
-  };
-
-  // Load template background images
+  // Load background images for template backgrounds
   const { data: templateBackgrounds = [], refetch: refetchBackgrounds } = useQuery({
     queryKey: ['template-backgrounds', user?.id],
     queryFn: async () => {
       if (!user) return [];
       
       const { data, error } = await supabase.storage
-        .from('template-images')
-        .list(`templates/${user.id}`, {
+        .from('game-backgrounds')
+        .list(`backgrounds/${user.id}`, {
           limit: 100,
           offset: 0,
           sortBy: { column: 'updated_at', order: 'desc' },
@@ -200,22 +177,34 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
         return [];
       }
 
+      // Filter out .emptyFolderPlaceholder
+      const filteredData = data.filter(file => !file.name.includes('.emptyFolderPlaceholder'));
+
+      if (filteredData.length === 0) {
+        return [];
+      }
+
       const items = await Promise.all(
-        data.map(async (file) => {
-          const filePath = `templates/${user.id}/${file.name}`;
-          const { data: publicUrlData } = supabase.storage
-            .from('template-images')
-            .getPublicUrl(filePath);
+        filteredData.map(async (file) => {
+          const filePath = `backgrounds/${user.id}/${file.name}`;
+          const { data: signed, error: signError } = await supabase.storage
+            .from('game-backgrounds')
+            .createSignedUrl(filePath, 3600);
+
+          if (signError) {
+            console.error('Error creating signed URL:', signError);
+            return null;
+          }
 
           return {
             name: file.name,
-            url: publicUrlData.publicUrl,
+            url: signed.signedUrl,
             path: filePath,
           };
         })
       );
 
-      return items;
+      return items.filter((item): item is { name: string; url: string; path: string } => item !== null);
     },
     enabled: !!user,
   });
@@ -407,16 +396,16 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
       
       const fileExt = 'png';
       const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `templates/${user.id}/${fileName}`;
+      const filePath = `logos/${user.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('template-images')
+        .from('user-logos')
         .upload(filePath, blob);
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('template-images')
+        .from('user-logos')
         .getPublicUrl(filePath);
 
       const maxZIndex = Math.max(0, ...elements.map(el => el.zIndex ?? 0));
@@ -438,8 +427,8 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
         description: "Das Bild wurde erfolgreich zugeschnitten und hochgeladen.",
       });
 
-      // Refresh the gallery to show the newly uploaded image
-      refetchBackgrounds();
+      // Reload logos to include the newly uploaded image
+      loadLogos();
     } catch (error: any) {
       toast({
         title: "Upload-Fehler",
@@ -530,21 +519,22 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
       <Dialog open={showLogoDialog} onOpenChange={setShowLogoDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Logo auswählen</DialogTitle>
+            <DialogTitle>Logo/Bild auswählen</DialogTitle>
           </DialogHeader>
           <div className="py-4">
             {loadingLogos ? (
               <div className="text-center py-8 text-muted-foreground">Logos werden geladen...</div>
             ) : logos.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                Keine Logos gefunden. Laden Sie zuerst Logos in der Logo-Verwaltung hoch.
+                Keine Logos/Bilder gefunden. Laden Sie zuerst Logos in der "Logos und Bilder"-Verwaltung hoch.
               </div>
             ) : (
               <Tabs defaultValue="sponsor" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="sponsor">Sponsoren</TabsTrigger>
                   <TabsTrigger value="club">Verein</TabsTrigger>
                   <TabsTrigger value="team">Team</TabsTrigger>
+                  <TabsTrigger value="other">Andere</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="sponsor" className="mt-4">
@@ -639,44 +629,38 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                     </div>
                   )}
                 </TabsContent>
-              </Tabs>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
 
-      {/* Image Gallery Dialog */}
-      <Dialog open={showImageGalleryDialog} onOpenChange={setShowImageGalleryDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Bild aus Sammlung wählen</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            {templateBackgrounds.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Keine Bilder gefunden. Laden Sie zuerst Bilder hoch oder verwenden Sie den "Bild hochladen" Button.
-              </div>
-            ) : (
-              <ScrollArea className="h-[400px]">
-                <div className="grid grid-cols-3 gap-4 pr-4">
-                  {templateBackgrounds.map((image: any) => (
-                    <button
-                      key={image.name}
-                      onClick={() => addImageFromGallery(image.url, image.name)}
-                      className="group relative border rounded-lg p-2 hover:border-primary transition-colors"
-                    >
-                      <div className="aspect-video bg-muted rounded-md mb-2 flex items-center justify-center overflow-hidden">
-                        <img
-                          src={image.url}
-                          alt={image.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="text-xs font-medium truncate text-center">{image.name}</div>
-                    </button>
-                  ))}
-                </div>
-              </ScrollArea>
+                <TabsContent value="other" className="mt-4">
+                  {logos.filter(logo => logo.logo_type === 'other').length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Keine anderen Bilder gefunden
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-4">
+                      {logos.filter(logo => logo.logo_type === 'other').map((logo) => (
+                        <button
+                          key={logo.id}
+                          onClick={() => addLogoElement(logo)}
+                          className="group relative border rounded-lg p-4 hover:border-primary transition-colors"
+                        >
+                          <div className="aspect-square bg-muted rounded-md mb-2 flex items-center justify-center overflow-hidden">
+                            {logo.file_url ? (
+                              <img
+                                src={logo.file_url}
+                                alt={logo.name}
+                                className="max-w-full max-h-full object-contain"
+                              />
+                            ) : (
+                              <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div className="text-sm font-medium truncate">{logo.name}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             )}
           </div>
         </DialogContent>
@@ -705,20 +689,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
               disabled={previewMode}
             >
               <ImageIcon className="h-4 w-4" />
-              Logo auswählen
-            </Button>
-            <Button
-              onClick={() => {
-                setShowImageGalleryDialog(true);
-                refetchBackgrounds();
-              }}
-              size="sm"
-              variant="outline"
-              className="gap-2"
-              disabled={previewMode}
-            >
-              <ImageIcon className="h-4 w-4" />
-              Aus Sammlung wählen
+              Logo/Bild auswählen
             </Button>
             <Button
               onClick={() => fileInputRef.current?.click()}
