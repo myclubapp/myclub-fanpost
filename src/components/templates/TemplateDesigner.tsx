@@ -437,6 +437,9 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
         title: "Bild hochgeladen",
         description: "Das Bild wurde erfolgreich zugeschnitten und hochgeladen.",
       });
+
+      // Refresh the gallery to show the newly uploaded image
+      refetchBackgrounds();
     } catch (error: any) {
       toast({
         title: "Upload-Fehler",
@@ -705,7 +708,10 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
               Logo auswählen
             </Button>
             <Button
-              onClick={() => setShowImageGalleryDialog(true)}
+              onClick={() => {
+                setShowImageGalleryDialog(true);
+                refetchBackgrounds();
+              }}
               size="sm"
               variant="outline"
               className="gap-2"
