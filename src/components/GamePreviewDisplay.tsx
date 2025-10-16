@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Image as ImageIcon, FileText, Palette, Upload, X } from "lucide-react";
+import { Download, Image as ImageIcon, FileText, Palette, Upload, X, Check } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useQuery } from "@tanstack/react-query";
 import * as svg from "save-svg-as-png";
 import { Share } from "@capacitor/share";
 import { Filesystem, Directory } from "@capacitor/filesystem";
@@ -32,6 +33,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ImageCropper } from "./ImageCropper";
 import { supabase } from "@/integrations/supabase/client";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type SportType = "unihockey" | "volleyball" | "handball";
 
@@ -124,6 +126,36 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+
+  // Load user's existing background images
+  const { data: userBackgrounds = [], refetch: refetchBackgrounds } = useQuery({
+    queryKey: ['user-backgrounds', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase.storage
+        .from('game-backgrounds')
+        .list(user.id, {
+          sortBy: { column: 'created_at', order: 'desc' }
+        });
+
+      if (error) {
+        console.error('Error loading backgrounds:', error);
+        return [];
+      }
+
+      return data.map(file => {
+        const { data: urlData } = supabase.storage
+          .from('game-backgrounds')
+          .getPublicUrl(`${user.id}/${file.name}`);
+        return {
+          name: file.name,
+          url: urlData.publicUrl
+        };
+      });
+    },
+    enabled: !!user
+  });
   const { isPaidUser } = useUserRole();
   
   const [selectedTheme, setSelectedTheme] = useState(initialTheme);
@@ -143,6 +175,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [uploadingBackground, setUploadingBackground] = useState(false);
+  const [showGallery, setShowGallery] = useState(false);
   const [isHomeGame, setIsHomeGame] = useState(initialIsHomeGame);
   const [showResultDetail, setShowResultDetail] = useState(initialShowResultDetail);
   
@@ -413,6 +446,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       
       if (publicUrl) {
         setBackgroundImage(publicUrl);
+        refetchBackgrounds(); // Refresh gallery
         toast({
           title: "Hintergrundbild zugeschnitten",
           description: "Das Bild wurde erfolgreich hochgeladen.",
@@ -1059,31 +1093,78 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
 
           {/* Background image upload - before checkboxes */}
           {(isMyClubTheme || (isCustomTemplate && selectedCustomTemplate?.config?.useBackgroundPlaceholder)) && (
-            <div className="flex items-center gap-2">
-              <Input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleBackgroundImageUpload}
-                className="hidden"
-                id="background-upload"
-              />
-              <Label
-                htmlFor="background-upload"
-                className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-background hover:bg-muted/50 text-sm transition-colors h-10"
-              >
-                <Upload className="h-4 w-4" />
-                Hintergrundbild
-              </Label>
-              {backgroundImage && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleRemoveBackgroundImage}
-                  className="h-10 w-10"
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleBackgroundImageUpload}
+                  className="hidden"
+                  id="background-upload"
+                />
+                <Label
+                  htmlFor="background-upload"
+                  className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-background hover:bg-muted/50 text-sm transition-colors h-10"
                 >
-                  <X className="h-4 w-4" />
+                  <Upload className="h-4 w-4" />
+                  Neues Bild
+                </Label>
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowGallery(!showGallery)}
+                  className="flex items-center gap-2 h-10"
+                >
+                  <ImageIcon className="w-4 h-4" />
+                  Sammlung ({userBackgrounds.length})
                 </Button>
+                
+                {backgroundImage && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleRemoveBackgroundImage}
+                    className="h-10 w-10"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              
+              {showGallery && userBackgrounds.length > 0 && (
+                <div className="mt-2 p-4 border border-border rounded-lg bg-card/50">
+                  <p className="text-sm text-muted-foreground mb-3">Deine hochgeladenen Hintergrundbilder:</p>
+                  <ScrollArea className="h-[200px]">
+                    <div className="grid grid-cols-3 gap-2">
+                      {userBackgrounds.map((bg) => (
+                        <div
+                          key={bg.name}
+                          className="relative cursor-pointer group aspect-video rounded-md overflow-hidden border-2 border-transparent hover:border-primary transition-all"
+                          onClick={() => {
+                            setBackgroundImage(bg.url);
+                            setShowGallery(false);
+                            toast({
+                              title: "Hintergrundbild ausgewählt",
+                              description: "Das Bild wurde erfolgreich ausgewählt.",
+                            });
+                          }}
+                        >
+                          <img
+                            src={bg.url}
+                            alt={bg.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                            <Check className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </div>
               )}
             </div>
           )}
