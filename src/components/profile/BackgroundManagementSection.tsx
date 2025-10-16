@@ -102,7 +102,7 @@ export function BackgroundManagementSection() {
         description: 'Hintergrundbild gelöscht',
       });
 
-      loadBackgrounds();
+      await loadBackgrounds();
     } catch (error: any) {
       toast({
         title: 'Fehler',
@@ -133,7 +133,7 @@ export function BackgroundManagementSection() {
         description: 'Hintergrundbild hochgeladen',
       });
 
-      loadBackgrounds();
+      await loadBackgrounds();
     } catch (error: any) {
       toast({
         title: 'Fehler',
