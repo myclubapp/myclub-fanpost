@@ -136,7 +136,9 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       const { data, error } = await supabase.storage
         .from('game-backgrounds')
         .list(user.id, {
-          sortBy: { column: 'created_at', order: 'desc' }
+          limit: 100,
+          offset: 0,
+          sortBy: { column: 'updated_at', order: 'desc' },
         });
 
       if (error) {
@@ -1123,7 +1125,11 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowGallery(!showGallery)}
+                  onClick={() => {
+                    const open = !showGallery;
+                    setShowGallery(open);
+                    if (open) refetchBackgrounds();
+                  }}
                   className="flex items-center gap-2 h-10"
                 >
                   <ImageIcon className="w-4 h-4" />
