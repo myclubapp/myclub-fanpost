@@ -135,7 +135,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       
       const { data, error } = await supabase.storage
         .from('game-backgrounds')
-        .list(user.id, {
+        .list(`backgrounds/${user.id}`, {
           limit: 100,
           offset: 0,
           sortBy: { column: 'updated_at', order: 'desc' },
@@ -150,7 +150,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
 
       const items = await Promise.all(
         data.map(async (file) => {
-          const filePath = `${user.id}/${file.name}`;
+          const filePath = `backgrounds/${user.id}/${file.name}`;
           const { data: signed, error: signError } = await supabase.storage
             .from('game-backgrounds')
             .createSignedUrl(filePath, 3600);
@@ -402,7 +402,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       
       // Generate unique filename
       const fileName = `background-${Date.now()}.jpg`;
-      const filePath = `${user.id}/${fileName}`;
+      const filePath = `backgrounds/${user.id}/${fileName}`;
       
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage

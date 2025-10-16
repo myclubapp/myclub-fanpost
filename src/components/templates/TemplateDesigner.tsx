@@ -326,9 +326,11 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
       const response = await fetch(croppedImage);
       const blob = await response.blob();
       
+      if (!user) throw new Error('User not authenticated');
+      
       const fileExt = 'png';
       const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
+      const filePath = `templates/${user.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('template-images')
