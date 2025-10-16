@@ -14,39 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      credit_transactions: {
-        Row: {
-          amount: number
-          created_at: string
-          description: string | null
-          game_url: string | null
-          id: string
-          template_info: string | null
-          transaction_type: Database["public"]["Enums"]["credit_transaction_type"]
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          description?: string | null
-          game_url?: string | null
-          id?: string
-          template_info?: string | null
-          transaction_type: Database["public"]["Enums"]["credit_transaction_type"]
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          description?: string | null
-          game_url?: string | null
-          id?: string
-          template_info?: string | null
-          transaction_type?: Database["public"]["Enums"]["credit_transaction_type"]
-          user_id?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           created_at: string
@@ -144,36 +111,6 @@ export type Database = {
           name?: string
           supported_games?: number
           svg_config?: Json
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      user_credits: {
-        Row: {
-          created_at: string
-          credits_purchased: number
-          credits_remaining: number
-          id: string
-          last_reset_date: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          credits_purchased?: number
-          credits_remaining?: number
-          id?: string
-          last_reset_date?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          credits_purchased?: number
-          credits_remaining?: number
-          id?: string
-          last_reset_date?: string
           updated_at?: string
           user_id?: string
         }
@@ -307,22 +244,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      add_purchased_credits: {
-        Args: { p_amount: number; p_user_id: string }
-        Returns: undefined
-      }
       can_add_team_slot: {
         Args: { p_user_id: string }
         Returns: boolean
       }
       can_change_team_slot: {
         Args: { p_team_id: string; p_user_id: string }
-        Returns: boolean
-      }
-      consume_credit: {
-        Args:
-          | { p_game_url?: string; p_template_info?: string; p_user_id: string }
-          | { p_user_id: string }
         Returns: boolean
       }
       has_role: {
@@ -335,11 +262,6 @@ export type Database = {
     }
     Enums: {
       app_role: "free_user" | "paid_user" | "admin"
-      credit_transaction_type:
-        | "monthly_reset"
-        | "purchase"
-        | "consumption"
-        | "subscription_grant"
       subscription_tier: "free" | "amateur" | "pro" | "premium"
     }
     CompositeTypes: {
@@ -469,12 +391,6 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["free_user", "paid_user", "admin"],
-      credit_transaction_type: [
-        "monthly_reset",
-        "purchase",
-        "consumption",
-        "subscription_grant",
-      ],
       subscription_tier: ["free", "amateur", "pro", "premium"],
     },
   },
