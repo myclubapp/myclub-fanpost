@@ -142,6 +142,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
+  const [uploadingBackground, setUploadingBackground] = useState(false);
   const [isHomeGame, setIsHomeGame] = useState(initialIsHomeGame);
   const [showResultDetail, setShowResultDetail] = useState(initialShowResultDetail);
   
@@ -347,50 +348,39 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     };
   }, []);
 
-  // Compress image for mobile compatibility
-  const compressImage = (dataUrl: string): Promise<string> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve(dataUrl);
-          return;
-        }
-
-        // Set max dimensions (mobile-friendly)
-        const MAX_WIDTH = 1920;
-        const MAX_HEIGHT = 1920;
-        
-        let width = img.width;
-        let height = img.height;
-
-        // Calculate new dimensions maintaining aspect ratio
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height = (height * MAX_WIDTH) / width;
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width = (width * MAX_HEIGHT) / height;
-            height = MAX_HEIGHT;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        // Draw image with compression
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Convert to data URL with 0.85 quality for better mobile performance
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-        resolve(compressedDataUrl);
-      };
-      img.src = dataUrl;
-    });
+  // Upload background image to Supabase Storage for better mobile compatibility
+  const uploadBackgroundToStorage = async (dataUrl: string): Promise<string | null> => {
+    if (!user) return null;
+    
+    try {
+      // Convert data URL to blob
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      
+      // Generate unique filename
+      const fileName = `background-${user.id}-${Date.now()}.jpg`;
+      const filePath = `backgrounds/${fileName}`;
+      
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('game-backgrounds')
+        .upload(filePath, blob, {
+          contentType: 'image/jpeg',
+          upsert: true
+        });
+      
+      if (uploadError) throw uploadError;
+      
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('game-backgrounds')
+        .getPublicUrl(filePath);
+      
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading background:', error);
+      return null;
+    }
   };
 
   const handleBackgroundImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -415,14 +405,37 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   };
 
   const handleCropComplete = async (croppedImage: string) => {
-    // Compress the image for mobile compatibility
-    const compressedImage = await compressImage(croppedImage);
-    setBackgroundImage(compressedImage);
-    setTempImage(null);
-    toast({
-      title: "Hintergrundbild zugeschnitten",
-      description: "Das Bild wurde erfolgreich zugeschnitten.",
-    });
+    setUploadingBackground(true);
+    
+    try {
+      // Upload to Supabase Storage instead of using data URL
+      const publicUrl = await uploadBackgroundToStorage(croppedImage);
+      
+      if (publicUrl) {
+        setBackgroundImage(publicUrl);
+        toast({
+          title: "Hintergrundbild zugeschnitten",
+          description: "Das Bild wurde erfolgreich hochgeladen.",
+        });
+      } else {
+        // Fallback to data URL if upload fails
+        setBackgroundImage(croppedImage);
+        toast({
+          title: "Hintergrundbild zugeschnitten",
+          description: "Das Bild wurde erfolgreich zugeschnitten.",
+        });
+      }
+    } catch (error) {
+      // Fallback to data URL on error
+      setBackgroundImage(croppedImage);
+      toast({
+        title: "Hintergrundbild zugeschnitten",
+        description: "Das Bild wurde erfolgreich zugeschnitten.",
+      });
+    } finally {
+      setTempImage(null);
+      setUploadingBackground(false);
+    }
   };
 
   const handleRemoveBackgroundImage = () => {
