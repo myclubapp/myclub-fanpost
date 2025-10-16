@@ -391,8 +391,8 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       const blob = await response.blob();
       
       // Generate unique filename
-      const fileName = `background-${user.id}-${Date.now()}.jpg`;
-      const filePath = `backgrounds/${fileName}`;
+      const fileName = `background-${Date.now()}.jpg`;
+      const filePath = `${user.id}/${fileName}`;
       
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
