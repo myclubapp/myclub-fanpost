@@ -8,11 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trash2, Move, Type, ImageIcon, Database, Upload, ChevronDown, ChevronUp, RectangleHorizontal, Square } from 'lucide-react';
+import { Trash2, Move, Type, ImageIcon, Database, Upload, ChevronDown, ChevronUp, RectangleHorizontal, Square, Check, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { ImageCropper } from '@/components/ImageCropper';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useQuery } from '@tanstack/react-query';
 
 interface Logo {
   id: string;
@@ -90,6 +92,11 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   const [cropperFormat, setCropperFormat] = useState<'4:5' | '1:1' | 'free'>(format as '4:5' | '1:1');
   const [backgroundColor, setBackgroundColor] = useState(config.backgroundColor || '#1a1a1a');
   const [useBackgroundPlaceholder, setUseBackgroundPlaceholder] = useState(config.useBackgroundPlaceholder || false);
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState(config.backgroundImageUrl || '');
+  const [backgroundMode, setBackgroundMode] = useState<'placeholder' | 'color' | 'image'>(
+    config.backgroundImageUrl ? 'image' : config.useBackgroundPlaceholder ? 'placeholder' : 'color'
+  );
+  const [showBackgroundGallery, setShowBackgroundGallery] = useState(false);
   const [logos, setLogos] = useState<Logo[]>([]);
   const [showLogoDialog, setShowLogoDialog] = useState(false);
   const [loadingLogos, setLoadingLogos] = useState(false);
@@ -150,10 +157,57 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
     });
   };
 
+  // Load template background images
+  const { data: templateBackgrounds = [], refetch: refetchBackgrounds } = useQuery({
+    queryKey: ['template-backgrounds', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase.storage
+        .from('template-images')
+        .list(`templates/${user.id}`, {
+          limit: 100,
+          offset: 0,
+          sortBy: { column: 'updated_at', order: 'desc' },
+        });
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        return [];
+      }
+
+      const items = await Promise.all(
+        data.map(async (file) => {
+          const filePath = `templates/${user.id}/${file.name}`;
+          const { data: publicUrlData } = supabase.storage
+            .from('template-images')
+            .getPublicUrl(filePath);
+
+          return {
+            name: file.name,
+            url: publicUrlData.publicUrl,
+            path: filePath,
+          };
+        })
+      );
+
+      return items;
+    },
+    enabled: !!user,
+  });
+
   // Sync elements and format with config
   useEffect(() => {
-    onChange({ ...config, elements, format, backgroundColor, useBackgroundPlaceholder });
-  }, [elements, format, backgroundColor, useBackgroundPlaceholder]);
+    onChange({ 
+      ...config, 
+      elements, 
+      format, 
+      backgroundColor, 
+      useBackgroundPlaceholder: backgroundMode === 'placeholder',
+      backgroundImageUrl: backgroundMode === 'image' ? backgroundImageUrl : ''
+    });
+  }, [elements, format, backgroundColor, backgroundMode, backgroundImageUrl]);
 
   const handleMouseDown = (e: React.MouseEvent, elementId: string) => {
     e.stopPropagation();
@@ -693,9 +747,18 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
               onMouseLeave={handleMouseUp}
             >
               {/* Background */}
-              <rect width={canvasDimensions.width} height={canvasDimensions.height} fill={useBackgroundPlaceholder ? '#333333' : backgroundColor} />
+              {backgroundMode === 'image' && backgroundImageUrl ? (
+                <image 
+                  href={backgroundImageUrl} 
+                  width={canvasDimensions.width} 
+                  height={canvasDimensions.height}
+                  preserveAspectRatio="xMidYMid slice"
+                />
+              ) : (
+                <rect width={canvasDimensions.width} height={canvasDimensions.height} fill={backgroundMode === 'placeholder' ? '#333333' : backgroundColor} />
+              )}
               
-              {useBackgroundPlaceholder && (
+              {backgroundMode === 'placeholder' && (
                 <>
                   <text
                     x={canvasDimensions.width / 2}
@@ -864,22 +927,25 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
           <CardHeader>
             <CardTitle>Hintergrund</CardTitle>
             <CardDescription>
-              Wählen Sie eine feste Farbe oder einen Platzhalter für Hintergrundbilder
+              Wählen Sie einen Platzhalter, eine Farbe oder ein Bild aus Ihrer Sammlung
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="background-placeholder" 
-                checked={useBackgroundPlaceholder}
-                onCheckedChange={(checked) => setUseBackgroundPlaceholder(checked as boolean)}
-              />
-              <Label htmlFor="background-placeholder" className="text-sm cursor-pointer">
-                Hintergrundbild-Platzhalter verwenden
-              </Label>
+            <div className="space-y-2">
+              <Label>Hintergrund-Typ</Label>
+              <Select value={backgroundMode} onValueChange={(value: 'placeholder' | 'color' | 'image') => setBackgroundMode(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="placeholder">Platzhalter (für dynamisches Bild)</SelectItem>
+                  <SelectItem value="color">Feste Farbe</SelectItem>
+                  <SelectItem value="image">Bild aus Sammlung</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
-            {!useBackgroundPlaceholder && (
+            {backgroundMode === 'color' && (
               <div className="flex gap-2">
                 <Input
                   type="color"
@@ -897,10 +963,94 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
               </div>
             )}
             
-            {useBackgroundPlaceholder && (
+            {backgroundMode === 'placeholder' && (
               <p className="text-xs text-muted-foreground">
                 Im Studio kann dann ein Hintergrundbild hochgeladen werden, das automatisch eingefügt wird.
               </p>
+            )}
+
+            {backgroundMode === 'image' && (
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const open = !showBackgroundGallery;
+                      setShowBackgroundGallery(open);
+                      if (open) refetchBackgrounds();
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                    Sammlung ({templateBackgrounds.length})
+                  </Button>
+                  
+                  {backgroundImageUrl && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setBackgroundImageUrl('')}
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Entfernen
+                    </Button>
+                  )}
+                </div>
+
+                {showBackgroundGallery && templateBackgrounds.length > 0 && (
+                  <div className="mt-2 p-4 border border-border rounded-lg bg-card/50">
+                    <p className="text-sm text-muted-foreground mb-3">Ihre Template-Hintergrundbilder:</p>
+                    <ScrollArea className="h-[200px]">
+                      <div className="grid grid-cols-3 gap-2">
+                        {templateBackgrounds.map((bg: any) => (
+                          <div
+                            key={bg.name}
+                            className="relative cursor-pointer group aspect-video rounded-md overflow-hidden border-2 border-transparent hover:border-primary transition-all"
+                            onClick={() => {
+                              setBackgroundImageUrl(bg.url);
+                              setShowBackgroundGallery(false);
+                              toast({
+                                title: "Hintergrundbild ausgewählt",
+                                description: "Das Bild wurde erfolgreich ausgewählt.",
+                              });
+                            }}
+                          >
+                            <img
+                              src={bg.url}
+                              alt={bg.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                              <Check className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                )}
+
+                {showBackgroundGallery && templateBackgrounds.length === 0 && (
+                  <div className="mt-2 p-4 border border-border rounded-lg bg-card/50">
+                    <p className="text-sm text-muted-foreground text-center">
+                      Noch keine Hintergrundbilder hochgeladen. Template-Bilder können in der Vorlagen-Verwaltung hochgeladen werden.
+                    </p>
+                  </div>
+                )}
+
+                {backgroundImageUrl && (
+                  <div className="border rounded-lg p-2">
+                    <img 
+                      src={backgroundImageUrl} 
+                      alt="Ausgewähltes Hintergrundbild" 
+                      className="w-full h-32 object-cover rounded"
+                    />
+                  </div>
+                )}
+              </div>
             )}
           </CardContent>
         </Card>
