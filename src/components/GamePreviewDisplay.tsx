@@ -148,8 +148,11 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
 
       if (!data) return [];
 
+      // Filter out .emptyFolderPlaceholder files
+      const filteredData = data.filter(file => !file.name.includes('.emptyFolderPlaceholder'));
+
       const items = await Promise.all(
-        data.map(async (file) => {
+        filteredData.map(async (file) => {
           const filePath = `backgrounds/${user.id}/${file.name}`;
           const { data: signed, error: signError } = await supabase.storage
             .from('game-backgrounds')
