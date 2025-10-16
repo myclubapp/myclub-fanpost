@@ -140,6 +140,30 @@ export const translations = {
       description: 'KANVA macht aus jedem Spiel eine Story – und aus deinem Team eine Marke. Wir befähigen dich, deine Emotionen, Erfolge und Momente in professionelle Social Media Posts zu verwandeln.',
     },
 
+    // Auth Page
+    auth: {
+      title: 'Willkommen bei KANVA',
+      subtitle: 'Melde dich mit deiner E-Mail-Adresse an',
+      emailPlaceholder: 'deine.email@beispiel.ch',
+      sendButton: 'Login-Link senden',
+      sendingButton: 'Wird gesendet...',
+      description: 'Du erhältst eine E-Mail mit einem Login-Link',
+      successTitle: 'Login-Link gesendet!',
+      successDescription: 'Überprüfe dein E-Mail-Postfach für den Login-Link.',
+      errorTitle: 'Fehler beim Senden',
+      invalidEmail: 'Ungültige E-Mail-Adresse',
+    },
+
+    // Common Messages
+    messages: {
+      saved: 'Gespeichert',
+      error: 'Fehler',
+      loadingError: 'Fehler beim Laden',
+      previewLoaded: 'Vorschau geladen',
+      previewError: 'Vorschaudaten konnten nicht geladen werden',
+      instagramUpdated: 'Instagram-Benutzername wurde aktualisiert.',
+    },
+
     // Studio Page
     studio: {
       title: 'Social Media Posts für dein Team',
@@ -307,6 +331,30 @@ export const translations = {
     about: {
       title: 'About',
       description: 'KANVA turns every match into a story – and every team into a brand. Empower sports clubs to turn their emotions, victories, and moments into professional social media posts.',
+    },
+
+    // Auth Page
+    auth: {
+      title: 'Welcome to KANVA',
+      subtitle: 'Sign in with your email address',
+      emailPlaceholder: 'your.email@example.com',
+      sendButton: 'Send Login Link',
+      sendingButton: 'Sending...',
+      description: 'You will receive an email with a login link',
+      successTitle: 'Login Link Sent!',
+      successDescription: 'Check your email inbox for the login link.',
+      errorTitle: 'Error Sending',
+      invalidEmail: 'Invalid email address',
+    },
+
+    // Common Messages
+    messages: {
+      saved: 'Saved',
+      error: 'Error',
+      loadingError: 'Loading Error',
+      previewLoaded: 'Preview Loaded',
+      previewError: 'Preview data could not be loaded',
+      instagramUpdated: 'Instagram username has been updated.',
     },
 
     // Studio Page

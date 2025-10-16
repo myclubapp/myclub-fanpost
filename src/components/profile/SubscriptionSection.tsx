@@ -35,7 +35,7 @@ export function SubscriptionSection() {
       // Show toast to inform user
       toast({
         title: "Abo vorausgewählt",
-        description: `Das ${savedPlan === 'amateur' ? 'Amateur' : 'Pro'}-Abo wurde für Sie vorausgewählt.`,
+        description: `Das ${savedPlan === 'amateur' ? 'Amateur' : 'Pro'}-Abo wurde für dich vorausgewählt.`,
       });
     }
   }, [toast]);
@@ -71,7 +71,7 @@ export function SubscriptionSection() {
         window.open(url, '_blank');
         toast({
           title: "Checkout geöffnet",
-          description: "Schließen Sie den Kaufvorgang ab, um Ihr Abonnement zu aktivieren.",
+          description: "Schließe den Kaufvorgang ab, um dein Abonnement zu aktivieren.",
         });
       } else {
         throw new Error('Checkout URL konnte nicht erstellt werden');
@@ -171,7 +171,7 @@ export function SubscriptionSection() {
         <Card>
           <CardHeader>
             <CardTitle>Zahlungsintervall</CardTitle>
-            <CardDescription>Wählen Sie, wie oft Sie zahlen möchten</CardDescription>
+            <CardDescription>Wähle, wie oft du zahlen möchtest</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-center gap-3 sm:gap-4">

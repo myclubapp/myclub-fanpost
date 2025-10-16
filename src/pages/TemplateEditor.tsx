@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Loader2, Save, ArrowLeft, Eye, Plus, Minus } from 'lucide-react';
 import { TemplateDesigner } from '@/components/templates/TemplateDesigner';
 import { z } from 'zod';
@@ -18,6 +19,7 @@ import { z } from 'zod';
 const TemplateEditor = () => {
   const { id } = useParams<{ id: string }>();
   const { user, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
   const { isPaidUser, loading: roleLoading } = useUserRole();
   const { maxGamesPerTemplate, loading: limitsLoading } = useSubscriptionLimits();
   const navigate = useNavigate();
@@ -112,13 +114,13 @@ const TemplateEditor = () => {
       setPreviewData(previewDataObj);
       setPreviewMode(true);
       toast({
-        title: "Vorschau geladen",
+        title: t.messages.previewLoaded,
         description: `Template wird mit Beispieldaten für ${supportedGames} ${supportedGames === 1 ? 'Spiel' : 'Spiele'} angezeigt`,
       });
     } catch (error) {
       toast({
-        title: "Fehler beim Laden",
-        description: "Vorschaudaten konnten nicht geladen werden",
+        title: t.messages.loadingError,
+        description: t.messages.previewError,
         variant: "destructive",
       });
     }
@@ -233,7 +235,7 @@ const TemplateEditor = () => {
                   {isEditMode ? 'Template bearbeiten' : 'Neues Template'}
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Erstellen Sie eine eigene Vorlage für Ihre Spielbilder
+                  Erstelle eine eigene Vorlage für deine Spielbilder
                 </p>
               </div>
             </div>
@@ -266,7 +268,7 @@ const TemplateEditor = () => {
             <CardHeader>
               <CardTitle>Grundeinstellungen</CardTitle>
               <CardDescription>
-                Geben Sie Ihrem Template einen Namen und wählen Sie die Anzahl unterstützter Spiele
+                Gib deinem Template einen Namen und wähle die Anzahl unterstützter Spiele
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">

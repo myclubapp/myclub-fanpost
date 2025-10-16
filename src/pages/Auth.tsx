@@ -6,11 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/Header';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { z } from 'zod';
 
-const emailSchema = z.string().email({ message: "Ungültige E-Mail-Adresse" });
-
 const Auth = () => {
+  const { t } = useLanguage();
+  const emailSchema = z.string().email({ message: t.auth.invalidEmail });
+
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
@@ -50,14 +52,14 @@ const Auth = () => {
     
     if (error) {
       toast({
-        title: "Fehler beim Senden",
+        title: t.auth.errorTitle,
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Login-Link gesendet!",
-        description: "Überprüfen Sie Ihr E-Mail-Postfach für den Login-Link.",
+        title: t.auth.successTitle,
+        description: t.auth.successDescription,
       });
     }
   };
@@ -68,9 +70,9 @@ const Auth = () => {
       <div className="flex items-center justify-center p-4 py-20">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Willkommen bei KANVA</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">{t.auth.title}</CardTitle>
             <CardDescription className="text-center">
-              Melden Sie sich mit Ihrer E-Mail-Adresse an
+              {t.auth.subtitle}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -78,7 +80,7 @@ const Auth = () => {
               <div className="space-y-2">
                 <Input
                   type="email"
-                  placeholder="ihre.email@beispiel.ch"
+                  placeholder={t.auth.emailPlaceholder}
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
@@ -97,11 +99,11 @@ const Auth = () => {
                 className="w-full" 
                 disabled={isLoading}
               >
-                {isLoading ? 'Wird gesendet...' : 'Login-Link senden'}
+                {isLoading ? t.auth.sendingButton : t.auth.sendButton}
               </Button>
             </form>
             <p className="text-sm text-muted-foreground text-center mt-4">
-              Sie erhalten eine E-Mail mit einem Login-Link
+              {t.auth.description}
             </p>
           </CardContent>
         </Card>

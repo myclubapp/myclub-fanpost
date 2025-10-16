@@ -94,7 +94,7 @@ export const useTeamSlots = () => {
     if (!canAddSlot()) {
       toast({
         title: 'Maximale Anzahl erreicht',
-        description: `Sie können maximal ${maxTeams} Team${maxTeams !== 1 ? 's' : ''} verwalten. Upgraden Sie Ihr Abo für mehr Slots.`,
+        description: `Du kannst maximal ${maxTeams} Team${maxTeams !== 1 ? 's' : ''} verwalten. Upgrade dein Abo für mehr Slots.`,
         variant: 'destructive',
       });
       return false;

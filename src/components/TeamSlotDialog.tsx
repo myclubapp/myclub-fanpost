@@ -30,10 +30,10 @@ export function TeamSlotDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Team speichern?</AlertDialogTitle>
           <AlertDialogDescription>
-            Möchten Sie <strong>{teamName}</strong> in Ihren Team-Slots speichern?
+            Möchtest du <strong>{teamName}</strong> in deinen Team-Slots speichern?
             <br /><br />
-            Dies ermöglicht es Ihnen, Grafiken für dieses Team zu exportieren. Das Team nimmt
-            einen Ihrer verfügbaren Slots ein und kann nur 1x pro Woche gewechselt werden.
+            Dies ermöglicht es dir, Grafiken für dieses Team zu exportieren. Das Team nimmt
+            einen deiner verfügbaren Slots ein und kann nur 1x pro Woche gewechselt werden.
             <br /><br />
             <strong>Ja:</strong> Team speichern und Export durchführen<br />
             <strong>Nein:</strong> Export wird nicht durchgeführt

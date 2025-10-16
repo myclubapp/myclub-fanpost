@@ -64,7 +64,7 @@ export const ClubSearch = ({ sportType, onClubSelect }: ClubSearchProps) => {
         if (sortedClubs.length === 0) {
           toast({
             title: "Keine Clubs gefunden",
-            description: "Es konnten keine Clubs geladen werden. Versuchen Sie es später erneut.",
+            description: "Es konnten keine Clubs geladen werden. Versuche es später erneut.",
           });
         }
       } catch (error) {

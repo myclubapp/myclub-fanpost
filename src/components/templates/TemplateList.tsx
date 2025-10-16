@@ -148,7 +148,7 @@ export const TemplateList = () => {
           <FileText className="h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">Keine Templates vorhanden</h3>
           <p className="text-muted-foreground text-center mb-6">
-            Erstellen Sie Ihr erstes Template, um loszulegen.
+            Erstelle dein erstes Template, um loszulegen.
           </p>
           <Button onClick={() => navigate('/templates/new')}>
             Erstes Template erstellen

@@ -19,7 +19,7 @@ export const DeleteAccountSection = () => {
     if (deleteConfirmation !== 'DELETE') {
       toast({
         title: "Bestätigung fehlgeschlagen",
-        description: "Bitte geben Sie 'DELETE' ein, um fortzufahren.",
+        description: "Bitte gib 'DELETE' ein, um fortzufahren.",
         variant: "destructive",
       });
       return;
@@ -90,7 +90,7 @@ export const DeleteAccountSection = () => {
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Sind Sie absolut sicher?</AlertDialogTitle>
+                <AlertDialogTitle>Bist du absolut sicher?</AlertDialogTitle>
                 <AlertDialogDescription>
                   Diese Aktion kann nicht rückgängig gemacht werden. Ihr Account und alle zugehörigen Daten werden dauerhaft gelöscht:
                   <ul className="list-disc list-inside mt-2 space-y-1">
@@ -101,7 +101,7 @@ export const DeleteAccountSection = () => {
                   </ul>
                   <div className="mt-4 p-3 bg-destructive/10 rounded-md">
                     <p className="font-semibold text-sm mb-2">
-                      Bitte geben Sie <span className="font-mono bg-background px-1">DELETE</span> ein, um zu bestätigen:
+                      Bitte gib <span className="font-mono bg-background px-1">DELETE</span> ein, um zu bestätigen:
                     </p>
                     <Input
                       value={deleteConfirmation}

@@ -65,7 +65,7 @@ export function TeamSlotsSection() {
       const daysRemaining = 7 - daysSinceChange;
       toast({
         title: 'Löschen nicht möglich',
-        description: `Team-Slots können nur 1x pro Woche geändert werden. Sie können diesen Slot in ${daysRemaining} Tag${daysRemaining !== 1 ? 'en' : ''} löschen.`,
+        description: `Team-Slots können nur 1x pro Woche geändert werden. Du kannst diesen Slot in ${daysRemaining} Tag${daysRemaining !== 1 ? 'en' : ''} löschen.`,
         variant: 'destructive',
       });
       return;
@@ -129,7 +129,7 @@ export function TeamSlotsSection() {
           <div>
             <CardTitle>Meine Team-Slots</CardTitle>
             <CardDescription>
-              Sie können bis zu {maxTeams} Team{maxTeams !== 1 ? 's' : ''} verwalten
+              Du kannst bis zu {maxTeams} Team{maxTeams !== 1 ? 's' : ''} verwalten
             </CardDescription>
           </div>
           <Badge variant="outline">
@@ -149,7 +149,7 @@ export function TeamSlotsSection() {
 
         {teamSlots.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            <p>Keine Teams gespeichert. Teams werden automatisch hinzugefügt, wenn Sie sie im Studio verwenden.</p>
+            <p>Keine Teams gespeichert. Teams werden automatisch hinzugefügt, wenn du sie im Studio verwendest.</p>
           </div>
         ) : (
           <div className="space-y-3">

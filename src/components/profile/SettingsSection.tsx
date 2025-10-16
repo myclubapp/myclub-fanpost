@@ -9,11 +9,13 @@ import { Sun, Moon, Monitor, Instagram } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export const SettingsSection = () => {
   const { theme, setTheme } = useTheme();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [instagramUsername, setInstagramUsername] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -58,12 +60,12 @@ export const SettingsSection = () => {
       if (error) throw error;
 
       toast({
-        title: "Gespeichert",
-        description: "Instagram-Benutzername wurde aktualisiert.",
+        title: t.messages.saved,
+        description: t.messages.instagramUpdated,
       });
     } catch (error: any) {
       toast({
-        title: "Fehler",
+        title: t.messages.error,
         description: error.message,
         variant: "destructive",
       });
@@ -77,14 +79,14 @@ export const SettingsSection = () => {
       <CardHeader>
         <CardTitle>Einstellungen</CardTitle>
         <CardDescription>
-          Passen Sie die Darstellung an Ihre Präferenzen an
+          Passe die Darstellung an deine Präferenzen an
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-3">
           <Label className="text-base font-semibold">Darstellung</Label>
           <p className="text-sm text-muted-foreground">
-            Wählen Sie, wie die Anwendung angezeigt werden soll.
+            Wähle, wie die Anwendung angezeigt werden soll.
           </p>
           <RadioGroup value={theme} onValueChange={(value) => setTheme(value as "light" | "dark" | "system")}>
             <div className="flex items-center space-x-2">
@@ -117,7 +119,7 @@ export const SettingsSection = () => {
             Instagram Integration
           </Label>
           <p className="text-sm text-muted-foreground">
-            Verknüpfen Sie Ihren Instagram-Account für schnelles Teilen.
+            Verknüpfe deinen Instagram-Account für schnelles Teilen.
           </p>
           <div className="flex gap-2">
             <Input

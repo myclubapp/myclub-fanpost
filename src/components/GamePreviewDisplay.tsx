@@ -435,7 +435,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       if (!file.type.startsWith('image/')) {
         toast({
           title: "Ungültiger Dateityp",
-          description: "Bitte wählen Sie eine Bilddatei aus.",
+          description: "Bitte wähle eine Bilddatei aus.",
           variant: "destructive",
         });
         return;
@@ -652,7 +652,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     if (!user) {
       toast({
         title: "Anmeldung erforderlich",
-        description: "Bitte melden Sie sich an, um Posts zu erstellen",
+        description: "Bitte melde dich an, um Posts zu erstellen",
         variant: "destructive",
       });
       return;
@@ -667,7 +667,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     if (!user) {
       toast({
         title: "Anmeldung erforderlich",
-        description: "Bitte melden Sie sich an, um Posts zu erstellen",
+        description: "Bitte melde dich an, um Posts zu erstellen",
         variant: "destructive",
       });
       return;
@@ -810,7 +810,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     
     toast({
       title: "Instagram geöffnet",
-      description: "Sie können das Bild jetzt in Ihrer Instagram Story hochladen.",
+      description: "Du kannst das Bild jetzt in deiner Instagram Story hochladen.",
     });
   };
 
@@ -835,7 +835,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       toast({
         title: "Fehler",
         description:
-          "Bild konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+          "Bild konnte nicht erstellt werden. Bitte versuche es erneut.",
         variant: "destructive",
       });
 
@@ -1327,7 +1327,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
           <AlertDialogHeader>
             <AlertDialogTitle>Instagram öffnen?</AlertDialogTitle>
             <AlertDialogDescription>
-              Ihr Bild wurde erfolgreich heruntergeladen. Möchten Sie Instagram öffnen, um das Bild zu teilen?
+              Dein Bild wurde erfolgreich heruntergeladen. Möchtest du Instagram öffnen, um das Bild zu teilen?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

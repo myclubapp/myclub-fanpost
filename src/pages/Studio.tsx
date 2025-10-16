@@ -689,8 +689,8 @@ const Index = () => {
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Sie haben das Maximum von {maxTeams} Team-Slot{maxTeams !== 1 ? 's' : ''} erreicht. 
-              Um für weitere Teams zu exportieren, upgraden Sie Ihr Abo oder löschen Sie einen bestehenden Slot im Profil.
+              Du hast das Maximum von {maxTeams} Team-Slot{maxTeams !== 1 ? 's' : ''} erreicht. 
+              Um für weitere Teams zu exportieren, upgrade dein Abo oder lösche einen bestehenden Slot im Profil.
             </AlertDescription>
           </Alert>
         </div>
@@ -705,7 +705,7 @@ const Index = () => {
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Bitte melden Sie sich an oder registrieren Sie sich, um Bilder zu exportieren.
+                    Bitte melde dich an oder registriere dich, um Bilder zu exportieren.
                   </AlertDescription>
                 </Alert>
               )}

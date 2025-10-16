@@ -68,7 +68,7 @@ export function LogoManagementSection() {
     if (!user || !logoName.trim()) {
       toast({
         title: 'Fehler',
-        description: 'Bitte geben Sie einen Namen für das Logo ein',
+        description: 'Bitte gib einen Namen für das Logo ein',
         variant: 'destructive',
       });
       return;
@@ -178,7 +178,7 @@ export function LogoManagementSection() {
       <CardContent className="space-y-4">
         <Alert>
           <AlertDescription>
-            Upgrade auf Pro oder Premium, um eigene Logos und Bilder hochzuladen und in Ihren Vorlagen zu verwenden.
+            Upgrade auf Pro oder Premium, um eigene Logos und Bilder hochzuladen und in deinen Vorlagen zu verwenden.
           </AlertDescription>
         </Alert>
           <Button onClick={handleUpgrade} className="w-full">
@@ -194,7 +194,7 @@ export function LogoManagementSection() {
       <CardHeader>
         <CardTitle>Logos und Bilder</CardTitle>
         <CardDescription>
-          Laden Sie Ihre eigenen Logos und Bilder hoch und verwenden Sie sie in Ihren Vorlagen
+          Lade deine eigenen Logos und Bilder hoch und verwende sie in deinen Vorlagen
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">

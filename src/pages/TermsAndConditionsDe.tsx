@@ -67,8 +67,8 @@ const TermsAndConditionsDe = () => {
             </section>
             
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold mb-4">Kontaktieren Sie uns</h2>
-              <p className="text-muted-foreground mb-2">Wenn Sie Fragen zu diesen Bedingungen haben, kontaktieren Sie uns bitte unter <a href="mailto:support@my-club.app" className="text-primary hover:underline">support@my-club.app</a></p>
+              <h2 className="text-2xl font-semibold mb-4">Kontaktiere uns</h2>
+              <p className="text-muted-foreground mb-2">Wenn du Fragen zu diesen Bedingungen hast, kontaktiere uns bitte unter <a href="mailto:support@my-club.app" className="text-primary hover:underline">support@my-club.app</a></p>
             </section>
             
             <div className="mt-12">

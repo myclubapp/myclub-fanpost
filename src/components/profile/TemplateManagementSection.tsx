@@ -130,7 +130,7 @@ export function TemplateManagementSection() {
           <div>
             <CardTitle>Vorlagen-Verwaltung</CardTitle>
             <CardDescription>
-              Erstellen und verwalten Sie Ihre eigenen Vorlagen
+              Erstelle und verwalte deine eigenen Vorlagen
             </CardDescription>
           </div>
           <Badge variant="outline">

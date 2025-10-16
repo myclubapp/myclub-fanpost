@@ -158,7 +158,7 @@ export function BackgroundManagementSection() {
       <CardHeader>
         <CardTitle>Hintergrundbilder</CardTitle>
         <CardDescription>
-          Verwalten Sie Ihre hochgeladenen Hintergrundbilder aus dem Studio
+          Verwalte deine hochgeladenen Hintergrundbilder aus dem Studio
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -193,11 +193,11 @@ export function BackgroundManagementSection() {
           <div className="text-center py-8 text-muted-foreground">
             <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
             <p>Noch keine Hintergrundbilder hochgeladen</p>
-            <p className="text-sm mt-2">Laden Sie Ihr erstes Bild über das Formular oben hoch</p>
+            <p className="text-sm mt-2">Lade dein erstes Bild über das Formular oben hoch</p>
           </div>
         ) : (
           <div>
-            <p className="text-sm text-muted-foreground mb-3">Ihre hochgeladenen Hintergrundbilder:</p>
+            <p className="text-sm text-muted-foreground mb-3">Deine hochgeladenen Hintergrundbilder:</p>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {backgrounds.map((background) => (
                 <div key={background.name} className="relative group border rounded-lg overflow-hidden">

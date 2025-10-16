@@ -179,7 +179,7 @@ export const ProfileInfo = () => {
       <CardHeader>
         <CardTitle>Persönliche Informationen</CardTitle>
         <CardDescription>
-          Aktualisieren Sie Ihre persönlichen Daten
+          Aktualisiere deine persönlichen Daten
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

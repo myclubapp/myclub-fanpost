@@ -91,10 +91,16 @@ export const AnimatedHero = () => {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background pt-20 sm:pt-16">
-      {/* Subtle Background Glow */}
-      <div className="absolute inset-0 overflow-hidden opacity-10">
-        <div className="absolute top-1/4 -left-1/4 w-96 h-96 bg-primary rounded-full blur-[100px]" />
-        <div className="absolute bottom-1/4 -right-1/4 w-96 h-96 bg-accent rounded-full blur-[100px]" />
+      {/* Animated Background Glow */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 -left-1/4 w-96 h-96 bg-primary rounded-full blur-[100px] opacity-20 sm:opacity-15 md:opacity-20 lg:opacity-25 animate-pulse" />
+        <div className="absolute bottom-1/4 -right-1/4 w-96 h-96 bg-accent rounded-full blur-[100px] opacity-20 sm:opacity-15 md:opacity-20 lg:opacity-25 animate-pulse" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-secondary rounded-full blur-[80px] opacity-15 sm:opacity-10 md:opacity-15 lg:opacity-20 animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-3/4 left-1/4 w-48 h-48 bg-primary/60 rounded-full blur-[60px] opacity-10 sm:opacity-8 md:opacity-10 lg:opacity-15 animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute bottom-1/3 right-1/3 w-72 h-72 bg-accent/60 rounded-full blur-[90px] opacity-12 sm:opacity-8 md:opacity-12 lg:opacity-18 animate-pulse" style={{ animationDelay: '0.5s' }} />
+        <div className="absolute top-1/6 right-1/6 w-56 h-56 bg-primary/40 rounded-full blur-[70px] opacity-8 sm:opacity-6 md:opacity-8 lg:opacity-12 animate-pulse" style={{ animationDelay: '1.5s' }} />
+        <div className="absolute bottom-1/6 left-1/6 w-80 h-80 bg-accent/30 rounded-full blur-[110px] opacity-6 sm:opacity-4 md:opacity-6 lg:opacity-10 animate-pulse" style={{ animationDelay: '2.5s' }} />
+        <div className="absolute top-2/3 right-1/2 w-40 h-40 bg-secondary/50 rounded-full blur-[50px] opacity-9 sm:opacity-7 md:opacity-9 lg:opacity-13 animate-pulse" style={{ animationDelay: '3s' }} />
       </div>
 
       <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20 relative z-10">
@@ -140,9 +146,9 @@ export const AnimatedHero = () => {
           <div className="relative order-1 lg:order-2">
             <div className="relative mx-auto max-w-[280px] sm:max-w-sm">
               {/* Phone Frame */}
-              <div className="relative bg-gradient-to-br from-[#1C1C28] to-[#2A2A38] rounded-[2.5rem] sm:rounded-[3.5rem] p-2 sm:p-3 shadow-2xl border-[10px] sm:border-[14px] border-[#0A0A0F]">
+              <div className={`relative ${isDarkMode ? 'bg-gradient-to-br from-[#1C1C28] to-[#2A2A38] border-[#0A0A0F]' : 'bg-gradient-to-br from-[#E5E7EB] to-[#D1D5DB] border-[#9CA3AF]'} rounded-[2.5rem] sm:rounded-[3.5rem] p-2 sm:p-3 shadow-2xl border-[8px] sm:border-[10px]`}>
                 {/* Phone Notch */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 sm:w-36 h-5 sm:h-7 bg-[#0A0A0F] rounded-b-2xl sm:rounded-b-3xl z-10" />
+                <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-28 sm:w-36 h-5 sm:h-7 ${isDarkMode ? 'bg-[#0A0A0F]' : 'bg-[#9CA3AF]'} rounded-b-2xl sm:rounded-b-3xl z-10`} />
 
                 {/* Screen */}
                 <div className={`${isDarkMode ? 'bg-[#000000]' : 'bg-white'} rounded-[2rem] sm:rounded-[2.75rem] overflow-hidden relative transition-colors duration-300`}>

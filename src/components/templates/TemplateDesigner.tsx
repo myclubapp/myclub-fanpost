@@ -357,7 +357,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
     if (!file.type.startsWith('image/')) {
       toast({
         title: "Ungültiger Dateityp",
-        description: "Bitte wählen Sie eine Bilddatei aus.",
+        description: "Bitte wähle eine Bilddatei aus.",
         variant: "destructive",
       });
       return;
@@ -539,7 +539,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
               <div className="text-center py-8 text-muted-foreground">Logos werden geladen...</div>
             ) : logos.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                Keine Logos/Bilder gefunden. Laden Sie zuerst Logos in der "Logos und Bilder"-Verwaltung hoch.
+                Keine Logos/Bilder gefunden. Lade zuerst Logos in der "Logos und Bilder"-Verwaltung hoch.
               </div>
             ) : (
               <Tabs defaultValue="sponsor" className="w-full">
@@ -685,7 +685,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
         <CardHeader>
           <CardTitle>Template Canvas</CardTitle>
           <CardDescription>
-            Klicken und ziehen Sie Elemente, um sie zu verschieben
+            Klicke und ziehe Elemente, um sie zu verschieben
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -987,7 +987,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
           <CardHeader>
             <CardTitle>Hintergrund</CardTitle>
             <CardDescription>
-              Wählen Sie einen Platzhalter, eine Farbe oder ein Bild aus Ihrer Sammlung
+              Wähle einen Platzhalter, eine Farbe oder ein Bild aus deiner Sammlung
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1337,7 +1337,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <Move className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>Wählen Sie ein Element aus, um es zu bearbeiten</p>
+              <p>Wähle ein Element aus, um es zu bearbeiten</p>
             </div>
           )}
         </CardContent>
