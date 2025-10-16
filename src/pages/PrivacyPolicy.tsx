@@ -9,19 +9,19 @@ const PrivacyPolicy = () => {
       <Header />
       <main className="container mx-auto px-4 py-32">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold mb-8">Privacy Policy (Version January 2025)</h1>
+          <h1 className="text-4xl font-bold mb-8">Privacy Policy (Version Oktober 2025)</h1>
           
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Introduction</h2>
             <p className="text-muted-foreground mb-4">
-              Welcome to KANVA. This Privacy Policy outlines our practices regarding the collection, use, and disclosure of your information when you use our app, as well as the associated choices you have.
+              Welcome to KANVA. This Privacy Policy outlines our practices regarding the collection, use, and disclosure of your information when you use our Service, as well as the associated choices you have.
             </p>
           </section>
           
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Collection and Use of Information</h2>
             <p className="text-muted-foreground mb-4">
-              For a better experience while using our app, we may require certain personally identifiable information from you, including but not limited to your email address, first and last name. The collected information is used to create and manage social media posts for your sports team.
+              For a better experience while using our Service, we may require certain personally identifiable information from you, including but not limited to your email address, first and last name. This information is used to create your user profile, with which social media posts for your sports team are created and managed.
             </p>
             
             <h3 className="text-xl font-semibold mb-2">a. Profile Creation</h3>
@@ -42,7 +42,7 @@ const PrivacyPolicy = () => {
             </ul>
           </section>
           
-          <section className="mb-8">
+          {/*<section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Cookies</h2>
             <p className="text-muted-foreground mb-4">
               Cookies are files with a small amount of data that is commonly used as an anonymous unique identifier. These are sent to your browser from the website that you visit and are stored on your device's internal memory.
@@ -50,7 +50,7 @@ const PrivacyPolicy = () => {
             <p className="text-muted-foreground mb-4">
               This Service uses "cookies" explicitly to improve user experience. You have the option to either accept or refuse these cookies and know when a cookie is being sent to your device.
             </p>
-          </section>
+          </section>*/}
           
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Service Providers</h2>

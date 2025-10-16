@@ -62,7 +62,7 @@ export const translations = {
       amateur: {
         name: 'Amateur',
         emoji: '🟡',
-        subtitle: 'Für kleine Vereine',
+        subtitle: 'Für einzelne Teams und kleine Vereine',
         price: '6.90',
         priceYearly: '66',
         period: '/Monat',
@@ -98,7 +98,7 @@ export const translations = {
       premium: {
         name: 'Premium',
         emoji: '🔵',
-        subtitle: 'Für Verbände',
+        subtitle: 'Für grosse Vereine, Verbände und Medienhäuser',
         price: '30.00',
         priceYearly: '288',
         period: '/Monat',
@@ -231,7 +231,7 @@ export const translations = {
       amateur: {
         name: 'Amateur',
         emoji: '🟡',
-        subtitle: 'For Small Clubs',
+        subtitle: 'For individual teams and small clubs',
         price: '6.90',
         priceYearly: '66',
         period: '/month',
@@ -267,7 +267,7 @@ export const translations = {
       premium: {
         name: 'Premium',
         emoji: '🔵',
-        subtitle: 'For Leagues',
+        subtitle: 'For large clubs, associations and media houses',
         price: '30.00',
         priceYearly: '288',
         period: '/month',

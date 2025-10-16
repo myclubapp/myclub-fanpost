@@ -9,19 +9,19 @@ const PrivacyPolicyDe = () => {
       <Header />
       <main className="container mx-auto px-4 py-32">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold mb-8">Datenschutzrichtlinie (Version Januar 2025)</h1>
+          <h1 className="text-4xl font-bold mb-8">Datenschutzrichtlinie (Version Oktober 2025)</h1>
           
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Einführung</h2>
             <p className="text-muted-foreground mb-4">
-              Willkommen bei KANVA. Diese Datenschutzrichtlinie umreisst unsere Praktiken bezüglich der Sammlung, Nutzung und Offenlegung Ihrer Informationen, wenn Sie unsere App verwenden, sowie die damit verbundenen Wahlmöglichkeiten.
+              Willkommen bei KANVA. Diese Datenschutzrichtlinie umreisst unsere Praktiken bezüglich der Sammlung, Nutzung und Offenlegung Ihrer Informationen, wenn Sie unseren Service verwenden, sowie die damit verbundenen Wahlmöglichkeiten.
             </p>
           </section>
           
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Sammlung und Nutzung von Informationen</h2>
             <p className="text-muted-foreground mb-4">
-              Für ein besseres Erlebnis bei der Nutzung unserer App benötigen wir möglicherweise bestimmte persönlich identifizierbare Informationen von Ihnen, einschliesslich, aber nicht beschränkt auf Ihre E-Mail-Adresse, Vor- und Nachnamen. Die gesammelten Informationen werden zur Erstellung und Verwaltung von Social-Media-Posts für Ihr Sportteam verwendet.
+              Für ein besseres Erlebnis bei der Nutzung unseres Service benötigen wir möglicherweise bestimmte persönlich identifizierbare Informationen von Ihnen, einschliesslich, aber nicht beschränkt auf Ihre E-Mail-Adresse, Vor- und Nachnamen. Die Informationen werden zur Erstellung Ihres Benutzerprofils verwendet, mit dem Social-Media-Posts für Ihr Sportteam erstellt und verwaltet werden.
             </p>
             
             <h3 className="text-xl font-semibold mb-2">a. Profilerstellung</h3>
@@ -37,12 +37,12 @@ const PrivacyPolicyDe = () => {
             <h3 className="text-xl font-semibold mb-2">b. Datenhosting</h3>
             <ul className="list-disc pl-5 mb-4 text-muted-foreground">
               <li>
-                Ihre Daten werden in der Schweiz (Region Europa-West6) verarbeitet und gespeichert, um die Einhaltung der lokalen Datenschutz- und Datenschutzbestimmungen sicherzustellen.
+                Ihre Daten werden in der Schweiz (Region Zürich) verarbeitet und gespeichert, um die Einhaltung der lokalen Datenschutz- und Datenschutzbestimmungen sicherzustellen.
               </li>
             </ul>
           </section>
           
-          <section className="mb-8">
+          {/*<section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Cookies</h2>
             <p className="text-muted-foreground mb-4">
               Cookies sind Dateien mit einer kleinen Datenmenge, die üblicherweise als anonymer eindeutiger Identifikator verwendet werden. Diese werden von der von Ihnen besuchten Website an Ihren Browser gesendet und im internen Speicher Ihres Geräts gespeichert.
@@ -50,7 +50,7 @@ const PrivacyPolicyDe = () => {
             <p className="text-muted-foreground mb-4">
               Dieser Dienst verwendet "Cookies" explizit, um die Benutzererfahrung zu verbessern. Sie haben die Möglichkeit, diese Cookies entweder zu akzeptieren oder abzulehnen und zu wissen, wann ein Cookie an Ihr Gerät gesendet wird.
             </p>
-          </section>
+          </section>*/}
           
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Dienstleister</h2>
