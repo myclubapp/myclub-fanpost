@@ -97,6 +97,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
     config.backgroundImageUrl ? 'image' : config.useBackgroundPlaceholder ? 'placeholder' : 'color'
   );
   const [showBackgroundGallery, setShowBackgroundGallery] = useState(false);
+  const [showImageGalleryDialog, setShowImageGalleryDialog] = useState(false);
   const [logos, setLogos] = useState<Logo[]>([]);
   const [showLogoDialog, setShowLogoDialog] = useState(false);
   const [loadingLogos, setLoadingLogos] = useState(false);
@@ -154,6 +155,28 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
     toast({
       title: 'Logo hinzugefügt',
       description: `${logo.name} wurde zum Template hinzugefügt.`,
+    });
+  };
+
+  const addImageFromGallery = (imageUrl: string, imageName: string) => {
+    const maxZIndex = Math.max(0, ...elements.map(el => el.zIndex ?? 0));
+    const newElement: SVGElement = {
+      id: `image-${Date.now()}`,
+      type: 'image',
+      x: canvasDimensions.width / 2 - 200,
+      y: 100,
+      width: 400,
+      height: 400,
+      href: imageUrl,
+      zIndex: maxZIndex + 1
+    };
+    setElements(prev => [...prev, newElement]);
+    setSelectedElement(newElement.id);
+    setShowImageGalleryDialog(false);
+    
+    toast({
+      title: 'Bild hinzugefügt',
+      description: `${imageName} wurde zum Template hinzugefügt.`,
     });
   };
 
@@ -619,6 +642,43 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
         </DialogContent>
       </Dialog>
 
+      {/* Image Gallery Dialog */}
+      <Dialog open={showImageGalleryDialog} onOpenChange={setShowImageGalleryDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Bild aus Sammlung wählen</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {templateBackgrounds.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Keine Bilder gefunden. Laden Sie zuerst Bilder hoch oder verwenden Sie den "Bild hochladen" Button.
+              </div>
+            ) : (
+              <ScrollArea className="h-[400px]">
+                <div className="grid grid-cols-3 gap-4 pr-4">
+                  {templateBackgrounds.map((image: any) => (
+                    <button
+                      key={image.name}
+                      onClick={() => addImageFromGallery(image.url, image.name)}
+                      className="group relative border rounded-lg p-2 hover:border-primary transition-colors"
+                    >
+                      <div className="aspect-video bg-muted rounded-md mb-2 flex items-center justify-center overflow-hidden">
+                        <img
+                          src={image.url}
+                          alt={image.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="text-xs font-medium truncate text-center">{image.name}</div>
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="grid lg:grid-cols-[1fr_350px] gap-6">
       {/* Canvas */}
       <Card>
@@ -643,6 +703,16 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
             >
               <ImageIcon className="h-4 w-4" />
               Logo auswählen
+            </Button>
+            <Button
+              onClick={() => setShowImageGalleryDialog(true)}
+              size="sm"
+              variant="outline"
+              className="gap-2"
+              disabled={previewMode}
+            >
+              <ImageIcon className="h-4 w-4" />
+              Aus Sammlung wählen
             </Button>
             <Button
               onClick={() => fileInputRef.current?.click()}
