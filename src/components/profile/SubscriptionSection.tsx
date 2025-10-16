@@ -17,7 +17,7 @@ export function SubscriptionSection() {
   const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedPlan, setSelectedPlan] = useState<'amateur' | 'pro' | 'premium'>('pro');
-  const [isYearly, setIsYearly] = useState(false);
+  const [isYearly, setIsYearly] = useState(true);
 
   // Check for pre-selected plan from landing page
   useEffect(() => {
