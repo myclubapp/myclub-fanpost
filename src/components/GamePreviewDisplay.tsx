@@ -1180,6 +1180,14 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
                   </ScrollArea>
                 </div>
               )}
+              
+              {showGallery && userBackgrounds.length === 0 && (
+                <div className="mt-2 p-4 border border-border rounded-lg bg-card/50">
+                  <p className="text-sm text-muted-foreground text-center">
+                    Noch keine Hintergrundbilder hochgeladen. Lade dein erstes Bild über "Neues Bild" hoch.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
