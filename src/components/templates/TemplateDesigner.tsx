@@ -408,6 +408,19 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
         .from('user-logos')
         .getPublicUrl(filePath);
 
+      // Create database entry for the uploaded logo
+      const { error: dbError } = await supabase
+        .from('user_logos')
+        .insert({
+          user_id: user.id,
+          name: `Bild ${new Date().toLocaleDateString()}`,
+          logo_type: 'other',
+          file_path: filePath,
+          file_url: publicUrl,
+        });
+
+      if (dbError) throw dbError;
+
       const maxZIndex = Math.max(0, ...elements.map(el => el.zIndex ?? 0));
       const newElement: SVGElement = {
         id: `image-${Date.now()}`,
