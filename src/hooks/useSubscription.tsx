@@ -14,16 +14,16 @@ interface SubscriptionStatus {
 // Price IDs mapping
 export const SUBSCRIPTION_PRICES = {
   amateur: {
-    monthly: 'price_1SIszGKI9ikURwOt7wsvwcIU',
-    yearly: 'price_1SIszJKI9ikURwOte5flDHEg',
+    monthly: 'price_1SIt38GSAgdOdkjUibu3LJtf',
+    yearly: 'price_1SIt3CGSAgdOdkjUDitQ01mm',
   },
   pro: {
-    monthly: 'price_1SIszLKI9ikURwOtiCgphLRN',
-    yearly: 'price_1SIszLKI9ikURwOtijLekR6e',
+    monthly: 'price_1SIt3GGSAgdOdkjUXJNvNa7j',
+    yearly: 'price_1SIt3GGSAgdOdkjUvIqxD2n1',
   },
   premium: {
-    monthly: 'price_1SIszMKI9ikURwOtq9qOzaiH',
-    yearly: 'price_1SIszMKI9ikURwOteeKbjJri',
+    monthly: 'price_1SIt3HGSAgdOdkjUiURGlI67',
+    yearly: 'price_1SIt3HGSAgdOdkjUCP4AgG6c',
   },
 };
 

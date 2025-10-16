@@ -14,24 +14,24 @@ const logStep = (step: string, details?: any) => {
 
 // Map Stripe product and price IDs to subscription tiers
 const PRODUCT_TIER_MAP: Record<string, string> = {
-  "prod_TFNkETI069pO2p": "amateur", // Amateur Monthly (CHF 6.90)
-  "prod_TFNkSZwKQQyGrJ": "amateur", // Amateur Yearly (CHF 66.00)
-  "prod_TFNkrSJIym3F76": "pro",     // Pro Monthly (CHF 15.00)
-  "prod_TFNkUFbJ2xKyvR": "pro",     // Pro Yearly (CHF 144.00)
-  "prod_TFNkd43VQzra7i": "premium", // Premium Monthly (CHF 30.00)
-  "prod_TFNkWzzuhsFPuu": "premium", // Premium Yearly (CHF 288.00)
+  "prod_TFNoV8omJ5Wn3O": "amateur", // Amateur Monthly (CHF 6.90)
+  "prod_TFNoxECDtYR86W": "amateur", // Amateur Yearly (CHF 66.00)
+  "prod_TFNobiA1WLMLOC": "pro",     // Pro Monthly (CHF 15.00)
+  "prod_TFNoinvv7sn1fo": "pro",     // Pro Yearly (CHF 144.00)
+  "prod_TFNoVEWgwZIZaW": "premium", // Premium Monthly (CHF 30.00)
+  "prod_TFNo1hArrAfVc7": "premium", // Premium Yearly (CHF 288.00)
 };
 
 const PRICE_TIER_MAP: Record<string, string> = {
   // Amateur
-  "price_1SIszGKI9ikURwOt7wsvwcIU": "amateur",
-  "price_1SIszJKI9ikURwOte5flDHEg": "amateur",
+  "price_1SIt38GSAgdOdkjUibu3LJtf": "amateur",
+  "price_1SIt3CGSAgdOdkjUDitQ01mm": "amateur",
   // Pro
-  "price_1SIszLKI9ikURwOtiCgphLRN": "pro",
-  "price_1SIszLKI9ikURwOtijLekR6e": "pro",
+  "price_1SIt3GGSAgdOdkjUXJNvNa7j": "pro",
+  "price_1SIt3GGSAgdOdkjUvIqxD2n1": "pro",
   // Premium
-  "price_1SIszMKI9ikURwOtq9qOzaiH": "premium",
-  "price_1SIszMKI9ikURwOteeKbjJri": "premium",
+  "price_1SIt3HGSAgdOdkjUiURGlI67": "premium",
+  "price_1SIt3HGSAgdOdkjUCP4AgG6c": "premium",
 };
 
 serve(async (req) => {
