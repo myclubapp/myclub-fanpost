@@ -144,15 +144,23 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         return [];
       }
 
-      return data.map(file => {
-        const { data: urlData } = supabase.storage
-          .from('game-backgrounds')
-          .getPublicUrl(`${user.id}/${file.name}`);
-        return {
-          name: file.name,
-          url: urlData.publicUrl
-        };
-      });
+      if (!data) return [];
+
+      const items = await Promise.all(
+        data.map(async (file) => {
+          const filePath = `${user.id}/${file.name}`;
+          const { data: signed, error: signError } = await supabase.storage
+            .from('game-backgrounds')
+            .createSignedUrl(filePath, 3600);
+          if (signError || !signed?.signedUrl) return null;
+          return {
+            name: file.name,
+            url: signed.signedUrl,
+          };
+        })
+      );
+
+      return items.filter((i): i is { name: string; url: string } => !!i);
     },
     enabled: !!user
   });
@@ -404,12 +412,12 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       
       if (uploadError) throw uploadError;
       
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
+      // Create signed URL
+      const { data: signed, error: signError } = await supabase.storage
         .from('game-backgrounds')
-        .getPublicUrl(filePath);
-      
-      return publicUrl;
+        .createSignedUrl(filePath, 3600);
+      if (signError) throw signError;
+      return signed.signedUrl;
     } catch (error) {
       console.error('Error uploading background:', error);
       return null;
