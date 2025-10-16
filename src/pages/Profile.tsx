@@ -12,6 +12,7 @@ import { LogoManagementSection } from '@/components/profile/LogoManagementSectio
 import { BackgroundManagementSection } from '@/components/profile/BackgroundManagementSection';
 import { SettingsSection } from '@/components/profile/SettingsSection';
 import { DeleteAccountSection } from '@/components/profile/DeleteAccountSection';
+import Footer from '@/components/Footer';
 import { Loader2 } from 'lucide-react';
 
 const Profile = () => {
@@ -63,6 +64,8 @@ const Profile = () => {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 };
