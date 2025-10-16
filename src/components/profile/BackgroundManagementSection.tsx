@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Trash2, Image as ImageIcon, Upload } from 'lucide-react';
 
 interface BackgroundImage {
   name: string;
@@ -18,6 +20,7 @@ export function BackgroundManagementSection() {
   const [backgrounds, setBackgrounds] = useState<BackgroundImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -45,8 +48,16 @@ export function BackgroundManagementSection() {
         return;
       }
 
+      // Filter out .emptyFolderPlaceholder files
+      const filteredData = data.filter(file => !file.name.includes('.emptyFolderPlaceholder'));
+
+      if (filteredData.length === 0) {
+        setBackgrounds([]);
+        return;
+      }
+
       const items = await Promise.all(
-        data.map(async (file) => {
+        filteredData.map(async (file) => {
           const filePath = `backgrounds/${user.id}/${file.name}`;
           const { data: signed, error: signError } = await supabase.storage
             .from('game-backgrounds')
@@ -103,6 +114,37 @@ export function BackgroundManagementSection() {
     }
   };
 
+  const uploadBackground = async (file: File) => {
+    if (!user) return;
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `backgrounds/${user.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('game-backgrounds')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      toast({
+        title: 'Erfolg',
+        description: 'Hintergrundbild hochgeladen',
+      });
+
+      loadBackgrounds();
+    } catch (error: any) {
+      toast({
+        title: 'Fehler',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -111,7 +153,30 @@ export function BackgroundManagementSection() {
           Verwalten Sie Ihre hochgeladenen Hintergrundbilder aus dem Studio
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-6">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="background-file">Hintergrundbild hochladen</Label>
+            <Input
+              id="background-file"
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) uploadBackground(file);
+              }}
+              disabled={uploading}
+            />
+          </div>
+
+          {uploading && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Hintergrundbild wird hochgeladen...</span>
+            </div>
+          )}
+        </div>
+
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -120,34 +185,37 @@ export function BackgroundManagementSection() {
           <div className="text-center py-8 text-muted-foreground">
             <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
             <p>Noch keine Hintergrundbilder hochgeladen</p>
-            <p className="text-sm mt-2">Laden Sie Bilder im Studio hoch, um sie hier zu verwalten</p>
+            <p className="text-sm mt-2">Laden Sie Ihr erstes Bild über das Formular oben hoch</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {backgrounds.map((background) => (
-              <div key={background.name} className="relative group border rounded-lg overflow-hidden">
-                <div className="aspect-video bg-muted flex items-center justify-center">
-                  <img
-                    src={background.url}
-                    alt={background.name}
-                    className="w-full h-full object-cover"
-                  />
+          <div>
+            <p className="text-sm text-muted-foreground mb-3">Ihre hochgeladenen Hintergrundbilder:</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {backgrounds.map((background) => (
+                <div key={background.name} className="relative group border rounded-lg overflow-hidden">
+                  <div className="aspect-video bg-muted flex items-center justify-center">
+                    <img
+                      src={background.url}
+                      alt={background.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => deleteBackground(background)}
+                    disabled={deleting === background.name}
+                  >
+                    {deleting === background.name ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3 w-3" />
+                    )}
+                  </Button>
                 </div>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => deleteBackground(background)}
-                  disabled={deleting === background.name}
-                >
-                  {deleting === background.name ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-3 w-3" />
-                  )}
-                </Button>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </CardContent>
