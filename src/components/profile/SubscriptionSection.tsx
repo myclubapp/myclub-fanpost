@@ -62,11 +62,6 @@ export function SubscriptionSection() {
   }, [searchParams, setSearchParams, checkSubscription, toast]);
 
   const handleUpgrade = async (planId: 'amateur' | 'pro' | 'premium') => {
-    if (planId === 'premium') {
-      window.location.href = 'mailto:info@fanpost.ch';
-      return;
-    }
-    
     setLoading(true);
     try {
       const interval = isYearly ? 'yearly' : 'monthly';
