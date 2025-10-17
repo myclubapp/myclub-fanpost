@@ -29,9 +29,9 @@ const Footer = () => {
           <div>
             <h3 className="text-xl font-bold mb-4">KANVA</h3>
             <p className="text-muted-foreground mb-4">
-              Aus Emotionen werden Posts. Social Media für Sportvereine, die wieder Freude macht.
-              <br />
-              Digital. Einfach. Leidenschaftlich.
+             Wo Emotionen zu Stories werden.<br />
+              
+              Teilen, was euch bewegt.
             </p>
             <div className="flex space-x-4">
               <a href="https://www.facebook.com/myclubthenextgeneration" className="text-muted-foreground hover:text-primary transition-colors">

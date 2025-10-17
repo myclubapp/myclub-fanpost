@@ -19,11 +19,11 @@ export const translations = {
 
     // Hero Section
     hero: {
-      headline1: 'Vom Spiel',
-      headline2: 'zum Post',
-      headline3: 'in Sekunden.',
-      subtitle: 'Erstelle beeindruckende Social Media Posts für dein Team - automatisch.',
-      description: 'KANVA verwandelt deine Spieldaten in fertige Posts für Instagram, WhatsApp & mehr.',
+      headline1: 'Wo Emotionen',
+      headline2: '',
+      headline3: 'zu Stories werden.',
+      subtitle: 'Teile, was deinen Verein einzigartig macht – auf und neben dem Spielfeld.',
+      description: 'Erstelle automatisch Social Media Posts aus deinen Spielen – schnell, authentisch und im Look deines Teams.',
       ctaPrimary: 'Jetzt kostenlos starten',
       ctaSecondary: 'Demo ansehen',
     },
@@ -137,7 +137,7 @@ export const translations = {
     // About Section
     about: {
       title: 'Über uns',
-      description: 'KANVA macht aus jedem Spiel eine Story – und aus deinem Team eine Marke. Wir befähigen dich, deine Emotionen, Erfolge und Momente in professionelle Social Media Posts zu verwandeln.',
+      description: 'KKANVA macht aus Emotionen digitale Erlebnisse. Wir helfen Sportvereinen, ihre Begeisterung zu teilen – von der Halle bis in den Feed. Mit KANVA erstellst du automatisch Social Media Posts aus deinen Spielen. Professionell. Einfach. Emotional. Damit jeder Moment, jedes Tor, jede Emotion sichtbar bleibt.',
     },
 
     // Auth Page
