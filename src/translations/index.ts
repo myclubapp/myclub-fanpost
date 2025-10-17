@@ -137,7 +137,7 @@ export const translations = {
     // About Section
     about: {
       title: 'Über uns',
-      description: 'KKANVA macht aus Emotionen digitale Erlebnisse. Wir helfen Sportvereinen, ihre Begeisterung zu teilen – von der Halle bis in den Feed. Mit KANVA erstellst du automatisch Social Media Posts aus deinen Spielen. Professionell. Einfach. Emotional. Damit jeder Moment, jedes Tor, jede Emotion sichtbar bleibt.',
+      description: 'KANVA macht aus Emotionen digitale Erlebnisse. Wir helfen Sportvereinen, ihre Begeisterung zu teilen – von der Halle bis in den Feed. Mit KANVA erstellst du automatisch Social Media Posts aus deinen Spielen. Professionell. Einfach. Emotional. Damit jeder Moment, jedes Tor, jede Emotion sichtbar bleibt.',
     },
 
     // Auth Page
@@ -192,6 +192,22 @@ export const translations = {
       fansWillLove: 'Deine Fans werden deinen Feed lieben.',
       smartDesign: 'Intelligentes Design für echte Emotionen.',
     },
+
+    // Footer Section
+    footer: {
+      tagline: 'Wo Emotionen zu Stories werden.',
+      subtitle: 'Teilen, was euch bewegt.',
+      product: 'Produkt',
+      features: 'Funktionen',
+      pricing: 'Preise',
+      about: 'Über uns',
+      socialMedia: 'Soziale Medien',
+      privacy: 'Privatsphäre',
+      imprint: 'Impressum',
+      dataProtection: 'Datenschutz',
+      terms: 'AGB',
+      allRightsReserved: 'Alle Rechte vorbehalten.',
+    },
   },
 
   en: {
@@ -212,11 +228,11 @@ export const translations = {
 
     // Hero Section
     hero: {
-      headline1: 'From match',
-      headline2: 'to post',
-      headline3: 'in seconds.',
-      subtitle: 'Create stunning social media posts for your team - automatically.',
-      description: 'KANVA turns your game data into ready-to-share posts for Instagram, WhatsApp & more.',
+      headline1: 'Where emotions',
+      headline2: '',
+      headline3: 'become stories.',
+      subtitle: 'Share what makes your club unique – on and off the field.',
+      description: 'Automatically create social media posts from your games – fast, authentic and in your team\'s look.',
       ctaPrimary: 'Get Started Free',
       ctaSecondary: 'Watch the Demo',
     },
@@ -384,6 +400,22 @@ export const translations = {
       turnEveryMatch: 'Turn every match into a moment.',
       fansWillLove: 'Your fans will love your feed.',
       smartDesign: 'Smart design for real emotion.',
+    },
+
+    // Footer Section
+    footer: {
+      tagline: 'Where emotions become stories.',
+      subtitle: 'Share what moves you.',
+      product: 'Product',
+      features: 'Features',
+      pricing: 'Pricing',
+      about: 'About',
+      socialMedia: 'Social Media',
+      privacy: 'Privacy',
+      imprint: 'Imprint',
+      dataProtection: 'Data Protection',
+      terms: 'Terms & Conditions',
+      allRightsReserved: 'All rights reserved.',
     },
   },
 };

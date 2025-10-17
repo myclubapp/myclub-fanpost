@@ -1,9 +1,11 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Github, Linkedin } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Footer = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const handleSectionNavigate = (sectionId: string) => {
     if (window.location.pathname === '/') {
@@ -29,9 +31,8 @@ const Footer = () => {
           <div>
             <h3 className="text-xl font-bold mb-4">KANVA</h3>
             <p className="text-muted-foreground mb-4">
-             Wo Emotionen zu Stories werden.<br />
-              
-              Teilen, was euch bewegt.
+              {t.footer.tagline}<br />
+              {t.footer.subtitle}
             </p>
             <div className="flex space-x-4">
               <a href="https://www.facebook.com/myclubthenextgeneration" className="text-muted-foreground hover:text-primary transition-colors">
@@ -60,14 +61,14 @@ const Footer = () => {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-4">Produkt</h3>
+            <h3 className="text-lg font-semibold mb-4">{t.footer.product}</h3>
             <ul className="space-y-3">
               <li>
                 <button 
                   onClick={() => navigate('/studio')} 
                   className="text-muted-foreground hover:text-primary transition-colors text-left"
                 >
-                  Studio
+                  {t.nav.studio}
                 </button>
               </li>
               <li>
@@ -75,7 +76,7 @@ const Footer = () => {
                   onClick={() => handleSectionNavigate('how-it-works')} 
                   className="text-muted-foreground hover:text-primary transition-colors text-left"
                 >
-                  Funktionen
+                  {t.footer.features}
                 </button>
               </li>
               <li>
@@ -83,7 +84,7 @@ const Footer = () => {
                   onClick={() => handleSectionNavigate('pricing')} 
                   className="text-muted-foreground hover:text-primary transition-colors text-left"
                 >
-                  Preise
+                  {t.footer.pricing}
                 </button>
               </li>
               <li>
@@ -91,14 +92,14 @@ const Footer = () => {
                   onClick={() => handleSectionNavigate('about')} 
                   className="text-muted-foreground hover:text-primary transition-colors text-left"
                 >
-                  Über uns
+                  {t.footer.about}
                 </button>
               </li>
             </ul>
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-4">Soziale Medien</h3>
+            <h3 className="text-lg font-semibold mb-4">{t.footer.socialMedia}</h3>
             <ul className="space-y-3">
               <li><a href="https://github.com/myclubapp" className="text-muted-foreground hover:text-primary transition-colors">GitHub</a></li>
               <li><a href="https://twitter.com/my_club_app" className="text-muted-foreground hover:text-primary transition-colors">Twitter</a></li>
@@ -109,11 +110,11 @@ const Footer = () => {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-4">Privatsphäre</h3>
+            <h3 className="text-lg font-semibold mb-4">{t.footer.privacy}</h3>
             <ul className="space-y-3">
-              <li><Link to="/impressum" className="text-muted-foreground hover:text-primary transition-colors">Impressum</Link></li>
-              <li><Link to="/privacy-policy-de" className="text-muted-foreground hover:text-primary transition-colors">Datenschutz</Link></li>
-              <li><Link to="/terms-and-conditions-de" className="text-muted-foreground hover:text-primary transition-colors">AGB</Link></li>
+              <li><Link to="/impressum" className="text-muted-foreground hover:text-primary transition-colors">{t.footer.imprint}</Link></li>
+              <li><Link to="/privacy-policy-de" className="text-muted-foreground hover:text-primary transition-colors">{t.footer.dataProtection}</Link></li>
+              <li><Link to="/terms-and-conditions-de" className="text-muted-foreground hover:text-primary transition-colors">{t.footer.terms}</Link></li>
             </ul>
           </div>
         </div>
@@ -121,13 +122,13 @@ const Footer = () => {
         <div className="border-t pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-muted-foreground text-sm mb-4 md:mb-0">
-              © {new Date().getFullYear()} KANVA. Alle Rechte vorbehalten.
+              © {new Date().getFullYear()} KANVA. {t.footer.allRightsReserved}
             </p>
             <div className="flex flex-wrap justify-center gap-2 md:gap-6 text-sm">
-              <Link to="/impressum" className="text-muted-foreground hover:text-primary transition-colors">Impressum</Link>
+              <Link to="/impressum" className="text-muted-foreground hover:text-primary transition-colors">{t.footer.imprint}</Link>
               <span className="text-muted-foreground hidden md:inline">|</span>
-              <Link to="/privacy-policy-de" className="text-muted-foreground hover:text-primary transition-colors">Datenschutz</Link>
-              <Link to="/terms-and-conditions-de" className="text-muted-foreground hover:text-primary transition-colors">AGB</Link>
+              <Link to="/privacy-policy-de" className="text-muted-foreground hover:text-primary transition-colors">{t.footer.dataProtection}</Link>
+              <Link to="/terms-and-conditions-de" className="text-muted-foreground hover:text-primary transition-colors">{t.footer.terms}</Link>
               <span className="text-muted-foreground hidden md:inline">|</span>
               <Link to="/privacy-policy" className="text-muted-foreground hover:text-primary transition-colors">Privacy Policy</Link>
               <Link to="/terms-and-conditions" className="text-muted-foreground hover:text-primary transition-colors">Terms & Conditions</Link>
