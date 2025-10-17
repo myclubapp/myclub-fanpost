@@ -16,8 +16,8 @@ const mockPosts = [
     scoreOpponent: "3",
     gradient: "from-[#f89828] to-[#fc4349]",
     likes: "1,2k",
-    caption: "Dein Sportmoment in wenigen Sekunden",
-    backgroundImage: "/mockup/kadetten-winu.JPG",
+    caption: "Dein Spiel. Deine Story. Dein Team. 🙌",
+    backgroundImage: "/mockup/kadetten-winu.jpeg",
   },
   {
     id: 2,
@@ -30,7 +30,7 @@ const mockPosts = [
     scoreOpponent: "3",
     gradient: "from-[#ff8f00] to-[#e1241b]",
     likes: "847",
-    caption: "Auswärtssieg in Schaffhausen! 🥳",
+    caption: "Teilen, was euch bewegt. ❤️",
     backgroundImage: "/mockup/vbcsh-aadorf.jpg",
   },
   {
@@ -44,7 +44,7 @@ const mockPosts = [
     scoreOpponent: "30",
     gradient: "from-[#eb6000] to-[#ec1919]",
     likes: "2,4k",
-    caption: "Heimsieg in der BBC Arena! 🔥",
+    caption: "Wo Emotionen zu Stories werden. 🔥",
     backgroundImage: "/mockup/kadetten-wacker.jpg",
   }
 ];
