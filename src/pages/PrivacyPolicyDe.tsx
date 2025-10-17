@@ -89,7 +89,7 @@ const PrivacyPolicyDe = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Kontaktiere uns</h2>
             <p className="text-muted-foreground mb-4">
-              Wenn du Fragen oder Vorschläge zu unserer Datenschutzrichtlinie hast, zögere nicht, uns unter <a href="mailto:support@my-club.app" className="text-primary hover:underline">support@my-club.app</a> zu kontaktieren.
+              Wenn du Fragen oder Vorschläge zu unserer Datenschutzrichtlinie hast, zögere nicht, uns unter <a href="mailto:support@getkanva.io" className="text-primary hover:underline">support@getkanva.io</a> zu kontaktieren.
             </p>
           </section>
           

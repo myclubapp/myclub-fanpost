@@ -165,7 +165,7 @@ export const MissionSection = () => {
             <Button 
               size="lg"
               className="text-lg px-8 py-6"
-              onClick={() => window.location.href = 'mailto:support@my-club.app'}
+              onClick={() => window.location.href = 'mailto:support@getkanva.io'}
             >
               <Mail className="h-5 w-5 mr-2" />
               Kontakt aufnehmen

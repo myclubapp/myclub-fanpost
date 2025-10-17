@@ -30,7 +30,7 @@ const TermsAndConditionsDe = () => {
               <h2 className="text-2xl font-semibold mb-4">Konten</h2>
               <p className="text-muted-foreground mb-2">a. Um bestimmte Funktionen des Dienstes nutzen zu können, müssen Sie ein Konto erstellen.</p>
               <p className="text-muted-foreground mb-2">b. Sie sind verantwortlich für die Wahrung der Vertraulichkeit Ihrer Kontozugangsdaten.</p>
-              <p className="text-muted-foreground mb-2">c. Sie erklären sich damit einverstanden, uns sofort zu informieren, wenn Sie von einer Verletzung der Sicherheit oder einer unbefugten Nutzung Ihres Kontos Kenntnis erlangen. Nutzen Sie dazu die E-Mail-Adresse <a href="mailto:support@my-club.app" className="text-primary hover:underline">support@my-club.app</a></p>
+              <p className="text-muted-foreground mb-2">c. Sie erklären sich damit einverstanden, uns sofort zu informieren, wenn Sie von einer Verletzung der Sicherheit oder einer unbefugten Nutzung Ihres Kontos Kenntnis erlangen. Nutzen Sie dazu die E-Mail-Adresse <a href="mailto:support@getkanva.io" className="text-primary hover:underline">support@getkanva.io</a></p>
             </section>
             
             <section className="mb-8">
@@ -68,7 +68,7 @@ const TermsAndConditionsDe = () => {
             
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">Kontaktiere uns</h2>
-              <p className="text-muted-foreground mb-2">Wenn du Fragen zu diesen Bedingungen hast, kontaktiere uns bitte unter <a href="mailto:support@my-club.app" className="text-primary hover:underline">support@my-club.app</a></p>
+              <p className="text-muted-foreground mb-2">Wenn du Fragen zu diesen Bedingungen hast, kontaktiere uns bitte unter <a href="mailto:support@getkanva.io" className="text-primary hover:underline">support@getkanva.io</a></p>
             </section>
             
             <div className="mt-12">

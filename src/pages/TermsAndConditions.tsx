@@ -30,7 +30,7 @@ const TermsAndConditions = () => {
               <h2 className="text-2xl font-semibold mb-4">Accounts</h2>
               <p className="text-muted-foreground mb-2">a. To use certain features of the Service, you must create an account.</p>
               <p className="text-muted-foreground mb-2">b. You are responsible for maintaining the confidentiality of your account credentials.</p>
-              <p className="text-muted-foreground mb-2">c. You agree to promptly notify us if you become aware of any breach of security or unauthorized use of your account. Please use the email address <a href="mailto:support@my-club.app" className="text-primary hover:underline">support@my-club.app</a></p>
+              <p className="text-muted-foreground mb-2">c. You agree to promptly notify us if you become aware of any breach of security or unauthorized use of your account. Please use the email address <a href="mailto:support@getkanva.io" className="text-primary hover:underline">support@getkanva.io</a></p>
             </section>
             
             <section className="mb-8">
@@ -68,7 +68,7 @@ const TermsAndConditions = () => {
             
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">Contact Us</h2>
-              <p className="text-muted-foreground mb-2">If you have any questions about these Terms, please contact us at <a href="mailto:support@my-club.app" className="text-primary hover:underline">support@my-club.app</a></p>
+              <p className="text-muted-foreground mb-2">If you have any questions about these Terms, please contact us at <a href="mailto:support@getkanva.io" className="text-primary hover:underline">support@getkanva.io</a></p>
             </section>
             
             <div className="mt-12">

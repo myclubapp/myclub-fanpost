@@ -22,7 +22,7 @@ const Impressum = () => {
             </p>
             <p className="text-muted-foreground mb-4">
               Telefon: +41 79 403 36 13<br />
-              E-Mail: <a href="mailto:support@my-club.app" className="text-primary hover:underline">support@my-club.app</a>
+              E-Mail: <a href="mailto:support@getkanva.io" className="text-primary hover:underline">support@getkanva.io</a>
             </p>
           </section>
           
