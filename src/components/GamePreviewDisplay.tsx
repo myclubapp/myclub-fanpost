@@ -378,7 +378,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     const script = document.createElement('script');
     script.type = 'module';
     // Use fixed version from package.json instead of @latest
-    script.src = 'https://unpkg.com/kanva-web-components@1.5.0/dist/kanva-web-components/kanva-web-components.esm.js';
+    script.src = 'https://unpkg.com/kanva-web-components@1.5.1/dist/kanva-web-components/kanva-web-components.esm.js';
     
     // Only add if not already loaded
     const existingScript = document.querySelector(`script[src="${script.src}"]`);
