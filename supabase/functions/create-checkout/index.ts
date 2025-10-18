@@ -65,6 +65,7 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
+      payment_method_configuration: 'pmc_1SJhK6GSAgdOdkjU1JM6o70W',
       success_url: `${origin}/profile/subscription?success=true`,
       cancel_url: `${origin}/profile/subscription?canceled=true`,
     });
