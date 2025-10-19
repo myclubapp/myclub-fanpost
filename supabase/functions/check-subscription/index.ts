@@ -155,7 +155,7 @@ serve(async (req) => {
     }
 
     // Update user_subscriptions table
-    await supabaseClient
+    const { error: subError } = await supabaseClient
       .from('user_subscriptions')
       .upsert({
         user_id: user.id,
@@ -165,6 +165,11 @@ serve(async (req) => {
         stripe_product_id: stripeProductId,
         subscription_end: subscriptionEnd,
       });
+
+    if (subError) {
+      logStep("ERROR updating user_subscriptions", { error: subError.message });
+      throw new Error(`Failed to update subscription: ${subError.message}`);
+    }
 
     logStep("Updated user subscription", { tier });
 
