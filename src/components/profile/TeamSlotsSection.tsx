@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ interface TeamSlot {
 
 export function TeamSlotsSection() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { maxTeams, loading: limitsLoading } = useSubscriptionLimits();
   const { toast } = useToast();
   const [teamSlots, setTeamSlots] = useState<TeamSlot[]>([]);
@@ -112,6 +114,15 @@ export function TeamSlotsSection() {
     return daysSinceChange >= 7;
   };
 
+  const handleTeamClick = (slot: TeamSlot) => {
+    const params = new URLSearchParams();
+    if (slot.sport) params.append('sport', slot.sport);
+    if (slot.club_id) params.append('club', slot.club_id);
+    if (slot.team_id) params.append('team', slot.team_id);
+    
+    navigate(`/studio?${params.toString()}`);
+  };
+
   if (loading || limitsLoading) {
     return (
       <Card>
@@ -157,7 +168,11 @@ export function TeamSlotsSection() {
               const days = daysUntilChange(slot.last_changed_at);
               const canDelete = canDeleteSlot(slot.last_changed_at);
               return (
-                <div key={slot.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div 
+                  key={slot.id} 
+                  className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
+                  onClick={() => handleTeamClick(slot)}
+                >
                   <div className="flex-1">
                     <div className="font-medium">{slot.team_name || 'Unbekanntes Team'}</div>
                     <div className="text-sm text-muted-foreground">
@@ -170,7 +185,10 @@ export function TeamSlotsSection() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => deleteTeamSlot(slot.id, slot.last_changed_at)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteTeamSlot(slot.id, slot.last_changed_at);
+                    }}
                     disabled={!canDelete}
                     title={!canDelete ? `Löschbar in ${days} Tag${days !== 1 ? 'en' : ''}` : 'Team-Slot löschen'}
                   >
