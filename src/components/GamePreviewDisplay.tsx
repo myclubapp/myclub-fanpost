@@ -394,40 +394,6 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     };
   }, []);
 
-  // Upload background image to Supabase Storage for better mobile compatibility
-  const uploadBackgroundToStorage = async (dataUrl: string): Promise<string | null> => {
-    if (!user) return null;
-    
-    try {
-      // Convert data URL to blob
-      const response = await fetch(dataUrl);
-      const blob = await response.blob();
-      
-      // Generate unique filename
-      const fileName = `background-${Date.now()}.jpg`;
-      const filePath = `backgrounds/${user.id}/${fileName}`;
-      
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from('game-backgrounds')
-        .upload(filePath, blob, {
-          contentType: 'image/jpeg',
-          upsert: true
-        });
-      
-      if (uploadError) throw uploadError;
-      
-      // Create signed URL
-      const { data: signed, error: signError } = await supabase.storage
-        .from('game-backgrounds')
-        .createSignedUrl(filePath, 3600);
-      if (signError) throw signError;
-      return signed.signedUrl;
-    } catch (error) {
-      console.error('Error uploading background:', error);
-      return null;
-    }
-  };
 
   const handleBackgroundImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -453,36 +419,15 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   const handleCropComplete = async (croppedImage: string) => {
     setUploadingBackground(true);
     
-    try {
-      // Upload to Supabase Storage instead of using data URL
-      const publicUrl = await uploadBackgroundToStorage(croppedImage);
-      
-      if (publicUrl) {
-        setBackgroundImage(publicUrl);
-        refetchBackgrounds(); // Refresh gallery
-        toast({
-          title: "Hintergrundbild zugeschnitten",
-          description: "Das Bild wurde erfolgreich hochgeladen.",
-        });
-      } else {
-        // Fallback to data URL if upload fails
-        setBackgroundImage(croppedImage);
-        toast({
-          title: "Hintergrundbild zugeschnitten",
-          description: "Das Bild wurde erfolgreich zugeschnitten.",
-        });
-      }
-    } catch (error) {
-      // Fallback to data URL on error
-      setBackgroundImage(croppedImage);
-      toast({
-        title: "Hintergrundbild zugeschnitten",
-        description: "Das Bild wurde erfolgreich zugeschnitten.",
-      });
-    } finally {
-      setTempImage(null);
-      setUploadingBackground(false);
-    }
+    // Use temporary data URL without saving to storage
+    setBackgroundImage(croppedImage);
+    toast({
+      title: "Hintergrundbild zugeschnitten",
+      description: "Das Bild wurde erfolgreich zugeschnitten.",
+    });
+    
+    setTempImage(null);
+    setUploadingBackground(false);
   };
 
   const handleRemoveBackgroundImage = () => {
