@@ -48,10 +48,9 @@ export function BackgroundManagementSection() {
         return;
       }
 
-      // Filter out .emptyFolderPlaceholder and thumbnail files
+      // Filter out .emptyFolderPlaceholder files
       const filteredData = data.filter(file => 
-        !file.name.includes('.emptyFolderPlaceholder') && 
-        !file.name.startsWith('thumb_')
+        !file.name.includes('.emptyFolderPlaceholder')
       );
 
       if (filteredData.length === 0) {
@@ -62,7 +61,7 @@ export function BackgroundManagementSection() {
       const items = await Promise.all(
         filteredData.map(async (file) => {
           const filePath = `backgrounds/${user.id}/${file.name}`;
-          const thumbPath = `backgrounds/${user.id}/thumb_${file.name}`;
+          const thumbPath = `thumbnails/${user.id}/${file.name}`;
           
           // Try to load thumbnail first, fallback to original
           let { data: signed, error: signError } = await supabase.storage
@@ -109,15 +108,14 @@ export function BackgroundManagementSection() {
     setBackgrounds(prev => prev.filter(b => b.path !== background.path));
 
     try {
-      const thumbPath = background.path.replace(
-        `backgrounds/${user?.id}/`,
-        `backgrounds/${user?.id}/thumb_`
-      );
+      // Construct both paths
+      const originalPath = background.path;
+      const thumbPath = `thumbnails/${user?.id}/${background.name}`;
 
       // Delete both original and thumbnail
       const { error } = await supabase.storage
         .from('game-backgrounds')
-        .remove([background.path, thumbPath]);
+        .remove([originalPath, thumbPath]);
 
       if (error) throw error;
 
@@ -178,7 +176,7 @@ export function BackgroundManagementSection() {
       const fileExt = file.name.split('.').pop();
       const timestamp = Date.now();
       const fileName = `backgrounds/${user.id}/${timestamp}.${fileExt}`;
-      const thumbFileName = `backgrounds/${user.id}/thumb_${timestamp}.${fileExt}`;
+      const thumbFileName = `thumbnails/${user.id}/${timestamp}.${fileExt}`;
 
       // Upload original
       const { error: uploadError } = await supabase.storage
