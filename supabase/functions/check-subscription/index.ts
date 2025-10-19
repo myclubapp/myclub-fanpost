@@ -116,28 +116,22 @@ serve(async (req) => {
       const subscription = subscriptions.data[0];
       stripeSubscriptionId = subscription.id;
       
+      // Get full subscription object to ensure we have all fields
+      const fullSubscription = await stripe.subscriptions.retrieve(subscription.id);
+      
       // Log raw subscription data for debugging
       logStep("Raw subscription data", { 
-        current_period_end: subscription.current_period_end,
-        current_period_end_type: typeof subscription.current_period_end 
+        current_period_end: fullSubscription.current_period_end,
+        current_period_end_type: typeof fullSubscription.current_period_end 
       });
       
-      // Safely handle subscription end date
-      if (subscription.current_period_end) {
-        try {
-          const timestamp = Number(subscription.current_period_end);
-          subscriptionEnd = new Date(timestamp * 1000).toISOString();
-          logStep("Successfully parsed subscription end date", { 
-            timestamp, 
-            subscriptionEnd 
-          });
-        } catch (error) {
-          logStep("Error parsing subscription end date", { 
-            error: String(error),
-            current_period_end: subscription.current_period_end 
-          });
-          subscriptionEnd = null;
-        }
+      // Handle subscription end date
+      if (fullSubscription.current_period_end) {
+        subscriptionEnd = new Date(fullSubscription.current_period_end * 1000).toISOString();
+        logStep("Successfully parsed subscription end date", { 
+          timestamp: fullSubscription.current_period_end, 
+          subscriptionEnd 
+        });
       } else {
         logStep("No current_period_end found in subscription");
       }
