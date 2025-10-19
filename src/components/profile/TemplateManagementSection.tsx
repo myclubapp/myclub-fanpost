@@ -8,7 +8,7 @@ import { useSubscription, SUBSCRIPTION_PRICES } from '@/hooks/useSubscription';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus, Lock, FileText, Trash2, Edit } from 'lucide-react';
+import { Loader2, Plus, Lock, FileText, Trash2, Edit, Copy } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Template {
@@ -73,6 +73,47 @@ export function TemplateManagementSection() {
       });
 
       loadTemplates();
+    } catch (error: any) {
+      toast({
+        title: 'Fehler',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const copyTemplate = async (template: any) => {
+    if (!user) return;
+    if (templates.length >= maxCustomTemplates) {
+      toast({
+        title: 'Limit erreicht',
+        description: 'Du hast die maximale Anzahl an Vorlagen erreicht.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('templates')
+        .insert({
+          user_id: user.id,
+          name: `${template.name} (Kopie)`,
+          supported_games: template.supported_games,
+          svg_config: (template as any).svg_config,
+          format: (template as any).format,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: 'Vorlage kopiert',
+        description: 'Die Vorlage wurde erfolgreich kopiert.',
+      });
+
+      if (data) setTemplates([data as Template, ...templates]);
     } catch (error: any) {
       toast({
         title: 'Fehler',
@@ -173,13 +214,23 @@ export function TemplateManagementSection() {
                     variant="ghost"
                     size="sm"
                     onClick={() => navigate(`/profile/templates/edit/${template.id}`)}
+                    title="Vorlage bearbeiten"
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
+                    onClick={() => copyTemplate(template)}
+                    title="Vorlage kopieren"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => deleteTemplate(template.id)}
+                    title="Vorlage löschen"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
