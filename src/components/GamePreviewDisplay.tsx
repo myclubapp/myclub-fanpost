@@ -446,8 +446,8 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
 
     // Get dimensions based on template format
     const templateFormat = config.format || '4:5';
-    const canvasWidth = 1080;
-    const canvasHeight = templateFormat === '4:5' ? 1350 : 1080;
+    const canvasWidth = templateFormat === '1100:800' ? 1100 : 1080;
+    const canvasHeight = templateFormat === '4:5' ? 1350 : templateFormat === '1100:800' ? 800 : 1080;
 
     return (
       <svg
