@@ -170,8 +170,7 @@ export function TeamSlotsSection() {
               return (
                 <div 
                   key={slot.id} 
-                  className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
-                  onClick={() => handleTeamClick(slot)}
+                  className="flex items-center justify-between p-4 border rounded-lg"
                 >
                   <div className="flex-1">
                     <div className="font-medium">{slot.team_name || 'Unbekanntes Team'}</div>
@@ -182,18 +181,24 @@ export function TeamSlotsSection() {
                       )}
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteTeamSlot(slot.id, slot.last_changed_at);
-                    }}
-                    disabled={!canDelete}
-                    title={!canDelete ? `Löschbar in ${days} Tag${days !== 1 ? 'en' : ''}` : 'Team-Slot löschen'}
-                  >
-                    <Trash2 className={`h-4 w-4 ${!canDelete ? 'opacity-50' : ''}`} />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleTeamClick(slot)}
+                    >
+                      Zum Studio
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteTeamSlot(slot.id, slot.last_changed_at)}
+                      disabled={!canDelete}
+                      title={!canDelete ? `Löschbar in ${days} Tag${days !== 1 ? 'en' : ''}` : 'Team-Slot löschen'}
+                    >
+                      <Trash2 className={`h-4 w-4 ${!canDelete ? 'opacity-50' : ''}`} />
+                    </Button>
+                  </div>
                 </div>
               );
             })}
