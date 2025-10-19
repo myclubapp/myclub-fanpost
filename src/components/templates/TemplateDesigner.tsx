@@ -37,6 +37,8 @@ interface SVGElement {
   fontFamily?: string;
   fill?: string;
   fontWeight?: string;
+  fontStyle?: string;
+  letterSpacing?: number;
   textAnchor?: string;
   href?: string;
   zIndex?: number;
@@ -305,6 +307,8 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
       fontFamily: 'Bebas Neue, sans-serif',
       fill: '#ffffff',
       fontWeight: '900',
+      fontStyle: 'normal',
+      letterSpacing: 0,
       textAnchor: 'middle',
       zIndex: maxZIndex + 1
     };
@@ -325,6 +329,8 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
       fontFamily: 'Bebas Neue, sans-serif',
       fill: '#ffffff',
       fontWeight: '900',
+      fontStyle: 'normal',
+      letterSpacing: 0,
       textAnchor: 'middle',
       zIndex: maxZIndex + 1
     };
@@ -866,6 +872,8 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                         fontFamily={element.fontFamily}
                         fill={element.fill}
                         fontWeight={element.fontWeight}
+                        fontStyle={element.fontStyle}
+                        letterSpacing={element.letterSpacing}
                         textAnchor={element.textAnchor}
                         style={{ cursor: previewMode ? 'default' : 'move', userSelect: 'none' }}
                         onMouseDown={previewMode ? undefined : (e) => handleMouseDown(e, element.id)}
@@ -1201,6 +1209,55 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                       type="number"
                       value={selectedElementData.fontSize}
                       onChange={(e) => updateElement(selectedElementData.id, { fontSize: Number(e.target.value) })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Schriftstärke</Label>
+                    <Select
+                      value={selectedElementData.fontWeight || '400'}
+                      onValueChange={(value) => updateElement(selectedElementData.id, { fontWeight: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="100">Thin (100)</SelectItem>
+                        <SelectItem value="200">Extra Light (200)</SelectItem>
+                        <SelectItem value="300">Light (300)</SelectItem>
+                        <SelectItem value="400">Normal (400)</SelectItem>
+                        <SelectItem value="500">Medium (500)</SelectItem>
+                        <SelectItem value="600">Semi Bold (600)</SelectItem>
+                        <SelectItem value="700">Bold (700)</SelectItem>
+                        <SelectItem value="800">Extra Bold (800)</SelectItem>
+                        <SelectItem value="900">Black (900)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Schriftstil</Label>
+                    <Select
+                      value={selectedElementData.fontStyle || 'normal'}
+                      onValueChange={(value) => updateElement(selectedElementData.id, { fontStyle: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="normal">Normal</SelectItem>
+                        <SelectItem value="italic">Kursiv</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Buchstabenabstand</Label>
+                    <Input
+                      type="number"
+                      value={selectedElementData.letterSpacing || 0}
+                      onChange={(e) => updateElement(selectedElementData.id, { letterSpacing: Number(e.target.value) })}
+                      placeholder="0"
                     />
                   </div>
 
