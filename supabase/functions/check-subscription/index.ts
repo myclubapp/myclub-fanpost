@@ -70,7 +70,7 @@ serve(async (req) => {
       logStep("No customer found, setting to free tier");
       
       // Update user_subscriptions to free tier
-      await supabaseClient
+      const { error: freeSubError } = await supabaseClient
         .from('user_subscriptions')
         .upsert({
           user_id: user.id,
@@ -79,7 +79,12 @@ serve(async (req) => {
           stripe_subscription_id: null,
           stripe_product_id: null,
           subscription_end: null,
-        });
+        }, { onConflict: 'user_id' });
+
+      if (freeSubError) {
+        logStep("ERROR updating user_subscriptions (no customer)", { error: freeSubError.message });
+        throw new Error(`Failed to upsert free subscription: ${freeSubError.message}`);
+      }
 
       // Sync user role to free_user
       await supabaseClient
@@ -164,7 +169,7 @@ serve(async (req) => {
         stripe_subscription_id: stripeSubscriptionId,
         stripe_product_id: stripeProductId,
         subscription_end: subscriptionEnd,
-      });
+      }, { onConflict: 'user_id' });
 
     if (subError) {
       logStep("ERROR updating user_subscriptions", { error: subError.message });
