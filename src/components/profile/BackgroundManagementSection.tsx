@@ -48,8 +48,11 @@ export function BackgroundManagementSection() {
         return;
       }
 
-      // Filter out .emptyFolderPlaceholder files
-      const filteredData = data.filter(file => !file.name.includes('.emptyFolderPlaceholder'));
+      // Filter out .emptyFolderPlaceholder and thumbnail files
+      const filteredData = data.filter(file => 
+        !file.name.includes('.emptyFolderPlaceholder') && 
+        !file.name.startsWith('thumb_')
+      );
 
       if (filteredData.length === 0) {
         setBackgrounds([]);
@@ -59,13 +62,23 @@ export function BackgroundManagementSection() {
       const items = await Promise.all(
         filteredData.map(async (file) => {
           const filePath = `backgrounds/${user.id}/${file.name}`;
-          const { data: signed, error: signError } = await supabase.storage
+          const thumbPath = `backgrounds/${user.id}/thumb_${file.name}`;
+          
+          // Try to load thumbnail first, fallback to original
+          let { data: signed, error: signError } = await supabase.storage
             .from('game-backgrounds')
-            .createSignedUrl(filePath, 3600);
+            .createSignedUrl(thumbPath, 3600);
 
+          // If no thumbnail exists, use original
           if (signError) {
-            console.error('Error creating signed URL:', signError);
-            return null;
+            const result = await supabase.storage
+              .from('game-backgrounds')
+              .createSignedUrl(filePath, 3600);
+            signed = result.data;
+            if (result.error) {
+              console.error('Error creating signed URL:', result.error);
+              return null;
+            }
           }
 
           return {
@@ -96,9 +109,15 @@ export function BackgroundManagementSection() {
     setBackgrounds(prev => prev.filter(b => b.path !== background.path));
 
     try {
+      const thumbPath = background.path.replace(
+        `backgrounds/${user?.id}/`,
+        `backgrounds/${user?.id}/thumb_`
+      );
+
+      // Delete both original and thumbnail
       const { error } = await supabase.storage
         .from('game-backgrounds')
-        .remove([background.path]);
+        .remove([background.path, thumbPath]);
 
       if (error) throw error;
 
@@ -122,19 +141,62 @@ export function BackgroundManagementSection() {
     }
   };
 
+  const createThumbnail = async (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      img.onload = () => {
+        // Set thumbnail size (max 400px wide, maintaining aspect ratio)
+        const maxWidth = 400;
+        const scale = maxWidth / img.width;
+        canvas.width = maxWidth;
+        canvas.height = img.height * scale;
+
+        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Failed to create thumbnail'));
+          }
+        }, 'image/jpeg', 0.8);
+      };
+
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const uploadBackground = async (file: File) => {
     if (!user) return;
 
     setUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `backgrounds/${user.id}/${Date.now()}.${fileExt}`;
+      const timestamp = Date.now();
+      const fileName = `backgrounds/${user.id}/${timestamp}.${fileExt}`;
+      const thumbFileName = `backgrounds/${user.id}/thumb_${timestamp}.${fileExt}`;
 
+      // Upload original
       const { error: uploadError } = await supabase.storage
         .from('game-backgrounds')
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
+
+      // Create and upload thumbnail
+      try {
+        const thumbnail = await createThumbnail(file);
+        await supabase.storage
+          .from('game-backgrounds')
+          .upload(thumbFileName, thumbnail);
+      } catch (thumbError) {
+        console.error('Thumbnail creation failed:', thumbError);
+        // Continue anyway - original is uploaded
+      }
 
       toast({
         title: 'Erfolg',
