@@ -70,8 +70,8 @@ interface TemplateDesignerProps {
   config: any;
   onChange: (config: any) => void;
   onSupportedGamesChange: (games: number) => void;
-  format: '4:5' | '1:1';
-  onFormatChange: (format: '4:5' | '1:1') => void;
+  format: '4:5' | '1:1' | '1100:800';
+  onFormatChange: (format: '4:5' | '1:1' | '1100:800') => void;
   previewMode: boolean;
   previewData: any;
   onTogglePreview: () => void;
@@ -91,7 +91,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   const [showCropper, setShowCropper] = useState(false);
   const [lockAspectRatio, setLockAspectRatio] = useState(true);
   const [expandedGame, setExpandedGame] = useState<number | null>(1);
-  const [cropperFormat, setCropperFormat] = useState<'4:5' | '1:1' | 'free'>(format as '4:5' | '1:1');
+  const [cropperFormat, setCropperFormat] = useState<'4:5' | '1:1' | 'free'>(format === '1100:800' ? 'free' : format as '4:5' | '1:1');
   const [backgroundColor, setBackgroundColor] = useState(config.backgroundColor || '#1a1a1a');
   const [useBackgroundPlaceholder, setUseBackgroundPlaceholder] = useState(config.useBackgroundPlaceholder || false);
   const [backgroundImageUrl, setBackgroundImageUrl] = useState(config.backgroundImageUrl || '');
@@ -106,6 +106,8 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   // Canvas dimensions based on format
   const canvasDimensions = format === '4:5' 
     ? { width: 1080, height: 1350 } 
+    : format === '1100:800'
+    ? { width: 1100, height: 800 }
     : { width: 1080, height: 1080 };
 
   // Load logos on mount

@@ -28,7 +28,7 @@ const TemplateEditor = () => {
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
   const [supportedGames, setSupportedGames] = useState<number>(1);
-  const [format, setFormat] = useState<'4:5' | '1:1'>('4:5');
+  const [format, setFormat] = useState<'4:5' | '1:1' | '1100:800'>('4:5');
   const [svgConfig, setSvgConfig] = useState<any>({});
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [previewMode, setPreviewMode] = useState(false);
@@ -327,7 +327,7 @@ const TemplateEditor = () => {
                   <Label htmlFor="format">Format</Label>
                   <Select
                     value={format}
-                    onValueChange={(value: '4:5' | '1:1') => setFormat(value)}
+                    onValueChange={(value: '4:5' | '1:1' | '1100:800') => setFormat(value)}
                   >
                     <SelectTrigger id="format">
                       <SelectValue />
@@ -335,6 +335,7 @@ const TemplateEditor = () => {
                     <SelectContent>
                       <SelectItem value="4:5">4:5 (Instagram - 1080x1350)</SelectItem>
                       <SelectItem value="1:1">1:1 (Quadratisch - 1080x1080)</SelectItem>
+                      <SelectItem value="1100:800">Swiss Unihockey Hub (1100x800)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
