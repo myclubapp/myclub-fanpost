@@ -115,12 +115,16 @@ export function TeamSlotsSection() {
   };
 
   const handleTeamClick = (slot: TeamSlot) => {
-    const params = new URLSearchParams();
-    if (slot.sport) params.append('sport', slot.sport);
-    if (slot.club_id) params.append('club', slot.club_id);
-    if (slot.team_id) params.append('team', slot.team_id);
-    
-    navigate(`/studio?${params.toString()}`);
+    // Navigate with path parameters instead of query parameters
+    if (slot.sport && slot.club_id && slot.team_id) {
+      navigate(`/studio/${slot.sport}/${slot.club_id}/${slot.team_id}`);
+    } else if (slot.sport && slot.club_id) {
+      navigate(`/studio/${slot.sport}/${slot.club_id}`);
+    } else if (slot.sport) {
+      navigate(`/studio/${slot.sport}`);
+    } else {
+      navigate('/studio');
+    }
   };
 
   if (loading || limitsLoading) {
