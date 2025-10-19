@@ -408,18 +408,8 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
         .from('user-logos')
         .getPublicUrl(filePath);
 
-      // Create database entry for the uploaded logo
-      const { error: dbError } = await supabase
-        .from('user_logos')
-        .insert({
-          user_id: user.id,
-          name: `Bild ${new Date().toLocaleDateString()}`,
-          logo_type: 'other',
-          file_path: filePath,
-          file_url: publicUrl,
-        });
-
-      if (dbError) throw dbError;
+      // Note: We don't create a database entry - this image is only for temporary use in templates
+      // and won't appear in the logo collection
 
       const maxZIndex = Math.max(0, ...elements.map(el => el.zIndex ?? 0));
       const newElement: SVGElement = {
@@ -439,9 +429,6 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
         title: "Bild hochgeladen",
         description: "Das Bild wurde erfolgreich zugeschnitten und hochgeladen.",
       });
-
-      // Reload logos to include the newly uploaded image
-      loadLogos();
     } catch (error: any) {
       toast({
         title: "Upload-Fehler",
