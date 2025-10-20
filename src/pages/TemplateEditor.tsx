@@ -12,8 +12,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Loader2, Save, ArrowLeft, Eye, Plus, Minus } from 'lucide-react';
+import { Loader2, Save, ArrowLeft, Eye, Plus, Minus, FileUp } from 'lucide-react';
 import { TemplateDesigner } from '@/components/templates/TemplateDesigner';
+import { SVGImporter } from '@/components/templates/SVGImporter';
 import { z } from 'zod';
 
 const TemplateEditor = () => {
@@ -33,6 +34,7 @@ const TemplateEditor = () => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [previewMode, setPreviewMode] = useState(false);
   const [previewData, setPreviewData] = useState<any>(null);
+  const [showImporter, setShowImporter] = useState(false);
 
   const isEditMode = !!id;
 
@@ -133,6 +135,27 @@ const TemplateEditor = () => {
     } else {
       loadPreviewData();
     }
+  };
+
+  const handleSVGImport = (importedConfig: {
+    elements: any[];
+    backgroundColor?: string;
+    width?: number;
+    height?: number;
+  }) => {
+    // Merge imported config with existing
+    const newConfig = {
+      ...svgConfig,
+      elements: importedConfig.elements,
+      backgroundColor: importedConfig.backgroundColor || svgConfig.backgroundColor,
+    };
+    
+    setSvgConfig(newConfig);
+    
+    toast({
+      title: 'SVG importiert',
+      description: 'Die Template-Elemente wurden erfolgreich geladen',
+    });
   };
 
   const handleSave = async () => {
@@ -240,6 +263,14 @@ const TemplateEditor = () => {
               </div>
             </div>
             <div className="flex gap-2">
+              <Button
+                onClick={() => setShowImporter(true)}
+                variant="outline"
+                className="gap-2"
+              >
+                <FileUp className="h-4 w-4" />
+                SVG importieren
+              </Button>
               <Button
                 onClick={handleTogglePreview}
                 variant={previewMode ? "default" : "outline"}
@@ -356,6 +387,13 @@ const TemplateEditor = () => {
           />
         </div>
       </div>
+
+      <SVGImporter
+        open={showImporter}
+        onOpenChange={setShowImporter}
+        onImport={handleSVGImport}
+        format={format}
+      />
     </div>
   );
 };
