@@ -129,6 +129,13 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   const [isBackgroundOpen, setIsBackgroundOpen] = useState(true);
   const [isPropertiesOpen, setIsPropertiesOpen] = useState(true);
 
+  // Auto-open properties panel when an element is selected
+  useEffect(() => {
+    if (selectedElement) {
+      setIsPropertiesOpen(true);
+    }
+  }, [selectedElement]);
+
   // Canvas dimensions based on format
   const canvasDimensions = format === '4:5' 
     ? { width: 1080, height: 1350 } 
@@ -1111,16 +1118,16 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
           <Collapsible open={isBackgroundOpen} onOpenChange={setIsBackgroundOpen}>
             <CardHeader className="pb-3">
               <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
-                <div>
+                <div className="text-left">
                   <CardTitle>Hintergrund</CardTitle>
                   <CardDescription>
                     Wähle einen Platzhalter, eine Farbe oder ein Bild aus deiner Sammlung
                   </CardDescription>
                 </div>
                 {isBackgroundOpen ? (
-                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                  <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0 ml-2" />
                 ) : (
-                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0 ml-2" />
                 )}
               </CollapsibleTrigger>
             </CardHeader>
@@ -1256,7 +1263,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
           <Collapsible open={isPropertiesOpen} onOpenChange={setIsPropertiesOpen}>
             <CardHeader className="pb-3">
               <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
-                <div>
+                <div className="text-left">
                   <CardTitle>Element-Eigenschaften</CardTitle>
                   <CardDescription>
                     {selectedElementData
@@ -1265,9 +1272,9 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                   </CardDescription>
                 </div>
                 {isPropertiesOpen ? (
-                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                  <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0 ml-2" />
                 ) : (
-                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0 ml-2" />
                 )}
               </CollapsibleTrigger>
             </CardHeader>
@@ -1546,7 +1553,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
          <Collapsible open={isElementsListOpen} onOpenChange={setIsElementsListOpen}>
            <CardHeader className="pb-3">
              <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
-               <div>
+               <div className="text-left">
                  <CardTitle className="flex items-center gap-2">
                    <Layers className="h-5 w-5" />
                    Alle Elemente
@@ -1556,9 +1563,9 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                  </CardDescription>
                </div>
                {isElementsListOpen ? (
-                 <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                 <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0 ml-2" />
                ) : (
-                 <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                 <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0 ml-2" />
                )}
              </CollapsibleTrigger>
            </CardHeader>
