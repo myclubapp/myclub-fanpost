@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 interface SVGElement {
   id: string;
-  type: 'text' | 'image' | 'api-text' | 'api-image';
+  type: 'text' | 'image' | 'api-text' | 'api-image' | 'rect';
   x: number;
   y: number;
   width?: number;
@@ -23,6 +23,10 @@ interface SVGElement {
   textAnchor?: string;
   href?: string;
   zIndex?: number;
+  rx?: number; // border radius for rect
+  ry?: number; // border radius for rect
+  stroke?: string; // stroke color for rect
+  strokeWidth?: number; // stroke width for rect
 }
 
 interface SVGImporterProps {
@@ -198,7 +202,7 @@ export const SVGImporter = ({ open, onOpenChange, onImport, format }: SVGImporte
         });
       });
 
-      // Parse rect elements as potential backgrounds or shapes
+      // Parse rect elements as shapes
       const rectElements = doc.querySelectorAll('rect');
       console.log(`Found ${rectElements.length} rect elements`);
       rectElements.forEach((rectEl) => {
@@ -207,11 +211,31 @@ export const SVGImporter = ({ open, onOpenChange, onImport, format }: SVGImporte
         const width = parseFloat(rectEl.getAttribute('width') || '100');
         const height = parseFloat(rectEl.getAttribute('height') || '100');
         const fill = rectEl.getAttribute('fill') || '#cccccc';
+        const rx = parseFloat(rectEl.getAttribute('rx') || '0');
+        const ry = parseFloat(rectEl.getAttribute('ry') || '0');
+        const stroke = rectEl.getAttribute('stroke') || '';
+        const strokeWidth = parseFloat(rectEl.getAttribute('stroke-width') || '0');
 
-        // Only import if it's not a full background rect
-        if (!(x === 0 && y === 0 && width >= svgElement.clientWidth * 0.9)) {
-          // We could add rect support in the future
-          // For now, we skip them
+        // Skip full-page background rects (typically x=0, y=0, and width/height >= 90% of canvas)
+        const isFullBackground = x === 0 && y === 0 && 
+                                width >= (svgElement.viewBox?.baseVal.width || width) * 0.9 &&
+                                height >= (svgElement.viewBox?.baseVal.height || height) * 0.9;
+        
+        if (!isFullBackground) {
+          elements.push({
+            id: `imported-rect-${elementCounter++}`,
+            type: 'rect',
+            x,
+            y,
+            width,
+            height,
+            fill,
+            rx,
+            ry,
+            stroke: stroke || undefined,
+            strokeWidth: strokeWidth || undefined,
+            zIndex: elementCounter,
+          });
         }
       });
 
@@ -221,12 +245,13 @@ export const SVGImporter = ({ open, onOpenChange, onImport, format }: SVGImporte
       // Count element types
       const textCount = elements.filter(e => e.type === 'text').length;
       const imageCount = elements.filter(e => e.type === 'image').length;
+      const rectCount = elements.filter(e => e.type === 'rect').length;
 
       if (elements.length === 0) {
-        const totalFound = textElements.length + imageElements.length + patterns.length;
+        const totalFound = textElements.length + imageElements.length + patterns.length + rectElements.length;
         toast({
           title: 'Keine Elemente importiert',
-          description: `Gefunden: ${textElements.length} Text, ${imageElements.length} Bilder, ${patterns.length} Patterns - aber keine konnten importiert werden. Überprüfe die SVG-Struktur.`,
+          description: `Gefunden: ${textElements.length} Text, ${imageElements.length} Bilder, ${rectElements.length} Rechtecke, ${patterns.length} Patterns - aber keine konnten importiert werden. Überprüfe die SVG-Struktur.`,
           variant: 'destructive',
         });
         return;
@@ -234,7 +259,7 @@ export const SVGImporter = ({ open, onOpenChange, onImport, format }: SVGImporte
 
       toast({
         title: 'SVG erfolgreich importiert',
-        description: `${elements.length} Elemente importiert: ${textCount} Text-Elemente, ${imageCount} Bilder`,
+        description: `${elements.length} Elemente importiert: ${textCount} Text, ${imageCount} Bilder, ${rectCount} Rechtecke`,
       });
 
       onImport({
@@ -318,8 +343,9 @@ export const SVGImporter = ({ open, onOpenChange, onImport, format }: SVGImporte
           <ul className="list-disc list-inside space-y-1 ml-2">
             <li>Text-Elemente werden als bearbeitbare Texte importiert</li>
             <li>Bild-Elemente werden als statische Bilder importiert</li>
+            <li>Rechteck-Elemente werden als Formen importiert</li>
             <li>Hintergrundfarben werden übernommen</li>
-            <li>Komplexe Pfade und Formen werden nicht unterstützt</li>
+            <li>Komplexe Pfade werden nicht unterstützt</li>
           </ul>
         </div>
       </DialogContent>
