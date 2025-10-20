@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trash2, Move, Type, ImageIcon, Database, Upload, ChevronDown, ChevronUp, RectangleHorizontal, Square, Check, X } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Trash2, Move, Type, ImageIcon, Database, Upload, ChevronDown, ChevronUp, RectangleHorizontal, Square, Check, X, Layers } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -124,6 +125,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   const [showLogoDialog, setShowLogoDialog] = useState(false);
   const [loadingLogos, setLoadingLogos] = useState(false);
   const [draggedElementIndex, setDraggedElementIndex] = useState<number | null>(null);
+  const [isElementsListOpen, setIsElementsListOpen] = useState(true);
 
   // Canvas dimensions based on format
   const canvasDimensions = format === '4:5' 
@@ -1502,49 +1504,6 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                  <Trash2 className="h-4 w-4 mr-2" />
                  Element löschen
                </Button>
-
-               <div className="pt-4 border-t space-y-2">
-                 <Label>Alle Elemente</Label>
-                 <p className="text-xs text-muted-foreground">
-                   Elemente ziehen, um die Ebene zu ändern
-                 </p>
-                 <ScrollArea className="h-[300px] rounded border">
-                   <div className="p-2 space-y-1">
-                     {elements.map((element, index) => (
-                       <div
-                         key={element.id}
-                         draggable
-                         onDragStart={() => handleDragStart(index)}
-                         onDragOver={(e) => handleDragOver(e, index)}
-                         onDragEnd={handleDragEnd}
-                         onClick={() => setSelectedElement(element.id)}
-                         className={`
-                           flex items-center gap-2 p-2 rounded cursor-move
-                           border transition-colors
-                           ${selectedElement === element.id 
-                             ? 'bg-primary/10 border-primary' 
-                             : 'bg-card hover:bg-accent border-border'
-                           }
-                           ${draggedElementIndex === index ? 'opacity-50' : ''}
-                         `}
-                       >
-                         <span className="text-sm">{getElementIcon(element.type)}</span>
-                         <span className="flex-1 text-sm truncate">
-                           {getElementLabel(element)}
-                         </span>
-                         <span className="text-xs text-muted-foreground">
-                           {index + 1}
-                         </span>
-                       </div>
-                     ))}
-                     {elements.length === 0 && (
-                       <p className="text-sm text-muted-foreground text-center py-8">
-                         Keine Elemente vorhanden
-                       </p>
-                     )}
-                   </div>
-                 </ScrollArea>
-               </div>
              </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
@@ -1552,9 +1511,72 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
               <p>Wähle ein Element aus, um es zu bearbeiten</p>
             </div>
           )}
-        </CardContent>
-      </Card>
-      </div>
+         </CardContent>
+       </Card>
+
+       <Card>
+         <Collapsible open={isElementsListOpen} onOpenChange={setIsElementsListOpen}>
+           <CardHeader className="pb-3">
+             <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
+               <div>
+                 <CardTitle className="flex items-center gap-2">
+                   <Layers className="h-5 w-5" />
+                   Alle Elemente
+                 </CardTitle>
+                 <CardDescription>
+                   Elemente ziehen, um die Ebene zu ändern
+                 </CardDescription>
+               </div>
+               {isElementsListOpen ? (
+                 <ChevronUp className="h-5 w-5 text-muted-foreground" />
+               ) : (
+                 <ChevronDown className="h-5 w-5 text-muted-foreground" />
+               )}
+             </CollapsibleTrigger>
+           </CardHeader>
+           <CollapsibleContent>
+             <CardContent>
+               <ScrollArea className="h-[400px] rounded border">
+                 <div className="p-2 space-y-1">
+                   {elements.map((element, index) => (
+                     <div
+                       key={element.id}
+                       draggable
+                       onDragStart={() => handleDragStart(index)}
+                       onDragOver={(e) => handleDragOver(e, index)}
+                       onDragEnd={handleDragEnd}
+                       onClick={() => setSelectedElement(element.id)}
+                       className={`
+                         flex items-center gap-2 p-2 rounded cursor-move
+                         border transition-colors
+                         ${selectedElement === element.id 
+                           ? 'bg-primary/10 border-primary' 
+                           : 'bg-card hover:bg-accent border-border'
+                         }
+                         ${draggedElementIndex === index ? 'opacity-50' : ''}
+                       `}
+                     >
+                       <span className="text-sm">{getElementIcon(element.type)}</span>
+                       <span className="flex-1 text-sm truncate">
+                         {getElementLabel(element)}
+                       </span>
+                       <span className="text-xs text-muted-foreground">
+                         {index + 1}
+                       </span>
+                     </div>
+                   ))}
+                   {elements.length === 0 && (
+                     <p className="text-sm text-muted-foreground text-center py-8">
+                       Keine Elemente vorhanden
+                     </p>
+                   )}
+                 </div>
+               </ScrollArea>
+             </CardContent>
+           </CollapsibleContent>
+         </Collapsible>
+       </Card>
+       </div>
     </div>
     </>
   );
