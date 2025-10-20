@@ -218,18 +218,23 @@ export const SVGImporter = ({ open, onOpenChange, onImport, format }: SVGImporte
       console.log('Total elements parsed:', elements.length);
       console.log('Elements:', elements);
 
+      // Count element types
+      const textCount = elements.filter(e => e.type === 'text').length;
+      const imageCount = elements.filter(e => e.type === 'image').length;
+
       if (elements.length === 0) {
+        const totalFound = textElements.length + imageElements.length + patterns.length;
         toast({
-          title: 'Warnung',
-          description: 'Keine importierbaren Elemente gefunden. Überprüfe die SVG-Struktur.',
+          title: 'Keine Elemente importiert',
+          description: `Gefunden: ${textElements.length} Text, ${imageElements.length} Bilder, ${patterns.length} Patterns - aber keine konnten importiert werden. Überprüfe die SVG-Struktur.`,
           variant: 'destructive',
         });
         return;
       }
 
       toast({
-        title: 'SVG importiert',
-        description: `${elements.length} Elemente wurden erfolgreich importiert`,
+        title: 'SVG erfolgreich importiert',
+        description: `${elements.length} Elemente importiert: ${textCount} Text-Elemente, ${imageCount} Bilder`,
       });
 
       onImport({
