@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 interface SVGElement {
   id: string;
-  type: 'text' | 'image' | 'api-text' | 'api-image' | 'rect';
+  type: 'text' | 'image' | 'api-text' | 'api-image' | 'rect' | 'path';
   x: number;
   y: number;
   width?: number;
@@ -25,8 +25,9 @@ interface SVGElement {
   zIndex?: number;
   rx?: number; // border radius for rect
   ry?: number; // border radius for rect
-  stroke?: string; // stroke color for rect
-  strokeWidth?: number; // stroke width for rect
+  stroke?: string; // stroke color
+  strokeWidth?: number; // stroke width
+  pathData?: string; // SVG path data (d attribute)
 }
 
 interface SVGImporterProps {
@@ -239,6 +240,36 @@ export const SVGImporter = ({ open, onOpenChange, onImport, format }: SVGImporte
         }
       });
 
+      // Parse path elements (often converted text or shapes)
+      const pathElements = doc.querySelectorAll('path');
+      console.log(`Found ${pathElements.length} path elements`);
+      pathElements.forEach((pathEl) => {
+        const pathData = pathEl.getAttribute('d');
+        if (!pathData) return; // Skip paths without data
+
+        const fill = pathEl.getAttribute('fill') || '#000000';
+        const stroke = pathEl.getAttribute('stroke') || '';
+        const strokeWidth = parseFloat(pathEl.getAttribute('stroke-width') || '0');
+
+        // Try to get approximate position from path data
+        // Path data starts with M (moveTo), we can extract the first coordinates
+        const moveMatch = pathData.match(/M\s*([0-9.-]+)[,\s]+([0-9.-]+)/);
+        const x = moveMatch ? parseFloat(moveMatch[1]) : 0;
+        const y = moveMatch ? parseFloat(moveMatch[2]) : 0;
+
+        elements.push({
+          id: `imported-path-${elementCounter++}`,
+          type: 'path',
+          x,
+          y,
+          fill,
+          stroke: stroke || undefined,
+          strokeWidth: strokeWidth || undefined,
+          pathData,
+          zIndex: elementCounter,
+        });
+      });
+
       console.log('Total elements parsed:', elements.length);
       console.log('Elements:', elements);
 
@@ -246,12 +277,13 @@ export const SVGImporter = ({ open, onOpenChange, onImport, format }: SVGImporte
       const textCount = elements.filter(e => e.type === 'text').length;
       const imageCount = elements.filter(e => e.type === 'image').length;
       const rectCount = elements.filter(e => e.type === 'rect').length;
+      const pathCount = elements.filter(e => e.type === 'path').length;
 
       if (elements.length === 0) {
-        const totalFound = textElements.length + imageElements.length + patterns.length + rectElements.length;
+        const totalFound = textElements.length + imageElements.length + patterns.length + rectElements.length + pathElements.length;
         toast({
           title: 'Keine Elemente importiert',
-          description: `Gefunden: ${textElements.length} Text, ${imageElements.length} Bilder, ${rectElements.length} Rechtecke, ${patterns.length} Patterns - aber keine konnten importiert werden. Überprüfe die SVG-Struktur.`,
+          description: `Gefunden: ${textElements.length} Text, ${imageElements.length} Bilder, ${rectElements.length} Rechtecke, ${pathElements.length} Pfade, ${patterns.length} Patterns - aber keine konnten importiert werden. Überprüfe die SVG-Struktur.`,
           variant: 'destructive',
         });
         return;
@@ -259,7 +291,7 @@ export const SVGImporter = ({ open, onOpenChange, onImport, format }: SVGImporte
 
       toast({
         title: 'SVG erfolgreich importiert',
-        description: `${elements.length} Elemente importiert: ${textCount} Text, ${imageCount} Bilder, ${rectCount} Rechtecke`,
+        description: `${elements.length} Elemente importiert: ${textCount} Text, ${imageCount} Bilder, ${rectCount} Rechtecke, ${pathCount} Pfade (nicht editierbar)`,
       });
 
       onImport({
@@ -344,8 +376,8 @@ export const SVGImporter = ({ open, onOpenChange, onImport, format }: SVGImporte
             <li>Text-Elemente werden als bearbeitbare Texte importiert</li>
             <li>Bild-Elemente werden als statische Bilder importiert</li>
             <li>Rechteck-Elemente werden als Formen importiert</li>
+            <li>Pfad-Elemente (konvertierte Texte) werden als visuelle Formen importiert (nicht editierbar)</li>
             <li>Hintergrundfarben werden übernommen</li>
-            <li>Komplexe Pfade werden nicht unterstützt</li>
           </ul>
         </div>
       </DialogContent>
