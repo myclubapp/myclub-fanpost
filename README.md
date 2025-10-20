@@ -9,7 +9,7 @@ Erstelle automatisch Social Media Posts aus deinen Spielen – schnell, authenti
 ### Features
 
 - **Sportarten**: Unihockey, Volleyball & Handball
-- **STUDIO**: Sportart → Club → Team → Spielauswahl
+- **Geführter Flow**: Sportart → Club → Team → Spielauswahl
 - **Mehrfachauswahl**: Mehrere Spiele gleichzeitig auswählen
 - **Automatische Vorschau**: Hochwertige Visualisierung mit `kanva-web-components`
 - **Saubere URLs**: Teilbare Deep-Links inkl. Mehrfach-Spiel-IDs
