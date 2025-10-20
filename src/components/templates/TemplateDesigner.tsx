@@ -104,6 +104,22 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
     config.backgroundImageUrl ? 'image' : config.useBackgroundPlaceholder ? 'placeholder' : 'color'
   );
   const [showBackgroundGallery, setShowBackgroundGallery] = useState(false);
+
+  // Sync incoming config from parent (e.g. after SVG import)
+  useEffect(() => {
+    if (Array.isArray(config?.elements) && config.elements !== elements) {
+      setElements(config.elements);
+    }
+    if (typeof config?.backgroundColor === 'string' && config.backgroundColor !== backgroundColor) {
+      setBackgroundColor(config.backgroundColor);
+    }
+    if (typeof config?.backgroundImageUrl === 'string' && config.backgroundImageUrl !== backgroundImageUrl) {
+      setBackgroundImageUrl(config.backgroundImageUrl);
+      setBackgroundMode('image');
+    } else if (config?.useBackgroundPlaceholder && backgroundMode !== 'placeholder') {
+      setBackgroundMode('placeholder');
+    }
+  }, [config]);
   const [logos, setLogos] = useState<Logo[]>([]);
   const [showLogoDialog, setShowLogoDialog] = useState(false);
   const [loadingLogos, setLoadingLogos] = useState(false);
