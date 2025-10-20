@@ -123,6 +123,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   const [logos, setLogos] = useState<Logo[]>([]);
   const [showLogoDialog, setShowLogoDialog] = useState(false);
   const [loadingLogos, setLoadingLogos] = useState(false);
+  const [draggedElementIndex, setDraggedElementIndex] = useState<number | null>(null);
 
   // Canvas dimensions based on format
   const canvasDimensions = format === '4:5' 
@@ -521,6 +522,49 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
       // Update z-indices to match new order
       return newElements.map((el, idx) => ({ ...el, zIndex: idx }));
     });
+  };
+
+  const handleDragStart = (index: number) => {
+    setDraggedElementIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedElementIndex === null || draggedElementIndex === index) return;
+    
+    const newElements = [...elements];
+    const draggedElement = newElements[draggedElementIndex];
+    newElements.splice(draggedElementIndex, 1);
+    newElements.splice(index, 0, draggedElement);
+    
+    setElements(newElements);
+    setDraggedElementIndex(index);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedElementIndex(null);
+  };
+
+  const getElementIcon = (type: string) => {
+    switch (type) {
+      case 'text': return 'T';
+      case 'api-text': return 'T';
+      case 'image': return '🖼️';
+      case 'api-image': return '🖼️';
+      case 'rect': return '▭';
+      case 'path': return '✒️';
+      default: return '●';
+    }
+  };
+
+  const getElementLabel = (element: SVGElement) => {
+    if (element.type === 'text') return element.content || 'Text';
+    if (element.type === 'api-text') return element.apiField || 'API Text';
+    if (element.type === 'image') return 'Bild';
+    if (element.type === 'api-image') return element.apiField || 'API Bild';
+    if (element.type === 'rect') return 'Rechteck';
+    if (element.type === 'path') return 'Pfad';
+    return element.id;
   };
 
   const selectedElementData = elements.find(el => el.id === selectedElement);
@@ -1450,15 +1494,58 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                  </p>
                </div>
 
-              <Button
-                className="w-full"
-                variant="destructive"
-                onClick={() => deleteElement(selectedElementData.id)}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Element löschen
-              </Button>
-            </div>
+               <Button
+                 className="w-full"
+                 variant="destructive"
+                 onClick={() => deleteElement(selectedElementData.id)}
+               >
+                 <Trash2 className="h-4 w-4 mr-2" />
+                 Element löschen
+               </Button>
+
+               <div className="pt-4 border-t space-y-2">
+                 <Label>Alle Elemente</Label>
+                 <p className="text-xs text-muted-foreground">
+                   Elemente ziehen, um die Ebene zu ändern
+                 </p>
+                 <ScrollArea className="h-[300px] rounded border">
+                   <div className="p-2 space-y-1">
+                     {elements.map((element, index) => (
+                       <div
+                         key={element.id}
+                         draggable
+                         onDragStart={() => handleDragStart(index)}
+                         onDragOver={(e) => handleDragOver(e, index)}
+                         onDragEnd={handleDragEnd}
+                         onClick={() => setSelectedElement(element.id)}
+                         className={`
+                           flex items-center gap-2 p-2 rounded cursor-move
+                           border transition-colors
+                           ${selectedElement === element.id 
+                             ? 'bg-primary/10 border-primary' 
+                             : 'bg-card hover:bg-accent border-border'
+                           }
+                           ${draggedElementIndex === index ? 'opacity-50' : ''}
+                         `}
+                       >
+                         <span className="text-sm">{getElementIcon(element.type)}</span>
+                         <span className="flex-1 text-sm truncate">
+                           {getElementLabel(element)}
+                         </span>
+                         <span className="text-xs text-muted-foreground">
+                           {index + 1}
+                         </span>
+                       </div>
+                     ))}
+                     {elements.length === 0 && (
+                       <p className="text-sm text-muted-foreground text-center py-8">
+                         Keine Elemente vorhanden
+                       </p>
+                     )}
+                   </div>
+                 </ScrollArea>
+               </div>
+             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <Move className="h-12 w-12 mx-auto mb-3 opacity-50" />
