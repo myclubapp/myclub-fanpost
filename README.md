@@ -2,7 +2,7 @@
 
 Erstelle automatisch Social Media Posts aus deinen Spielen – schnell, authentisch und im Look deines Teams.
 
-![KANVA logo](./src/assets/logo_dark_wide.png)
+![KANVA logo](./src/assets/logo.png)
 
 ---
 
