@@ -26,7 +26,7 @@ interface Logo {
 
 interface SVGElement {
   id: string;
-  type: 'text' | 'image' | 'api-text' | 'api-image';
+  type: 'text' | 'image' | 'api-text' | 'api-image' | 'rect' | 'path';
   x: number;
   y: number;
   width?: number;
@@ -42,6 +42,11 @@ interface SVGElement {
   textAnchor?: string;
   href?: string;
   zIndex?: number;
+  rx?: number; // border radius for rect
+  ry?: number; // border radius for rect
+  stroke?: string; // stroke color
+  strokeWidth?: number; // stroke width
+  pathData?: string; // SVG path data (d attribute)
 }
 
 // API Fields per game
@@ -966,6 +971,64 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                             API: {element.apiField}
                           </text>
                         </>
+                      )}
+                    </g>
+                  );
+                }
+
+                if (element.type === 'rect') {
+                  return (
+                    <g key={element.id}>
+                      {isSelected && (
+                        <rect
+                          x={element.x - 2}
+                          y={element.y - 2}
+                          width={(element.width || 100) + 4}
+                          height={(element.height || 100) + 4}
+                          fill="none"
+                          stroke="#3b82f6"
+                          strokeWidth="2"
+                          strokeDasharray="5,5"
+                        />
+                      )}
+                      <rect
+                        x={element.x}
+                        y={element.y}
+                        width={element.width || 100}
+                        height={element.height || 100}
+                        fill={element.fill || '#cccccc'}
+                        stroke={element.stroke}
+                        strokeWidth={element.strokeWidth}
+                        rx={element.rx}
+                        ry={element.ry}
+                        style={{ cursor: previewMode ? 'default' : 'move' }}
+                        onMouseDown={previewMode ? undefined : (e) => handleMouseDown(e, element.id)}
+                      />
+                    </g>
+                  );
+                }
+
+                if (element.type === 'path') {
+                  return (
+                    <g key={element.id}>
+                      {isSelected && element.pathData && (
+                        <path
+                          d={element.pathData}
+                          fill="none"
+                          stroke="#3b82f6"
+                          strokeWidth="2"
+                          strokeDasharray="5,5"
+                        />
+                      )}
+                      {element.pathData && (
+                        <path
+                          d={element.pathData}
+                          fill={element.fill || '#000000'}
+                          stroke={element.stroke}
+                          strokeWidth={element.strokeWidth}
+                          style={{ cursor: previewMode ? 'default' : 'move' }}
+                          onMouseDown={previewMode ? undefined : (e) => handleMouseDown(e, element.id)}
+                        />
                       )}
                     </g>
                   );
