@@ -1,6 +1,6 @@
-## KANVA – Social-Media-Spielvorschauen für Vereine
+## KANVA – Wo Emotionen zu Stories werden
 
-Wo Emotionenzu Stories werden. Teile, was deinen Verein einzigartig macht – auf und neben dem Spielfeld.
+Erstelle automatisch Social Media Posts aus deinen Spielen – schnell, authentisch und im Look deines Teams.
 
 ![KANVA logo](./src/assets/logo_dark_wide.png)
 
