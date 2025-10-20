@@ -206,7 +206,7 @@ export const translations = {
       imprint: 'Impressum',
       dataProtection: 'Datenschutz',
       terms: 'AGB',
-      allRightsReserved: 'Alle Rechte vorbehalten.',
+      allRightsReserved: 'Lizenziert unter CC BY-SA 4.0.',
     },
   },
 
@@ -415,7 +415,7 @@ export const translations = {
       imprint: 'Imprint',
       dataProtection: 'Data Protection',
       terms: 'Terms & Conditions',
-      allRightsReserved: 'All rights reserved.',
+      allRightsReserved: 'Licensed under CC BY-SA 4.0.',
     },
   },
 };
