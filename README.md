@@ -1,15 +1,15 @@
 ## KANVA – Social-Media-Spielvorschauen für Vereine
 
-Erstelle in Sekunden hochwertige Social-Media-Bilder zu Spielen deines Vereins. Wähle Sportart, Club, Team und Spiel(e) – die App generiert automatisch moderne Spielvorschauen zum Teilen.
+Wo Emotionenzu Stories werden. Teile, was deinen Verein einzigartig macht – auf und neben dem Spielfeld.
 
-![myclub logo](./src/assets/myclub-logo.png)
+![KANVA logo](./src/assets/logo_dark_wide.png)
 
 ---
 
 ### Features
 
-- **Sportarten**: Unihockey (Volleyball/Handball geplant)
-- **Geführter Flow**: Sportart → Club → Team → Spielauswahl
+- **Sportarten**: Unihockey, Volleyball & Handball
+- **STUDIO**: Sportart → Club → Team → Spielauswahl
 - **Mehrfachauswahl**: Mehrere Spiele gleichzeitig auswählen
 - **Automatische Vorschau**: Hochwertige Visualisierung mit `kanva-web-components`
 - **Saubere URLs**: Teilbare Deep-Links inkl. Mehrfach-Spiel-IDs
@@ -72,7 +72,7 @@ Nützliche Skripte:
 
 ### Datenquellen
 
-- Club-/Team-/Spieldaten für Unihockey werden über eine Cloud-Function als GraphQL-ähnliche Abfrage geladen. Die URLs sind im Code hinterlegt (siehe `Index.tsx`). Volleyball/Handball sind vorbereitet, aber noch ohne Datenquelle.
+- Club-/Team-/Spieldaten für Unihockey werden über eine Cloud-Function als GraphQL-ähnliche Abfrage geladen. Die URLs sind im Code hinterlegt (siehe `Index.tsx`). 
 
 Hinweis: Netzwerkfehler werden geloggt, die UI bleibt bedienbar.
 
