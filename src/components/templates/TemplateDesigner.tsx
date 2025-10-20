@@ -126,6 +126,8 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   const [loadingLogos, setLoadingLogos] = useState(false);
   const [draggedElementIndex, setDraggedElementIndex] = useState<number | null>(null);
   const [isElementsListOpen, setIsElementsListOpen] = useState(true);
+  const [isBackgroundOpen, setIsBackgroundOpen] = useState(true);
+  const [isPropertiesOpen, setIsPropertiesOpen] = useState(true);
 
   // Canvas dimensions based on format
   const canvasDimensions = format === '4:5' 
@@ -1106,13 +1108,24 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
       {/* Properties Panel */}
       <div className="space-y-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Hintergrund</CardTitle>
-            <CardDescription>
-              Wähle einen Platzhalter, eine Farbe oder ein Bild aus deiner Sammlung
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          <Collapsible open={isBackgroundOpen} onOpenChange={setIsBackgroundOpen}>
+            <CardHeader className="pb-3">
+              <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
+                <div>
+                  <CardTitle>Hintergrund</CardTitle>
+                  <CardDescription>
+                    Wähle einen Platzhalter, eine Farbe oder ein Bild aus deiner Sammlung
+                  </CardDescription>
+                </div>
+                {isBackgroundOpen ? (
+                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                )}
+              </CollapsibleTrigger>
+            </CardHeader>
+            <CollapsibleContent>
+              <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Hintergrund-Typ</Label>
               <Select value={backgroundMode} onValueChange={(value: 'placeholder' | 'color' | 'image') => setBackgroundMode(value)}>
@@ -1234,19 +1247,32 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                 )}
               </div>
             )}
-          </CardContent>
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Element-Eigenschaften</CardTitle>
-            <CardDescription>
-              {selectedElementData
-                ? `Bearbeiten: ${selectedElementData.type === 'text' ? 'Text' : 'Bild'}`
-                : 'Kein Element ausgewählt'}
-            </CardDescription>
-          </CardHeader>
-        <CardContent>
+          <Collapsible open={isPropertiesOpen} onOpenChange={setIsPropertiesOpen}>
+            <CardHeader className="pb-3">
+              <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
+                <div>
+                  <CardTitle>Element-Eigenschaften</CardTitle>
+                  <CardDescription>
+                    {selectedElementData
+                      ? `Bearbeiten: ${selectedElementData.type === 'text' ? 'Text' : 'Bild'}`
+                      : 'Kein Element ausgewählt'}
+                  </CardDescription>
+                </div>
+                {isPropertiesOpen ? (
+                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                )}
+              </CollapsibleTrigger>
+            </CardHeader>
+            <CollapsibleContent>
+              <CardContent>
           {selectedElementData ? (
             <div className="space-y-4">
               <Badge variant="outline" className="gap-1 mb-4">
@@ -1506,13 +1532,15 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                </Button>
              </div>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <Move className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>Wähle ein Element aus, um es zu bearbeiten</p>
-            </div>
-          )}
-         </CardContent>
-       </Card>
+             <div className="text-center py-8 text-muted-foreground">
+               <Move className="h-12 w-12 mx-auto mb-3 opacity-50" />
+               <p>Wähle ein Element aus, um es zu bearbeiten</p>
+             </div>
+           )}
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
 
        <Card>
          <Collapsible open={isElementsListOpen} onOpenChange={setIsElementsListOpen}>
