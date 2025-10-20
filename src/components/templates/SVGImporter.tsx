@@ -91,8 +91,11 @@ export const SVGImporter = ({ open, onOpenChange, onImport, format }: SVGImporte
       const elements: SVGElement[] = [];
       let elementCounter = 0;
 
-      // Parse text elements
+      console.log('SVG parsing started');
+
+      // Parse text elements (search in entire document, including nested groups)
       const textElements = doc.querySelectorAll('text, tspan');
+      console.log(`Found ${textElements.length} text elements`);
       textElements.forEach((textEl) => {
         const x = parseFloat(textEl.getAttribute('x') || '0');
         const y = parseFloat(textEl.getAttribute('y') || '0');
@@ -140,8 +143,9 @@ export const SVGImporter = ({ open, onOpenChange, onImport, format }: SVGImporte
         });
       });
 
-      // Parse image elements
+      // Parse direct image elements
       const imageElements = doc.querySelectorAll('image');
+      console.log(`Found ${imageElements.length} direct image elements`);
       imageElements.forEach((imgEl) => {
         const x = parseFloat(imgEl.getAttribute('x') || '0');
         const y = parseFloat(imgEl.getAttribute('y') || '0');
@@ -165,8 +169,38 @@ export const SVGImporter = ({ open, onOpenChange, onImport, format }: SVGImporte
         });
       });
 
+      // Parse images from patterns (common in exported SVGs)
+      const patterns = doc.querySelectorAll('pattern');
+      console.log(`Found ${patterns.length} pattern elements`);
+      patterns.forEach((pattern) => {
+        const patternImages = pattern.querySelectorAll('image');
+        patternImages.forEach((imgEl) => {
+          const x = parseFloat(imgEl.getAttribute('x') || '0');
+          const y = parseFloat(imgEl.getAttribute('y') || '0');
+          const width = parseFloat(imgEl.getAttribute('width') || '100');
+          const height = parseFloat(imgEl.getAttribute('height') || '100');
+          const href = imgEl.getAttribute('href') || 
+                      imgEl.getAttribute('xlink:href') || 
+                      '';
+
+          if (href) {
+            elements.push({
+              id: `imported-pattern-image-${elementCounter++}`,
+              type: 'image',
+              x,
+              y,
+              width,
+              height,
+              href,
+              zIndex: elementCounter,
+            });
+          }
+        });
+      });
+
       // Parse rect elements as potential backgrounds or shapes
       const rectElements = doc.querySelectorAll('rect');
+      console.log(`Found ${rectElements.length} rect elements`);
       rectElements.forEach((rectEl) => {
         const x = parseFloat(rectEl.getAttribute('x') || '0');
         const y = parseFloat(rectEl.getAttribute('y') || '0');
@@ -180,6 +214,18 @@ export const SVGImporter = ({ open, onOpenChange, onImport, format }: SVGImporte
           // For now, we skip them
         }
       });
+
+      console.log('Total elements parsed:', elements.length);
+      console.log('Elements:', elements);
+
+      if (elements.length === 0) {
+        toast({
+          title: 'Warnung',
+          description: 'Keine importierbaren Elemente gefunden. Überprüfe die SVG-Struktur.',
+          variant: 'destructive',
+        });
+        return;
+      }
 
       toast({
         title: 'SVG importiert',
