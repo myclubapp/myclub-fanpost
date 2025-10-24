@@ -137,7 +137,13 @@ export const AnimatedHero = () => {
               </Button>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
+            <div className="space-y-2 text-foreground/70">
+              <p className="text-sm sm:text-base">
+                {t.hero.description}
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <div className="relative">
                 <Button
                   size="lg"
@@ -166,12 +172,6 @@ export const AnimatedHero = () => {
                   Coming Soon
                 </Badge>
               </div>
-            </div>
-
-            <div className="space-y-2 text-foreground/70">
-              <p className="text-sm sm:text-base">
-                {t.hero.description}
-              </p>
             </div>
           </div>
 
