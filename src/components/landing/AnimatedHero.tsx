@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/components/theme-provider";
+import { Apple, Smartphone } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const mockPosts = [
   {
@@ -133,6 +135,37 @@ export const AnimatedHero = () => {
               >
                 {t.hero.ctaPrimary}
               </Button>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
+              <div className="relative">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="text-sm sm:text-base px-4 sm:px-6 py-4 sm:py-5 flex items-center gap-2 opacity-60 cursor-not-allowed"
+                  disabled
+                >
+                  <Apple className="w-5 h-5" />
+                  App Store
+                </Button>
+                <Badge className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs px-2 py-0.5">
+                  Coming Soon
+                </Badge>
+              </div>
+              <div className="relative">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="text-sm sm:text-base px-4 sm:px-6 py-4 sm:py-5 flex items-center gap-2 opacity-60 cursor-not-allowed"
+                  disabled
+                >
+                  <Smartphone className="w-5 h-5" />
+                  Google Play
+                </Button>
+                <Badge className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs px-2 py-0.5">
+                  Coming Soon
+                </Badge>
+              </div>
             </div>
 
             <div className="space-y-2 text-foreground/70">
