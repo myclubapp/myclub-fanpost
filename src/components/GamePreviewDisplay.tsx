@@ -533,50 +533,6 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     );
   };
 
-  const convertForeignObjectToImage = async (svgElement: SVGSVGElement): Promise<void> => {
-    const foreignObjects = svgElement.querySelectorAll('foreignObject');
-
-    for (const fo of Array.from(foreignObjects)) {
-      const img = fo.querySelector('img');
-      if (!img) continue;
-
-      const src = img.src;
-      const x = fo.getAttribute('x') || '0';
-      const y = fo.getAttribute('y') || '0';
-      const width = fo.getAttribute('width') || '1080';
-      const height = fo.getAttribute('height') || '1350';
-
-      // Convert to data URL if needed
-      let dataUrl = src;
-      if (!src.startsWith('data:')) {
-        try {
-          const response = await fetch(src);
-          const blob = await response.blob();
-          dataUrl = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.readAsDataURL(blob);
-          });
-        } catch (e) {
-          console.error('Failed to convert background image:', e);
-          continue; // Skip this foreignObject
-        }
-      }
-
-      // Create SVG image element
-      const imageElement = document.createElementNS('http://www.w3.org/2000/svg', 'image');
-      imageElement.setAttribute('x', x);
-      imageElement.setAttribute('y', y);
-      imageElement.setAttribute('width', width);
-      imageElement.setAttribute('height', height);
-      imageElement.setAttribute('href', dataUrl);
-      imageElement.setAttribute('preserveAspectRatio', 'xMidYMid slice');
-
-      // Replace foreignObject with image
-      fo.parentNode?.replaceChild(imageElement, fo);
-    }
-  };
-
   const inlineExternalImages = async (svgElement: SVGSVGElement): Promise<void> => {
     const images = svgElement.querySelectorAll("image");
     const proxyBase = `https://rgufivgtyonitgjlozog.functions.supabase.co/image-proxy?url=`;
@@ -866,18 +822,9 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         viewBox: svgElement.getAttribute('viewBox')
       });
 
-      // Clone the SVG to avoid modifying the displayed version
-      console.log("Cloning SVG element...");
-      const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
-
-      // Convert foreignObject elements to proper SVG image elements
-      console.log("Converting foreignObject to image elements...");
-      await convertForeignObjectToImage(clonedSvg);
-      console.log("ForeignObject converted successfully");
-
       // Wait for images to load - both custom templates and web components
       console.log("Waiting for images to load...");
-      const images = clonedSvg.querySelectorAll('image');
+      const images = svgElement.querySelectorAll('image');
       await Promise.all(
         Array.from(images).map(img => {
           const href = img.getAttribute('href') || img.getAttribute('xlink:href');
@@ -885,6 +832,15 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
 
           return new Promise((resolve) => {
             const testImg = new Image();
+            testImg.onload = () => {
+              console.log('Image loaded:', href);
+              resolve(undefined);
+            };
+            testImg.onerror = () => {
+              console.warn('Failed to preload image:', href);
+              resolve(undefined);
+            };
+            // Add a timeout for slow loading images on mobile
             const timeout = setTimeout(() => {
               console.warn('Image load timeout:', href);
               resolve(undefined);
@@ -908,11 +864,8 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
 
       // Inline external images (team logos, etc.)
       console.log("Inlining external images...");
-      await inlineExternalImages(clonedSvg);
+      await inlineExternalImages(svgElement);
       console.log("Images inlined successfully");
-
-      // Use clonedSvg instead of svgElement from here on
-      svgElement = clonedSvg;
 
       // Get SVG dimensions from viewBox or attributes
       let width = 1080;
