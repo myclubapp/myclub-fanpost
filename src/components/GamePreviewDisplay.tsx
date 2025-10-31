@@ -947,37 +947,75 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
           }
         }
       } else {
-        // Web platform - try Web Share API first
-        const canShare = navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'image/png' })] });
+        // Web platform - try Web Share API first on mobile browsers
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-        if (canShare) {
+        if (isMobile && navigator.share) {
           try {
-            // Use native share on mobile browsers
+            // Check if we can share files
             const file = new File([blob], fileName, { type: 'image/png' });
-            await navigator.share({
-              files: [file],
-              title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
-              text: activeTab === "preview" ? "Schau dir diese Spielvorschau an!" : "Schau dir dieses Resultat an!",
-            });
+            const canShare = navigator.canShare && navigator.canShare({ files: [file] });
 
-            notifySuccess(true);
+            if (canShare) {
+              // Use Web Share API with file
+              await navigator.share({
+                files: [file],
+                title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
+                text: activeTab === "preview" ? "Schau dir diese Spielvorschau an!" : "Schau dir dieses Resultat an!",
+              });
+              notifySuccess(true);
+            } else {
+              // Fallback: try to trigger download on mobile
+              const link = document.createElement('a');
+              link.download = fileName;
+              link.href = pngUri;
+              link.style.display = 'none';
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+
+              // Also try to open in new tab as fallback
+              setTimeout(() => {
+                const newWindow = window.open(pngUri, '_blank');
+                if (!newWindow) {
+                  toast({
+                    title: "Download gestartet",
+                    description: "Falls der Download nicht startet, bitte Pop-ups erlauben.",
+                  });
+                }
+              }, 100);
+
+              notifySuccess(false);
+            }
           } catch (error) {
-            // User cancelled the share dialog
+            // User cancelled the share dialog or share failed
             if ((error as Error).name === 'AbortError') {
               toast({
                 title: "Abgebrochen",
                 description: "Der Share-Dialog wurde abgebrochen.",
               });
             } else {
-              throw error;
+              console.error('Share failed, falling back to download:', error);
+              // Fallback to download
+              const link = document.createElement('a');
+              link.download = fileName;
+              link.href = pngUri;
+              link.style.display = 'none';
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              notifySuccess(false);
             }
           }
         } else {
-          // Fallback to download on desktop
+          // Desktop or browser without share support - direct download
           const link = document.createElement('a');
           link.download = fileName;
           link.href = pngUri;
+          link.style.display = 'none';
+          document.body.appendChild(link);
           link.click();
+          document.body.removeChild(link);
 
           notifySuccess(false);
         }
