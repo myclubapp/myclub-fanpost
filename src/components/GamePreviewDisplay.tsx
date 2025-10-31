@@ -822,9 +822,14 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         viewBox: svgElement.getAttribute('viewBox')
       });
 
+      // Clone the SVG to avoid modifying the displayed version
+      console.log("Cloning SVG element...");
+      const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
+      console.log("SVG cloned successfully");
+
       // Wait for images to load - both custom templates and web components
       console.log("Waiting for images to load...");
-      const images = svgElement.querySelectorAll('image');
+      const images = clonedSvg.querySelectorAll('image');
       await Promise.all(
         Array.from(images).map(img => {
           const href = img.getAttribute('href') || img.getAttribute('xlink:href');
@@ -832,15 +837,6 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
 
           return new Promise((resolve) => {
             const testImg = new Image();
-            testImg.onload = () => {
-              console.log('Image loaded:', href);
-              resolve(undefined);
-            };
-            testImg.onerror = () => {
-              console.warn('Failed to preload image:', href);
-              resolve(undefined);
-            };
-            // Add a timeout for slow loading images on mobile
             const timeout = setTimeout(() => {
               console.warn('Image load timeout:', href);
               resolve(undefined);
@@ -864,8 +860,11 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
 
       // Inline external images (team logos, etc.)
       console.log("Inlining external images...");
-      await inlineExternalImages(svgElement);
+      await inlineExternalImages(clonedSvg);
       console.log("Images inlined successfully");
+
+      // Use cloned SVG for conversion
+      svgElement = clonedSvg;
 
       // Get SVG dimensions from viewBox or attributes
       let width = 1080;
@@ -947,77 +946,47 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
           }
         }
       } else {
-        // Web platform - try Web Share API first on mobile browsers
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        // Web platform - try Web Share API
+        try {
+          const file = new File([blob], fileName, { type: 'image/png' });
 
-        if (isMobile && navigator.share) {
-          try {
-            // Check if we can share files
-            const file = new File([blob], fileName, { type: 'image/png' });
-            const canShare = navigator.canShare && navigator.canShare({ files: [file] });
+          // Check if Web Share API is available and supports files
+          if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            console.log("Using Web Share API");
+            await navigator.share({
+              files: [file],
+              title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
+            });
+            notifySuccess(true);
+          } else {
+            // Fallback: direct download
+            console.log("Using download fallback");
+            const link = document.createElement('a');
+            link.download = fileName;
+            link.href = pngUri;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
 
-            if (canShare) {
-              // Use Web Share API with file
-              await navigator.share({
-                files: [file],
-                title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
-                text: activeTab === "preview" ? "Schau dir diese Spielvorschau an!" : "Schau dir dieses Resultat an!",
-              });
-              notifySuccess(true);
-            } else {
-              // Fallback: try to trigger download on mobile
-              const link = document.createElement('a');
-              link.download = fileName;
-              link.href = pngUri;
-              link.style.display = 'none';
-              document.body.appendChild(link);
-              link.click();
+            // Cleanup after a short delay
+            setTimeout(() => {
               document.body.removeChild(link);
+            }, 100);
 
-              // Also try to open in new tab as fallback
-              setTimeout(() => {
-                const newWindow = window.open(pngUri, '_blank');
-                if (!newWindow) {
-                  toast({
-                    title: "Download gestartet",
-                    description: "Falls der Download nicht startet, bitte Pop-ups erlauben.",
-                  });
-                }
-              }, 100);
-
-              notifySuccess(false);
-            }
-          } catch (error) {
-            // User cancelled the share dialog or share failed
-            if ((error as Error).name === 'AbortError') {
-              toast({
-                title: "Abgebrochen",
-                description: "Der Share-Dialog wurde abgebrochen.",
-              });
-            } else {
-              console.error('Share failed, falling back to download:', error);
-              // Fallback to download
-              const link = document.createElement('a');
-              link.download = fileName;
-              link.href = pngUri;
-              link.style.display = 'none';
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              notifySuccess(false);
-            }
+            notifySuccess(false);
           }
-        } else {
-          // Desktop or browser without share support - direct download
-          const link = document.createElement('a');
-          link.download = fileName;
-          link.href = pngUri;
-          link.style.display = 'none';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-
-          notifySuccess(false);
+        } catch (error) {
+          // User cancelled the share dialog
+          if ((error as Error).name === 'AbortError') {
+            console.log("User cancelled share");
+            toast({
+              title: "Abgebrochen",
+              description: "Der Share-Dialog wurde abgebrochen.",
+            });
+          } else {
+            console.error('Share failed:', error);
+            throw error;
+          }
         }
       }
     } catch (error) {
