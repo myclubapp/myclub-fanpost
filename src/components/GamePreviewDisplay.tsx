@@ -203,7 +203,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   const [svgDimensions, setSvgDimensions] = useState({ width: "500", height: "625" });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [customTemplates, setCustomTemplates] = useState<CustomTemplate[]>([]);
-  const [gameData, setGameData] = useState<GameData | null>(null);
+  const [gameData, setGameData] = useState<GameData[]>([]);
   const [loadingGameData, setLoadingGameData] = useState(false);
   const customTemplateRef = useRef<SVGSVGElement>(null);
 
@@ -263,38 +263,44 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       
       setLoadingGameData(true);
       try {
+        const gameIdsToFetch = [gameId, gameId2, gameId3].filter(Boolean) as string[];
+        const fetchedGames: GameData[] = [];
+        
         // For volleyball and handball, use the games data passed from the list
         if (sportType === 'volleyball' || sportType === 'handball') {
           if (gamesData.length > 0) {
-            const game = gamesData.find((g: any) => g.id === gameId);
-            if (game) {
-              // Map the game data to match the expected format (with extended fields)
-              setGameData({
-                id: game.id,
-                teamHome: game.teamHome,
-                teamAway: game.teamAway,
-                date: game.date,
-                time: game.time,
-                result: game.result || '',
-                resultDetail: game.resultDetail || '',
-                teamHomeLogo: game.teamHomeLogo || '',
-                teamAwayLogo: game.teamAwayLogo || '',
-                location: game.location || '',
-                city: game.city || ''
-              });
-              setLoadingGameData(false);
-              return;
+            for (const id of gameIdsToFetch) {
+              const game = gamesData.find((g: any) => g.id === id);
+              if (game) {
+                fetchedGames.push({
+                  id: game.id,
+                  teamHome: game.teamHome,
+                  teamAway: game.teamAway,
+                  date: game.date,
+                  time: game.time,
+                  result: game.result || '',
+                  resultDetail: game.resultDetail || '',
+                  teamHomeLogo: game.teamHomeLogo || '',
+                  teamAwayLogo: game.teamAwayLogo || '',
+                  location: game.location || '',
+                  city: game.city || ''
+                });
+              }
             }
+            setGameData(fetchedGames);
+            setLoadingGameData(false);
+            return;
           }
           // If still not found, do not perform single-game fetch (not supported)
-          setGameData(null);
+          setGameData([]);
           setLoadingGameData(false);
           return;
         }
         
-        // For other sports, fetch individual game data
-        const query = `{
-  game(gameId: "${gameId}") {
+        // For other sports, fetch individual game data for each game
+        for (const id of gameIdsToFetch) {
+          const query = `{
+  game(gameId: "${id}") {
     teamHome
     teamAway
     date
@@ -307,16 +313,21 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     teamAwayLogo
   }
 }`;
+          
+          const apiUrl = `https://europe-west6-myclubmanagement.cloudfunctions.net/api/${apiType}?query=${encodeURIComponent(query)}`;
+          
+          const response = await fetch(apiUrl);
+          if (!response.ok) throw new Error('Failed to fetch game data');
+          
+          const result = await response.json();
+          
+          if (result.data?.game) {
+            fetchedGames.push(result.data.game);
+          }
+        }
         
-        const apiUrl = `https://europe-west6-myclubmanagement.cloudfunctions.net/api/${apiType}?query=${encodeURIComponent(query)}`;
-        
-        const response = await fetch(apiUrl);
-        if (!response.ok) throw new Error('Failed to fetch game data');
-        
-        const result = await response.json();
-        
-        if (result.data?.game) {
-          setGameData(result.data.game);
+        if (fetchedGames.length > 0) {
+          setGameData(fetchedGames);
         } else {
           throw new Error('No game data received');
         }
@@ -327,14 +338,14 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
           description: "Spieldaten konnten nicht geladen werden",
           variant: "destructive",
         });
-        setGameData(null);
+        setGameData([]);
       } finally {
         setLoadingGameData(false);
       }
     };
 
     fetchGameData();
-  }, [selectedCustomTemplate, gameId, apiType, toast, sportType, gamesData]);
+  }, [selectedCustomTemplate, gameId, gameId2, gameId3, apiType, toast, sportType, gamesData]);
 
   // Auto-switch to Result tab once when results become available
   useEffect(() => {
@@ -439,7 +450,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
 
   // Render custom template SVG with API data
   const renderCustomTemplateSVG = () => {
-    if (!selectedCustomTemplate || !gameData) return null;
+    if (!selectedCustomTemplate || gameData.length === 0) return null;
     
     const config = selectedCustomTemplate.config;
     if (!config || !config.elements) return null;
@@ -486,7 +497,22 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
             
             // Replace API fields with actual data
             if (element.type === 'api-text' && element.apiField) {
-              const fieldValue = (gameData as any)[element.apiField];
+              // Determine which game data to use (default to first game)
+              let gameIndex = 0;
+              
+              // Check if the apiField includes a game identifier (game-2 or game-3)
+              if (element.apiField.startsWith('game-2.')) {
+                gameIndex = 1;
+                element.apiField = element.apiField.replace('game-2.', '');
+              } else if (element.apiField.startsWith('game-3.')) {
+                gameIndex = 2;
+                element.apiField = element.apiField.replace('game-3.', '');
+              } else if (element.apiField.startsWith('game.')) {
+                element.apiField = element.apiField.replace('game.', '');
+              }
+              
+              const targetGame = gameData[gameIndex];
+              const fieldValue = targetGame ? (targetGame as any)[element.apiField] : null;
               content = fieldValue || element.content;
             }
             
@@ -511,7 +537,23 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
             
             // Replace API image fields with actual data
             if (element.type === 'api-image' && element.apiField) {
-              const fieldValue = (gameData as any)[element.apiField];
+              // Determine which game data to use (default to first game)
+              let gameIndex = 0;
+              let fieldName = element.apiField;
+              
+              // Check if the apiField includes a game identifier (game-2 or game-3)
+              if (element.apiField.startsWith('game-2.')) {
+                gameIndex = 1;
+                fieldName = element.apiField.replace('game-2.', '');
+              } else if (element.apiField.startsWith('game-3.')) {
+                gameIndex = 2;
+                fieldName = element.apiField.replace('game-3.', '');
+              } else if (element.apiField.startsWith('game.')) {
+                fieldName = element.apiField.replace('game.', '');
+              }
+              
+              const targetGame = gameData[gameIndex];
+              const fieldValue = targetGame ? (targetGame as any)[fieldName] : null;
               href = fieldValue || element.href;
             }
             
