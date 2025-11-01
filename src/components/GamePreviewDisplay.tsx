@@ -1079,131 +1079,97 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
           setProgressValue(95);
           setProgressMessage("Wird geteilt...");
 
-          // Check if Web Share API is available and supports files
-          if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-            console.log("Using Web Share API");
-            await navigator.share({
-              files: [file],
-              title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
-            });
-            
-            setProgressValue(100);
-            setProgressMessage("Erfolgreich geteilt!");
-            
-            setTimeout(() => {
-              setShowProgressDialog(false);
-              setImageLoadStatus([]);
-              toast({
-                title: "Erfolgreich!",
-                description: "Das Bild wurde geteilt.",
-              });
-            }, 500);
-          } else {
-            // Fallback for mobile browsers that don't support Web Share API
-            console.log("Using mobile-friendly fallback");
-            
-            // Check if we're on mobile
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            
-            if (isMobile) {
-              // On mobile without share API, open image in new tab
-              // User can then long-press and save the image
-              const newWindow = window.open();
-              if (newWindow) {
-                newWindow.document.write(`
-                  <!DOCTYPE html>
-                  <html>
-                    <head>
-                      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                      <title>Bild speichern</title>
-                      <style>
-                        body {
-                          margin: 0;
-                          padding: 20px;
-                          background: #1a1a1a;
-                          color: white;
-                          font-family: system-ui, -apple-system, sans-serif;
-                          text-align: center;
-                        }
-                        .instructions {
-                          margin-bottom: 20px;
-                          padding: 15px;
-                          background: rgba(255,255,255,0.1);
-                          border-radius: 8px;
-                        }
-                        img {
-                          max-width: 100%;
-                          height: auto;
-                          border-radius: 8px;
-                          box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-                        }
-                      </style>
-                    </head>
-                    <body>
-                      <div class="instructions">
-                        <h2>📥 Bild speichern</h2>
-                        <p>Halte das Bild gedrückt und wähle "Bild speichern" aus dem Menü.</p>
-                      </div>
-                      <img src="${pngUri}" alt="Generiertes Bild" />
-                    </body>
-                  </html>
-                `);
+          // Try to share the file directly
+          if (navigator.share) {
+            try {
+              // First try sharing the file object
+              if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                console.log("Using Web Share API with file");
+                await navigator.share({
+                  files: [file],
+                  title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
+                  text: activeTab === "preview" ? "Spielvorschau" : "Resultat",
+                });
+              } else {
+                // If file sharing not supported, share the data URL
+                console.log("Using Web Share API with data URL");
+                await navigator.share({
+                  title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
+                  text: activeTab === "preview" ? "Spielvorschau" : "Resultat",
+                  url: pngUri,
+                });
               }
               
               setProgressValue(100);
-              setProgressMessage("Bild in neuem Tab geöffnet!");
-              
-              setTimeout(() => {
-                setShowProgressDialog(false);
-                setImageLoadStatus([]);
-                toast({
-                  title: "Bild geöffnet",
-                  description: "Halte das Bild gedrückt und wähle 'Bild speichern'.",
-                  duration: 5000,
-                });
-              }, 500);
-            } else {
-              // Desktop fallback: direct download
-              console.log("Using download fallback");
-              const link = document.createElement('a');
-              link.download = fileName;
-              link.href = pngUri;
-              link.style.display = 'none';
-              document.body.appendChild(link);
-              link.click();
-
-              // Cleanup after a short delay
-              setTimeout(() => {
-                document.body.removeChild(link);
-              }, 100);
-
-              setProgressValue(100);
-              setProgressMessage("Download erfolgreich!");
+              setProgressMessage("Erfolgreich geteilt!");
               
               setTimeout(() => {
                 setShowProgressDialog(false);
                 setImageLoadStatus([]);
                 toast({
                   title: "Erfolgreich!",
-                  description: "Das Bild wurde heruntergeladen.",
+                  description: "Das Bild wurde geteilt.",
                 });
               }, 500);
+            } catch (shareError: any) {
+              // User cancelled or share failed
+              if (shareError.name === 'AbortError') {
+                console.log("User cancelled share");
+                setShowProgressDialog(false);
+                setImageLoadStatus([]);
+                toast({
+                  title: "Abgebrochen",
+                  description: "Der Share-Dialog wurde abgebrochen.",
+                });
+              } else {
+                // Share failed, open in new window as fallback
+                console.log("Share failed, opening in new window", shareError);
+                const newWindow = window.open(pngUri, '_blank');
+                
+                setProgressValue(100);
+                setProgressMessage("Bild geöffnet!");
+                
+                setTimeout(() => {
+                  setShowProgressDialog(false);
+                  setImageLoadStatus([]);
+                  toast({
+                    title: "Bild geöffnet",
+                    description: "Das Bild wurde in einem neuen Tab geöffnet.",
+                  });
+                }, 500);
+              }
             }
+          } else {
+            // No share API available - direct download
+            console.log("Using download fallback");
+            const link = document.createElement('a');
+            link.download = fileName;
+            link.href = pngUri;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+
+            setTimeout(() => {
+              document.body.removeChild(link);
+            }, 100);
+
+            setProgressValue(100);
+            setProgressMessage("Download erfolgreich!");
+            
+            setTimeout(() => {
+              setShowProgressDialog(false);
+              setImageLoadStatus([]);
+              toast({
+                title: "Erfolgreich!",
+                description: "Das Bild wurde heruntergeladen.",
+              });
+            }, 500);
           }
         } catch (error) {
-          // User cancelled the share dialog
-          if ((error as Error).name === 'AbortError') {
-            console.log("User cancelled share");
-            setShowProgressDialog(false);
-            setImageLoadStatus([]);
-            toast({
-              title: "Abgebrochen",
-              description: "Der Share-Dialog wurde abgebrochen.",
-            });
-          } else {
-            console.error('Share failed:', error);
-            throw error;
-          }
+          console.error('Share failed:', error);
+          setShowProgressDialog(false);
+          setImageLoadStatus([]);
+          throw error;
         }
       }
     } catch (error) {
