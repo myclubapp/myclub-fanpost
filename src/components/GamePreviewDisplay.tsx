@@ -213,6 +213,11 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   const [showProgressDialog, setShowProgressDialog] = useState(false);
   const [progressValue, setProgressValue] = useState(0);
   const [progressMessage, setProgressMessage] = useState("");
+  const [imageLoadStatus, setImageLoadStatus] = useState<Array<{
+    url: string;
+    status: 'pending' | 'loading' | 'loaded' | 'error';
+    size?: string;
+  }>>([]);
 
   // Expose the handleDownload and handleInstagramShare functions to parent via ref
   useImperativeHandle(ref, () => ({
@@ -671,6 +676,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       setShowProgressDialog(true);
       setProgressValue(10);
       setProgressMessage("Bild wird vorbereitet...");
+      setImageLoadStatus([]);
 
       let svgElement: SVGSVGElement | null = null;
 
@@ -780,6 +786,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       // Close dialog after short delay
       setTimeout(() => {
         setShowProgressDialog(false);
+        setImageLoadStatus([]);
         toast({
           title: "Download erfolgreich",
           description: "Das Bild wurde erfolgreich heruntergeladen.",
@@ -789,6 +796,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     } catch (error) {
       console.error("Export failed:", error);
       setShowProgressDialog(false);
+      setImageLoadStatus([]);
       toast({
         title: "Fehler",
         description: "Bild konnte nicht heruntergeladen werden. Bitte versuche es erneut.",
@@ -829,6 +837,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       setShowProgressDialog(true);
       setProgressValue(10);
       setProgressMessage("Bild wird vorbereitet...");
+      setImageLoadStatus([]);
 
       let svgElement: SVGSVGElement | null = null;
 
@@ -879,26 +888,70 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       // Wait for images to load - both custom templates and web components
       console.log("Waiting for images to load...");
       const images = clonedSvg.querySelectorAll('image');
+      
+      // Initialize image load status
+      const imageStatuses: Array<{
+        url: string;
+        status: 'pending' | 'loading' | 'loaded' | 'error';
+        size?: string;
+      }> = Array.from(images).map(img => {
+        const href = img.getAttribute('href') || img.getAttribute('xlink:href') || '';
+        const isDataUrl = href.startsWith('data:');
+        const urlPreview = isDataUrl 
+          ? `data-url (${(href.length / 1024).toFixed(1)} KB)` 
+          : href.substring(0, 50) + (href.length > 50 ? '...' : '');
+        
+        return {
+          url: urlPreview,
+          status: ((href && !isDataUrl) ? 'pending' : 'loaded') as 'pending' | 'loaded',
+          size: isDataUrl ? `${(href.length / 1024).toFixed(1)} KB` : undefined
+        };
+      });
+      
+      setImageLoadStatus(imageStatuses);
+      
       await Promise.all(
-        Array.from(images).map(img => {
+        Array.from(images).map(async (img, index) => {
           const href = img.getAttribute('href') || img.getAttribute('xlink:href');
           if (!href || href.startsWith('data:')) return Promise.resolve();
 
           return new Promise((resolve) => {
+            // Update status to loading
+            setImageLoadStatus(prev => {
+              const updated = [...prev];
+              updated[index] = { ...updated[index], status: 'loading' };
+              return updated;
+            });
+
             const testImg = new Image();
             const timeout = setTimeout(() => {
               console.warn('Image load timeout:', href);
+              setImageLoadStatus(prev => {
+                const updated = [...prev];
+                updated[index] = { ...updated[index], status: 'error' };
+                return updated;
+              });
               resolve(undefined);
             }, 10000); // 10 second timeout
 
             testImg.onload = () => {
               clearTimeout(timeout);
               console.log('Image loaded:', href);
+              setImageLoadStatus(prev => {
+                const updated = [...prev];
+                updated[index] = { ...updated[index], status: 'loaded' };
+                return updated;
+              });
               resolve(undefined);
             };
             testImg.onerror = () => {
               clearTimeout(timeout);
               console.warn('Failed to preload image:', href);
+              setImageLoadStatus(prev => {
+                const updated = [...prev];
+                updated[index] = { ...updated[index], status: 'error' };
+                return updated;
+              });
               resolve(undefined);
             };
             testImg.src = href;
@@ -998,6 +1051,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
           
           setTimeout(() => {
             setShowProgressDialog(false);
+            setImageLoadStatus([]);
             toast({
               title: "Erfolgreich!",
               description: "Das Bild wurde geteilt.",
@@ -1006,6 +1060,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         } catch (error) {
           console.error("Capacitor share failed:", error);
           setShowProgressDialog(false);
+          setImageLoadStatus([]);
           // User might have cancelled the share dialog
           if ((error as Error).name === 'AbortError') {
             toast({
@@ -1037,6 +1092,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
             
             setTimeout(() => {
               setShowProgressDialog(false);
+              setImageLoadStatus([]);
               toast({
                 title: "Erfolgreich!",
                 description: "Das Bild wurde geteilt.",
@@ -1062,6 +1118,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
             
             setTimeout(() => {
               setShowProgressDialog(false);
+              setImageLoadStatus([]);
               toast({
                 title: "Erfolgreich!",
                 description: "Das Bild wurde heruntergeladen.",
@@ -1073,6 +1130,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
           if ((error as Error).name === 'AbortError') {
             console.log("User cancelled share");
             setShowProgressDialog(false);
+            setImageLoadStatus([]);
             toast({
               title: "Abgebrochen",
               description: "Der Share-Dialog wurde abgebrochen.",
@@ -1086,6 +1144,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     } catch (error) {
       console.error("Export failed:", error);
       setShowProgressDialog(false);
+      setImageLoadStatus([]);
       // Don't show error if user cancelled the share dialog
       if ((error as Error).name !== 'AbortError') {
         toast({
@@ -1101,7 +1160,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     <>
       {/* Progress Dialog */}
       <Dialog open={showProgressDialog} onOpenChange={setShowProgressDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {progressValue < 100 ? (
@@ -1120,11 +1179,51 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
               {progressMessage}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 flex-1 overflow-hidden flex flex-col">
             <Progress value={progressValue} className="w-full" />
             <p className="text-sm text-muted-foreground text-center">
               {progressValue}% abgeschlossen
             </p>
+            
+            {imageLoadStatus.length > 0 && (
+              <div className="flex-1 overflow-hidden flex flex-col">
+                <h4 className="text-sm font-semibold mb-2 text-foreground">
+                  Grafiken ({imageLoadStatus.length})
+                </h4>
+                <ScrollArea className="flex-1 border rounded-md">
+                  <div className="space-y-2 p-3">
+                    {imageLoadStatus.map((image, index) => (
+                      <div key={index} className="flex items-start gap-2 text-xs">
+                        <div className="flex-shrink-0 mt-0.5">
+                          {image.status === 'loaded' && (
+                            <Check className="h-4 w-4 text-green-500" />
+                          )}
+                          {image.status === 'loading' && (
+                            <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                          )}
+                          {image.status === 'pending' && (
+                            <div className="h-4 w-4 rounded-full border-2 border-muted" />
+                          )}
+                          {image.status === 'error' && (
+                            <X className="h-4 w-4 text-red-500" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="truncate text-muted-foreground font-mono">
+                            {image.url}
+                          </p>
+                          {image.size && (
+                            <p className="text-muted-foreground/70">
+                              {image.size}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
