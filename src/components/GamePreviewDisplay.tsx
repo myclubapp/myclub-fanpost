@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Image as ImageIcon, FileText, Palette, Upload, X, Check } from "lucide-react";
+import { Download, Image as ImageIcon, FileText, Palette, Upload, X, Check, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,6 +12,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -206,6 +208,11 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   const [gameData, setGameData] = useState<GameData[]>([]);
   const [loadingGameData, setLoadingGameData] = useState(false);
   const customTemplateRef = useRef<SVGSVGElement>(null);
+  
+  // Progress dialog state
+  const [showProgressDialog, setShowProgressDialog] = useState(false);
+  const [progressValue, setProgressValue] = useState(0);
+  const [progressMessage, setProgressMessage] = useState("");
 
   // Expose the handleDownload and handleInstagramShare functions to parent via ref
   useImperativeHandle(ref, () => ({
@@ -660,22 +667,10 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       return;
     }
 
-    const notifyStart = () =>
-      toast({ title: "Vorbereitung...", description: "Bild wird erstellt" });
-    const notifySuccess = () =>
-      toast({
-        title: "Erfolgreich!",
-        description: "Bild wurde heruntergeladen.",
-      });
-    const notifyError = () =>
-      toast({
-        title: "Fehler",
-        description: "Beim Erstellen des Bildes ist ein Fehler aufgetreten",
-        variant: "destructive",
-      });
-
     try {
-      notifyStart();
+      setShowProgressDialog(true);
+      setProgressValue(10);
+      setProgressMessage("Bild wird vorbereitet...");
 
       let svgElement: SVGSVGElement | null = null;
 
@@ -704,6 +699,9 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         throw new Error("Kein SVG-Element gefunden");
       }
 
+      setProgressValue(30);
+      setProgressMessage("Bilder werden geladen...");
+
       // Wait for images to load
       const images = svgElement.querySelectorAll('image');
       await Promise.all(
@@ -727,8 +725,14 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         })
       );
 
+      setProgressValue(50);
+      setProgressMessage("Bilder werden verarbeitet...");
+
       // Inline external images
       await inlineExternalImages(svgElement);
+
+      setProgressValue(70);
+      setProgressMessage("Bild wird konvertiert...");
 
       // Get SVG dimensions
       let width = 1080;
@@ -755,6 +759,9 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       const blob = await response.blob();
       const fileName = `kanva-${activeTab}-${gameId}-${Date.now()}.png`;
 
+      setProgressValue(90);
+      setProgressMessage("Download wird vorbereitet...");
+
       // Build game URL and template info
       const gameUrl = studioUrl || window.location.pathname;
       const templateInfo = selectedCustomTemplate
@@ -767,12 +774,26 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       link.href = pngUri;
       link.click();
 
-      // Show success message without Instagram dialog
-      notifySuccess();
+      setProgressValue(100);
+      setProgressMessage("Download erfolgreich!");
+
+      // Close dialog after short delay
+      setTimeout(() => {
+        setShowProgressDialog(false);
+        toast({
+          title: "Download erfolgreich",
+          description: "Das Bild wurde erfolgreich heruntergeladen.",
+        });
+      }, 500);
 
     } catch (error) {
       console.error("Export failed:", error);
-      notifyError();
+      setShowProgressDialog(false);
+      toast({
+        title: "Fehler",
+        description: "Bild konnte nicht heruntergeladen werden. Bitte versuche es erneut.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -804,30 +825,10 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   const confirmDownload = async () => {
     setShowConfirmDialog(false);
 
-
-
-    const notifyStart = () =>
-      toast({
-        title: "Bild wird vorbereitet",
-        description: "Das Bild wird erstellt...",
-      });
-
-    const notifySuccess = (isShare: boolean) =>
-      toast({
-        title: "Erfolgreich!",
-        description: isShare ? "Das Bild wurde geteilt." : "Das Bild wurde heruntergeladen.",
-      });
-
-    const notifyError = () =>
-      toast({
-        title: "Fehler",
-        description:
-          "Bild konnte nicht erstellt werden. Bitte versuche es erneut.",
-        variant: "destructive",
-      });
-
     try {
-      notifyStart();
+      setShowProgressDialog(true);
+      setProgressValue(10);
+      setProgressMessage("Bild wird vorbereitet...");
 
       let svgElement: SVGSVGElement | null = null;
 
@@ -864,10 +865,16 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         viewBox: svgElement.getAttribute('viewBox')
       });
 
+      setProgressValue(25);
+      setProgressMessage("SVG wird vorbereitet...");
+
       // Clone the SVG to avoid modifying the displayed version
       console.log("Cloning SVG element...");
       const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
       console.log("SVG cloned successfully");
+
+      setProgressValue(35);
+      setProgressMessage("Bilder werden geladen...");
 
       // Wait for images to load - both custom templates and web components
       console.log("Waiting for images to load...");
@@ -900,10 +907,16 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       );
       console.log("All images loaded");
 
+      setProgressValue(55);
+      setProgressMessage("Bilder werden verarbeitet...");
+
       // Inline external images (team logos, etc.)
       console.log("Inlining external images...");
       await inlineExternalImages(clonedSvg);
       console.log("Images inlined successfully");
+
+      setProgressValue(70);
+      setProgressMessage("Bild wird konvertiert...");
 
       // Use cloned SVG for conversion
       svgElement = clonedSvg;
@@ -933,6 +946,9 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       // Convert SVG to PNG URI
       const pngUri = await svg.svgAsPngUri(svgElement, options);
       console.log("SVG converted to PNG successfully");
+
+      setProgressValue(85);
+      setProgressMessage("Download wird vorbereitet...");
 
       // Convert URI to Blob
       const response = await fetch(pngUri);
@@ -966,6 +982,9 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
             path: fileName,
           });
 
+          setProgressValue(95);
+          setProgressMessage("Wird geteilt...");
+
           // Share using Capacitor
           await Share.share({
             title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
@@ -974,9 +993,19 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
             dialogTitle: "Bild teilen",
           });
 
-          notifySuccess(true);
+          setProgressValue(100);
+          setProgressMessage("Erfolgreich geteilt!");
+          
+          setTimeout(() => {
+            setShowProgressDialog(false);
+            toast({
+              title: "Erfolgreich!",
+              description: "Das Bild wurde geteilt.",
+            });
+          }, 500);
         } catch (error) {
           console.error("Capacitor share failed:", error);
+          setShowProgressDialog(false);
           // User might have cancelled the share dialog
           if ((error as Error).name === 'AbortError') {
             toast({
@@ -992,6 +1021,9 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         try {
           const file = new File([blob], fileName, { type: 'image/png' });
 
+          setProgressValue(95);
+          setProgressMessage("Wird geteilt...");
+
           // Check if Web Share API is available and supports files
           if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
             console.log("Using Web Share API");
@@ -999,7 +1031,17 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
               files: [file],
               title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
             });
-            notifySuccess(true);
+            
+            setProgressValue(100);
+            setProgressMessage("Erfolgreich geteilt!");
+            
+            setTimeout(() => {
+              setShowProgressDialog(false);
+              toast({
+                title: "Erfolgreich!",
+                description: "Das Bild wurde geteilt.",
+              });
+            }, 500);
           } else {
             // Fallback: direct download
             console.log("Using download fallback");
@@ -1015,12 +1057,22 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
               document.body.removeChild(link);
             }, 100);
 
-            notifySuccess(false);
+            setProgressValue(100);
+            setProgressMessage("Download erfolgreich!");
+            
+            setTimeout(() => {
+              setShowProgressDialog(false);
+              toast({
+                title: "Erfolgreich!",
+                description: "Das Bild wurde heruntergeladen.",
+              });
+            }, 500);
           }
         } catch (error) {
           // User cancelled the share dialog
           if ((error as Error).name === 'AbortError') {
             console.log("User cancelled share");
+            setShowProgressDialog(false);
             toast({
               title: "Abgebrochen",
               description: "Der Share-Dialog wurde abgebrochen.",
@@ -1033,15 +1085,50 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       }
     } catch (error) {
       console.error("Export failed:", error);
+      setShowProgressDialog(false);
       // Don't show error if user cancelled the share dialog
       if ((error as Error).name !== 'AbortError') {
-        notifyError();
+        toast({
+          title: "Fehler",
+          description: "Bild konnte nicht erstellt werden. Bitte versuche es erneut.",
+          variant: "destructive",
+        });
       }
     }
   };
 
   return (
     <>
+      {/* Progress Dialog */}
+      <Dialog open={showProgressDialog} onOpenChange={setShowProgressDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {progressValue < 100 ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Bild wird erstellt
+                </>
+              ) : (
+                <>
+                  <Check className="h-5 w-5 text-green-500" />
+                  Erfolgreich!
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              {progressMessage}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Progress value={progressValue} className="w-full" />
+            <p className="text-sm text-muted-foreground text-center">
+              {progressValue}% abgeschlossen
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {tempImage && (
         <ImageCropper
           image={tempImage}
