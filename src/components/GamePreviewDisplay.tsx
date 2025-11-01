@@ -1099,31 +1099,96 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
               });
             }, 500);
           } else {
-            // Fallback: direct download
-            console.log("Using download fallback");
-            const link = document.createElement('a');
-            link.download = fileName;
-            link.href = pngUri;
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-
-            // Cleanup after a short delay
-            setTimeout(() => {
-              document.body.removeChild(link);
-            }, 100);
-
-            setProgressValue(100);
-            setProgressMessage("Download erfolgreich!");
+            // Fallback for mobile browsers that don't support Web Share API
+            console.log("Using mobile-friendly fallback");
             
-            setTimeout(() => {
-              setShowProgressDialog(false);
-              setImageLoadStatus([]);
-              toast({
-                title: "Erfolgreich!",
-                description: "Das Bild wurde heruntergeladen.",
-              });
-            }, 500);
+            // Check if we're on mobile
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+              // On mobile without share API, open image in new tab
+              // User can then long-press and save the image
+              const newWindow = window.open();
+              if (newWindow) {
+                newWindow.document.write(`
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                      <title>Bild speichern</title>
+                      <style>
+                        body {
+                          margin: 0;
+                          padding: 20px;
+                          background: #1a1a1a;
+                          color: white;
+                          font-family: system-ui, -apple-system, sans-serif;
+                          text-align: center;
+                        }
+                        .instructions {
+                          margin-bottom: 20px;
+                          padding: 15px;
+                          background: rgba(255,255,255,0.1);
+                          border-radius: 8px;
+                        }
+                        img {
+                          max-width: 100%;
+                          height: auto;
+                          border-radius: 8px;
+                          box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+                        }
+                      </style>
+                    </head>
+                    <body>
+                      <div class="instructions">
+                        <h2>📥 Bild speichern</h2>
+                        <p>Halte das Bild gedrückt und wähle "Bild speichern" aus dem Menü.</p>
+                      </div>
+                      <img src="${pngUri}" alt="Generiertes Bild" />
+                    </body>
+                  </html>
+                `);
+              }
+              
+              setProgressValue(100);
+              setProgressMessage("Bild in neuem Tab geöffnet!");
+              
+              setTimeout(() => {
+                setShowProgressDialog(false);
+                setImageLoadStatus([]);
+                toast({
+                  title: "Bild geöffnet",
+                  description: "Halte das Bild gedrückt und wähle 'Bild speichern'.",
+                  duration: 5000,
+                });
+              }, 500);
+            } else {
+              // Desktop fallback: direct download
+              console.log("Using download fallback");
+              const link = document.createElement('a');
+              link.download = fileName;
+              link.href = pngUri;
+              link.style.display = 'none';
+              document.body.appendChild(link);
+              link.click();
+
+              // Cleanup after a short delay
+              setTimeout(() => {
+                document.body.removeChild(link);
+              }, 100);
+
+              setProgressValue(100);
+              setProgressMessage("Download erfolgreich!");
+              
+              setTimeout(() => {
+                setShowProgressDialog(false);
+                setImageLoadStatus([]);
+                toast({
+                  title: "Erfolgreich!",
+                  description: "Das Bild wurde heruntergeladen.",
+                });
+              }, 500);
+            }
           }
         } catch (error) {
           // User cancelled the share dialog
