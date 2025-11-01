@@ -36,6 +36,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ImageCropper } from "./ImageCropper";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type SportType = "unihockey" | "volleyball" | "handball";
 
@@ -128,6 +129,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
 
   // Load user's existing background images
   const { data: userBackgrounds = [], refetch: refetchBackgrounds } = useQuery({
@@ -1140,30 +1142,43 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
               }
             }
           } else {
-            // No share API available - direct download
-            console.log("Using download fallback");
-            const link = document.createElement('a');
-            link.download = fileName;
-            link.href = pngUri;
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-
-            setTimeout(() => {
-              document.body.removeChild(link);
-            }, 100);
-
-            setProgressValue(100);
-            setProgressMessage("Download erfolgreich!");
-            
-            setTimeout(() => {
-              setShowProgressDialog(false);
-              setImageLoadStatus([]);
-              toast({
-                title: "Erfolgreich!",
-                description: "Das Bild wurde heruntergeladen.",
-              });
-            }, 500);
+            // No Web Share API available
+            console.log("No Web Share API; using platform-specific fallback");
+            if (isMobile) {
+              // On mobile (iOS Firefox/Safari), opening the data URL works best
+              window.open(pngUri, '_blank');
+              setProgressValue(100);
+              setProgressMessage("Bild geöffnet!");
+              setTimeout(() => {
+                setShowProgressDialog(false);
+                setImageLoadStatus([]);
+                toast({
+                  title: "Bild geöffnet",
+                  description: "Das Bild wurde in einem neuen Tab geöffnet.",
+                });
+              }, 500);
+            } else {
+              // Desktop: use direct download
+              const link = document.createElement('a');
+              link.download = fileName;
+              link.href = pngUri;
+              link.style.display = 'none';
+              document.body.appendChild(link);
+              link.click();
+              setTimeout(() => {
+                document.body.removeChild(link);
+              }, 100);
+              setProgressValue(100);
+              setProgressMessage("Download erfolgreich!");
+              setTimeout(() => {
+                setShowProgressDialog(false);
+                setImageLoadStatus([]);
+                toast({
+                  title: "Erfolgreich!",
+                  description: "Das Bild wurde heruntergeladen.",
+                });
+              }, 500);
+            }
           }
         } catch (error) {
           console.error('Share failed:', error);
