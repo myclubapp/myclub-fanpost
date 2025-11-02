@@ -854,8 +854,8 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
               setShowProgressDialog(false);
               setImageLoadStatus([]);
 
-              // Show fullscreen image viewer
-              showImageFullscreen(dataUrl, () => {
+              // Show fullscreen image viewer with the converted PNG
+              showImageFullscreen(dataUrl, fileName, () => {
                 toast({
                   title: "Bild geschlossen",
                   description: "Du kannst das Bild jederzeit erneut herunterladen.",
@@ -863,9 +863,9 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
               });
 
               toast({
-                title: "Bild anzeigen",
-                description: "Drücke lang auf das Bild, um es zu speichern.",
-                duration: 4000,
+                title: "Bild bereit zum Speichern",
+                description: "Das PNG-Bild wird angezeigt. Drücke lang darauf, um es zu speichern.",
+                duration: 5000,
               });
             }, 300);
           } else {
@@ -885,8 +885,8 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
                   description: "Das Bild wurde in einem neuen Tab geöffnet.",
                 });
               } else {
-                // Fallback: Show fullscreen viewer
-                showImageFullscreen(dataUrl, () => {
+                // Fallback: Show fullscreen viewer with converted PNG
+                showImageFullscreen(dataUrl, fileName, () => {
                   toast({
                     title: "Bild geschlossen",
                     description: "Du kannst das Bild jederzeit erneut herunterladen.",
@@ -894,9 +894,9 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
                 });
 
                 toast({
-                  title: "Bild anzeigen",
-                  description: "Drücke lang auf das Bild, um es zu speichern.",
-                  duration: 4000,
+                  title: "Bild bereit zum Speichern",
+                  description: "Das PNG-Bild wird angezeigt. Drücke lang darauf, um es zu speichern.",
+                  duration: 5000,
                 });
               }
             }, 500);

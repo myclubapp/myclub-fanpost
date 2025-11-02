@@ -248,19 +248,37 @@ export const svgToPngDataUrl = async (
 
 /**
  * Downloads a data URL as a file
+ * iOS-compatible: Uses multiple approaches to ensure download works
  */
-export const downloadDataUrl = (dataUrl: string, fileName: string): void => {
-  const link = document.createElement('a');
-  link.download = fileName;
-  link.href = dataUrl;
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
+export const downloadDataUrl = (dataUrl: string, fileName: string): boolean => {
+  try {
+    // Approach 1: Standard download attribute (works on most platforms)
+    const link = document.createElement('a');
+    link.download = fileName;
+    link.href = dataUrl;
+    link.style.display = 'none';
 
-  // Cleanup
-  setTimeout(() => {
-    document.body.removeChild(link);
-  }, 100);
+    // iOS Safari/Firefox workaround: Set target to force download
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+
+    document.body.appendChild(link);
+
+    // Trigger click
+    link.click();
+
+    // Cleanup
+    setTimeout(() => {
+      if (link.parentNode) {
+        document.body.removeChild(link);
+      }
+    }, 100);
+
+    return true;
+  } catch (error) {
+    console.error('Download failed:', error);
+    return false;
+  }
 };
 
 /**
@@ -312,8 +330,9 @@ export const openDataUrlInNewWindow = (dataUrl: string, fileName?: string): bool
 /**
  * iOS-specific: Show image in a modal-like experience
  * Creates a full-screen image viewer that allows long-press to save
+ * NOTE: The image passed here is already a converted PNG (data URL), not SVG!
  */
-export const showImageFullscreen = (dataUrl: string, onClose: () => void): void => {
+export const showImageFullscreen = (dataUrl: string, fileName: string, onClose: () => void): void => {
   // Create overlay
   const overlay = document.createElement('div');
   overlay.style.cssText = `
@@ -329,6 +348,7 @@ export const showImageFullscreen = (dataUrl: string, onClose: () => void): void 
     align-items: center;
     justify-content: center;
     padding: 20px;
+    overflow: auto;
   `;
 
   // Create instructions
@@ -339,21 +359,48 @@ export const showImageFullscreen = (dataUrl: string, onClose: () => void): void 
     margin-bottom: 20px;
     font-size: 14px;
     padding: 0 20px;
+    flex-shrink: 0;
   `;
   instructions.innerHTML = `
-    <p style="margin-bottom: 10px; font-weight: bold;">📱 Bild lang drücken zum Speichern</p>
-    <p style="font-size: 12px; opacity: 0.8;">Halte das Bild gedrückt und wähle "Bild sichern"</p>
+    <p style="margin-bottom: 10px; font-weight: bold;">📱 So speicherst du das Bild:</p>
+    <p style="font-size: 13px; opacity: 0.9; margin-bottom: 8px;">1. Drücke <strong>lang</strong> auf das Bild unten</p>
+    <p style="font-size: 13px; opacity: 0.9; margin-bottom: 8px;">2. Wähle "<strong>Bild sichern</strong>" oder "<strong>Zu Fotos hinzufügen</strong>"</p>
+    <p style="font-size: 11px; opacity: 0.7; margin-top: 12px;">Das Bild ist bereits als PNG konvertiert und bereit zum Speichern</p>
   `;
 
-  // Create image
+  // Create image container for better control
+  const imgContainer = document.createElement('div');
+  imgContainer.style.cssText = `
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    overflow: auto;
+  `;
+
+  // Create image (this is the converted PNG!)
   const img = document.createElement('img');
   img.src = dataUrl;
+  img.alt = fileName;
   img.style.cssText = `
     max-width: 100%;
-    max-height: 70vh;
+    max-height: 100%;
     object-fit: contain;
     border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
   `;
+
+  // Add visual feedback on touch
+  img.addEventListener('touchstart', () => {
+    img.style.opacity = '0.8';
+  });
+  img.addEventListener('touchend', () => {
+    img.style.opacity = '1';
+  });
+
+  imgContainer.appendChild(img);
 
   // Create close button
   const closeBtn = document.createElement('button');
@@ -370,28 +417,44 @@ export const showImageFullscreen = (dataUrl: string, onClose: () => void): void 
     font-size: 14px;
     cursor: pointer;
     backdrop-filter: blur(10px);
+    z-index: 10000;
   `;
 
   closeBtn.onclick = () => {
-    document.body.removeChild(overlay);
+    if (overlay.parentNode) {
+      document.body.removeChild(overlay);
+    }
     onClose();
   };
 
   // Assemble overlay
   overlay.appendChild(closeBtn);
   overlay.appendChild(instructions);
-  overlay.appendChild(img);
+  overlay.appendChild(imgContainer);
 
   // Add to document
   document.body.appendChild(overlay);
 
-  // Close on background click
+  // Close on background click (but not on image or instructions)
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) {
-      document.body.removeChild(overlay);
+    if (e.target === overlay || e.target === imgContainer) {
+      if (overlay.parentNode) {
+        document.body.removeChild(overlay);
+      }
       onClose();
     }
   });
+
+  // Prevent body scroll when overlay is open
+  document.body.style.overflow = 'hidden';
+
+  // Cleanup function
+  const cleanup = () => {
+    document.body.style.overflow = '';
+  };
+
+  // Store cleanup for later
+  (overlay as any)._cleanup = cleanup;
 };
 
 /**
