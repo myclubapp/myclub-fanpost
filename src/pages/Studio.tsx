@@ -63,7 +63,7 @@ const Index = () => {
   const [loadedLastSelection, setLoadedLastSelection] = useState(false);
   const [showTeamSlotDialog, setShowTeamSlotDialog] = useState(false);
   const [pendingExport, setPendingExport] = useState(false);
-  const gamePreviewRef = useRef<{ triggerDownload: () => void; triggerInstagramShare: () => void } | null>(null);
+  const gamePreviewRef = useRef<{ triggerDownload: () => void } | null>(null);
   
   const {
     isTeamInSlot,
@@ -352,7 +352,7 @@ const Index = () => {
     // Check if team is in a slot
     if (isTeamInSlot(selectedTeamId)) {
       // Team is already saved, proceed with export
-      gamePreviewRef.current?.triggerInstagramShare();
+      gamePreviewRef.current?.triggerDownload();
     } else {
       // Team not in slot, show dialog
       setShowTeamSlotDialog(true);
@@ -373,7 +373,7 @@ const Index = () => {
       
       if (success && pendingExport) {
         // Export after saving team
-        gamePreviewRef.current?.triggerInstagramShare();
+        gamePreviewRef.current?.triggerDownload();
       }
     }
     
