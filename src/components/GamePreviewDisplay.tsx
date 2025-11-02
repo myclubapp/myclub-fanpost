@@ -19,7 +19,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useQuery } from "@tanstack/react-query";
-import * as svg from "save-svg-as-png";
 import { Share } from "@capacitor/share";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Capacitor } from "@capacitor/core";
@@ -37,6 +36,7 @@ import { ImageCropper } from "./ImageCropper";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { convertSvgToImage, downloadDataUrl, openDataUrlInNewWindow, type ImageLoadProgress } from "@/utils/svgToImage";
 
 type SportType = "unihockey" | "volleyball" | "handball";
 
@@ -215,11 +215,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   const [showProgressDialog, setShowProgressDialog] = useState(false);
   const [progressValue, setProgressValue] = useState(0);
   const [progressMessage, setProgressMessage] = useState("");
-  const [imageLoadStatus, setImageLoadStatus] = useState<Array<{
-    url: string;
-    status: 'pending' | 'loading' | 'loaded' | 'error';
-    size?: string;
-  }>>([]);
+  const [imageLoadStatus, setImageLoadStatus] = useState<ImageLoadProgress[]>([]);
 
   // Expose the handleDownload and handleInstagramShare functions to parent via ref
   useImperativeHandle(ref, () => ({
@@ -589,53 +585,9 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     );
   };
 
-  const inlineExternalImages = async (svgElement: SVGSVGElement): Promise<void> => {
-    const images = svgElement.querySelectorAll("image");
-    const proxyBase = `https://rgufivgtyonitgjlozog.functions.supabase.co/image-proxy?url=`;
-
-    const toDataUrl = async (blob: Blob) =>
-      await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(blob);
-      });
-
-    const tryFetch = async (url: string): Promise<string | null> => {
-      try {
-        const res = await fetch(url, { mode: "cors" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const blob = await res.blob();
-        return await toDataUrl(blob);
-      } catch (e) {
-        // Fallback via proxy
-        try {
-          const proxyUrl = proxyBase + encodeURIComponent(url);
-          const res2 = await fetch(proxyUrl, { mode: "cors" });
-          if (!res2.ok) throw new Error(`Proxy HTTP ${res2.status}`);
-          const blob2 = await res2.blob();
-          return await toDataUrl(blob2);
-        } catch (e2) {
-          console.error("Failed to inline image (and proxy)", url, e2);
-          return null;
-        }
-      }
-    };
-
-    const promises = Array.from(images).map(async (img) => {
-      const href = img.getAttribute("href") || img.getAttribute("xlink:href");
-      if (!href) return;
-      if (href.startsWith("data:")) return; // already inlined
-      if (/^https?:\/\//i.test(href)) {
-        const dataUrl = await tryFetch(href);
-        if (dataUrl) {
-          img.setAttribute("href", dataUrl);
-        }
-      }
-    });
-
-    await Promise.all(promises);
-  };
-
+  /**
+   * Helper to convert blob to base64 (for Capacitor)
+   */
   const blobToBase64 = (blob: Blob): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -646,6 +598,39 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       reader.onerror = reject;
       reader.readAsDataURL(blob);
     });
+  };
+
+  /**
+   * Extracts the SVG element from either web component or custom template
+   */
+  const extractSvgElement = (): SVGSVGElement | null => {
+    // Check if using custom template
+    if (selectedCustomTemplate) {
+      if (!customTemplateRef.current) {
+        console.error("Custom template ref not available");
+        return null;
+      }
+      return customTemplateRef.current;
+    }
+
+    // Using myclub web component
+    const targetRef = activeTab === "preview" ? previewRef : resultRef;
+    const componentSelector = activeTab === "preview" ? "game-preview" : "game-result";
+    const gameElement = targetRef.current?.querySelector(componentSelector);
+
+    if (!gameElement) {
+      console.error("Game element not found");
+      return null;
+    }
+
+    const shadowRoot = (gameElement as any).shadowRoot as ShadowRoot | null;
+    const svgElement = shadowRoot?.querySelector("svg") || null;
+
+    if (!svgElement) {
+      console.error("SVG element not found in shadow root");
+    }
+
+    return svgElement;
   };
 
   const handleDownload = () => {
@@ -663,6 +648,9 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     setShowConfirmDialog(true);
   };
 
+  /**
+   * Simplified download/share handler using the new unified utility
+   */
   const handleInstagramShare = async () => {
     // Check if user is logged in
     if (!user) {
@@ -675,117 +663,39 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     }
 
     try {
+      // Show progress dialog
       setShowProgressDialog(true);
-      setProgressValue(10);
-      setProgressMessage("Bild wird vorbereitet...");
       setImageLoadStatus([]);
 
-      let svgElement: SVGSVGElement | null = null;
-
-      // Check if using custom template
-      if (selectedCustomTemplate) {
-        if (!customTemplateRef.current) {
-          console.error("Custom template ref not available");
-          throw new Error("Template nicht geladen");
-        }
-        svgElement = customTemplateRef.current;
-      } else {
-        // Using myclub web component
-        const targetRef = activeTab === "preview" ? previewRef : resultRef;
-        const componentSelector = activeTab === "preview" ? "game-preview" : "game-result";
-        const gameElement = targetRef.current?.querySelector(componentSelector);
-
-        if (!gameElement) {
-          throw new Error("Komponente nicht gefunden");
-        }
-
-        const shadowRoot = (gameElement as any).shadowRoot as ShadowRoot | null;
-        svgElement = shadowRoot?.querySelector("svg") || null;
-      }
-
+      // Extract SVG element
+      const svgElement = extractSvgElement();
       if (!svgElement) {
-        throw new Error("Kein SVG-Element gefunden");
+        throw new Error("SVG-Element konnte nicht gefunden werden");
       }
 
-      setProgressValue(30);
-      setProgressMessage("Bilder werden geladen...");
-
-      // Wait for images to load
-      const images = svgElement.querySelectorAll('image');
-      await Promise.all(
-        Array.from(images).map(img => {
-          const href = img.getAttribute('href') || img.getAttribute('xlink:href');
-          if (!href || href.startsWith('data:')) return Promise.resolve();
-
-          return new Promise((resolve) => {
-            const testImg = new Image();
-            const timeout = setTimeout(() => resolve(undefined), 10000);
-            testImg.onload = () => {
-              clearTimeout(timeout);
-              resolve(undefined);
-            };
-            testImg.onerror = () => {
-              clearTimeout(timeout);
-              resolve(undefined);
-            };
-            testImg.src = href;
-          });
-        })
-      );
-
-      setProgressValue(50);
-      setProgressMessage("Bilder werden verarbeitet...");
-
-      // Inline external images
-      await inlineExternalImages(svgElement);
-
-      setProgressValue(70);
-      setProgressMessage("Bild wird konvertiert...");
-
-      // Get SVG dimensions
-      let width = 1080;
-      let height = 1350;
-
-      if (svgElement.viewBox && svgElement.viewBox.baseVal) {
-        width = svgElement.viewBox.baseVal.width;
-        height = svgElement.viewBox.baseVal.height;
-      } else if (svgElement.getAttribute('width') && svgElement.getAttribute('height')) {
-        width = parseFloat(svgElement.getAttribute('width') || '1080');
-        height = parseFloat(svgElement.getAttribute('height') || '1350');
-      }
-
-      const options = {
+      // Convert SVG to image with progress tracking
+      const { dataUrl, blob } = await convertSvgToImage(svgElement, {
         scale: 2,
-        backgroundColor: "white",
-        width,
-        height,
-      };
+        backgroundColor: 'white',
+        onProgress: (progress, message) => {
+          setProgressValue(progress);
+          setProgressMessage(message);
+        },
+        onImageStatusUpdate: (statuses) => {
+          setImageLoadStatus(statuses);
+        },
+      });
 
-      // Convert SVG to PNG
-      const pngUri = await svg.svgAsPngUri(svgElement, options);
-      const response = await fetch(pngUri);
-      const blob = await response.blob();
+      // Generate file name
       const fileName = `kanva-${activeTab}-${gameId}-${Date.now()}.png`;
 
-      setProgressValue(90);
-      setProgressMessage("Download wird vorbereitet...");
+      // Simple download - works on all platforms
+      downloadDataUrl(dataUrl, fileName);
 
-      // Build game URL and template info
-      const gameUrl = studioUrl || window.location.pathname;
-      const templateInfo = selectedCustomTemplate
-        ? `template=${selectedCustomTemplate.id}`
-        : `theme=${selectedTheme}`;
-
-      // Download the image
-      const link = document.createElement('a');
-      link.download = fileName;
-      link.href = pngUri;
-      link.click();
-
+      // Success feedback
       setProgressValue(100);
       setProgressMessage("Download erfolgreich!");
 
-      // Close dialog after short delay
       setTimeout(() => {
         setShowProgressDialog(false);
         setImageLoadStatus([]);
@@ -801,7 +711,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       setImageLoadStatus([]);
       toast({
         title: "Fehler",
-        description: "Bild konnte nicht heruntergeladen werden. Bitte versuche es erneut.",
+        description: error instanceof Error ? error.message : "Bild konnte nicht heruntergeladen werden.",
         variant: "destructive",
       });
     }
@@ -832,195 +742,46 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     });
   };
 
+  /**
+   * Simplified confirm download handler with platform-specific behavior
+   */
   const confirmDownload = async () => {
     setShowConfirmDialog(false);
 
     try {
+      // Show progress dialog
       setShowProgressDialog(true);
-      setProgressValue(10);
-      setProgressMessage("Bild wird vorbereitet...");
       setImageLoadStatus([]);
 
-      let svgElement: SVGSVGElement | null = null;
-
-      // Check if using custom template
-      if (selectedCustomTemplate) {
-        if (!customTemplateRef.current) {
-          console.error("Custom template ref not available");
-          throw new Error("Template nicht geladen");
-        }
-        svgElement = customTemplateRef.current;
-        console.log("Using custom template SVG", svgElement);
-      } else {
-        // Using myclub web component
-        const targetRef = activeTab === "preview" ? previewRef : resultRef;
-        const componentSelector = activeTab === "preview" ? "game-preview" : "game-result";
-        const gameElement = targetRef.current?.querySelector(componentSelector);
-
-        if (!gameElement) {
-          throw new Error("Komponente nicht gefunden");
-        }
-
-        const shadowRoot = (gameElement as any).shadowRoot as ShadowRoot | null;
-        svgElement = shadowRoot?.querySelector("svg") || null;
-      }
-
+      // Extract SVG element
+      const svgElement = extractSvgElement();
       if (!svgElement) {
-        console.error("No SVG element found");
-        throw new Error("Kein SVG-Element gefunden");
+        throw new Error("SVG-Element konnte nicht gefunden werden");
       }
 
-      console.log("SVG element dimensions:", {
-        width: svgElement.getAttribute('width'),
-        height: svgElement.getAttribute('height'),
-        viewBox: svgElement.getAttribute('viewBox')
-      });
-
-      setProgressValue(25);
-      setProgressMessage("SVG wird vorbereitet...");
-
-      // Clone the SVG to avoid modifying the displayed version
-      console.log("Cloning SVG element...");
-      const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
-      console.log("SVG cloned successfully");
-
-      setProgressValue(35);
-      setProgressMessage("Bilder werden geladen...");
-
-      // Wait for images to load - both custom templates and web components
-      console.log("Waiting for images to load...");
-      const images = clonedSvg.querySelectorAll('image');
-      
-      // Initialize image load status
-      const imageStatuses: Array<{
-        url: string;
-        status: 'pending' | 'loading' | 'loaded' | 'error';
-        size?: string;
-      }> = Array.from(images).map(img => {
-        const href = img.getAttribute('href') || img.getAttribute('xlink:href') || '';
-        const isDataUrl = href.startsWith('data:');
-        const urlPreview = isDataUrl 
-          ? `data-url (${(href.length / 1024).toFixed(1)} KB)` 
-          : href.substring(0, 50) + (href.length > 50 ? '...' : '');
-        
-        return {
-          url: urlPreview,
-          status: ((href && !isDataUrl) ? 'pending' : 'loaded') as 'pending' | 'loaded',
-          size: isDataUrl ? `${(href.length / 1024).toFixed(1)} KB` : undefined
-        };
-      });
-      
-      setImageLoadStatus(imageStatuses);
-      
-      await Promise.all(
-        Array.from(images).map(async (img, index) => {
-          const href = img.getAttribute('href') || img.getAttribute('xlink:href');
-          if (!href || href.startsWith('data:')) return Promise.resolve();
-
-          return new Promise((resolve) => {
-            // Update status to loading
-            setImageLoadStatus(prev => {
-              const updated = [...prev];
-              updated[index] = { ...updated[index], status: 'loading' };
-              return updated;
-            });
-
-            const testImg = new Image();
-            const timeout = setTimeout(() => {
-              console.warn('Image load timeout:', href);
-              setImageLoadStatus(prev => {
-                const updated = [...prev];
-                updated[index] = { ...updated[index], status: 'error' };
-                return updated;
-              });
-              resolve(undefined);
-            }, 10000); // 10 second timeout
-
-            testImg.onload = () => {
-              clearTimeout(timeout);
-              console.log('Image loaded:', href);
-              setImageLoadStatus(prev => {
-                const updated = [...prev];
-                updated[index] = { ...updated[index], status: 'loaded' };
-                return updated;
-              });
-              resolve(undefined);
-            };
-            testImg.onerror = () => {
-              clearTimeout(timeout);
-              console.warn('Failed to preload image:', href);
-              setImageLoadStatus(prev => {
-                const updated = [...prev];
-                updated[index] = { ...updated[index], status: 'error' };
-                return updated;
-              });
-              resolve(undefined);
-            };
-            testImg.src = href;
-          });
-        })
-      );
-      console.log("All images loaded");
-
-      setProgressValue(55);
-      setProgressMessage("Bilder werden verarbeitet...");
-
-      // Inline external images (team logos, etc.)
-      console.log("Inlining external images...");
-      await inlineExternalImages(clonedSvg);
-      console.log("Images inlined successfully");
-
-      setProgressValue(70);
-      setProgressMessage("Bild wird konvertiert...");
-
-      // Use cloned SVG for conversion
-      svgElement = clonedSvg;
-
-      // Get SVG dimensions from viewBox or attributes
-      let width = 1080;
-      let height = 1350;
-
-      if (svgElement.viewBox && svgElement.viewBox.baseVal) {
-        width = svgElement.viewBox.baseVal.width;
-        height = svgElement.viewBox.baseVal.height;
-      } else if (svgElement.getAttribute('width') && svgElement.getAttribute('height')) {
-        width = parseFloat(svgElement.getAttribute('width') || '1080');
-        height = parseFloat(svgElement.getAttribute('height') || '1350');
-      }
-
-      console.log("Export dimensions:", { width, height });
-
-      const options = {
+      // Convert SVG to image with progress tracking
+      const { dataUrl, blob } = await convertSvgToImage(svgElement, {
         scale: 2,
-        backgroundColor: "white",
-        width,
-        height,
-      };
+        backgroundColor: 'white',
+        onProgress: (progress, message) => {
+          setProgressValue(progress);
+          setProgressMessage(message);
+        },
+        onImageStatusUpdate: (statuses) => {
+          setImageLoadStatus(statuses);
+        },
+      });
 
-      console.log("Converting SVG to PNG...");
-      // Convert SVG to PNG URI
-      const pngUri = await svg.svgAsPngUri(svgElement, options);
-      console.log("SVG converted to PNG successfully");
-
-      setProgressValue(85);
-      setProgressMessage("Download wird vorbereitet...");
-
-      // Convert URI to Blob
-      const response = await fetch(pngUri);
-      const blob = await response.blob();
-      const fileName = `${activeTab}-${gameId}-${Date.now()}.png`;
+      // Generate file name
+      const fileName = `kanva-${activeTab}-${gameId}-${Date.now()}.png`;
 
       // Check if running on native platform (iOS/Android)
       const isNative = Capacitor.isNativePlatform();
 
-      // Build game URL and template info
-      const gameUrl = studioUrl || window.location.pathname;
-      const templateInfo = selectedCustomTemplate
-        ? `template=${selectedCustomTemplate.id}`
-        : `theme=${selectedTheme}`;
-
       if (isNative) {
-        // Use Capacitor Share for native platforms
+        // Native platforms: Use Capacitor Share API
+        setProgressMessage("Wird geteilt...");
+
         try {
           const base64Data = await blobToBase64(blob);
 
@@ -1037,9 +798,6 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
             path: fileName,
           });
 
-          setProgressValue(95);
-          setProgressMessage("Wird geteilt...");
-
           // Share using Capacitor
           await Share.share({
             title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
@@ -1050,7 +808,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
 
           setProgressValue(100);
           setProgressMessage("Erfolgreich geteilt!");
-          
+
           setTimeout(() => {
             setShowProgressDialog(false);
             setImageLoadStatus([]);
@@ -1060,11 +818,10 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
             });
           }, 500);
         } catch (error) {
-          console.error("Capacitor share failed:", error);
-          setShowProgressDialog(false);
-          setImageLoadStatus([]);
           // User might have cancelled the share dialog
           if ((error as Error).name === 'AbortError') {
+            setShowProgressDialog(false);
+            setImageLoadStatus([]);
             toast({
               title: "Abgebrochen",
               description: "Der Share-Dialog wurde abgebrochen.",
@@ -1074,128 +831,51 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
           }
         }
       } else {
-        // Web platform - try Web Share API
-        try {
-          const file = new File([blob], fileName, { type: 'image/png' });
+        // Web platforms: Platform-specific behavior
+        setProgressMessage("Download wird vorbereitet...");
 
-          setProgressValue(95);
-          setProgressMessage("Wird geteilt...");
+        if (isMobile) {
+          // Mobile web: Open in new window (works better for iOS/Android browsers)
+          openDataUrlInNewWindow(dataUrl);
 
-          // Try to share the file directly
-          if (navigator.share) {
-            try {
-              // First try sharing the file object
-              if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                console.log("Using Web Share API with file");
-                await navigator.share({
-                  files: [file],
-                  title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
-                  text: activeTab === "preview" ? "Spielvorschau" : "Resultat",
-                });
-              } else {
-                // If file sharing not supported, share the data URL
-                console.log("Using Web Share API with data URL");
-                await navigator.share({
-                  title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
-                  text: activeTab === "preview" ? "Spielvorschau" : "Resultat",
-                  url: pngUri,
-                });
-              }
-              
-              setProgressValue(100);
-              setProgressMessage("Erfolgreich geteilt!");
-              
-              setTimeout(() => {
-                setShowProgressDialog(false);
-                setImageLoadStatus([]);
-                toast({
-                  title: "Erfolgreich!",
-                  description: "Das Bild wurde geteilt.",
-                });
-              }, 500);
-            } catch (shareError: any) {
-              // User cancelled or share failed
-              if (shareError.name === 'AbortError') {
-                console.log("User cancelled share");
-                setShowProgressDialog(false);
-                setImageLoadStatus([]);
-                toast({
-                  title: "Abgebrochen",
-                  description: "Der Share-Dialog wurde abgebrochen.",
-                });
-              } else {
-                // Share failed, open in new window as fallback
-                console.log("Share failed, opening in new window", shareError);
-                const newWindow = window.open(pngUri, '_blank');
-                
-                setProgressValue(100);
-                setProgressMessage("Bild geöffnet!");
-                
-                setTimeout(() => {
-                  setShowProgressDialog(false);
-                  setImageLoadStatus([]);
-                  toast({
-                    title: "Bild geöffnet",
-                    description: "Das Bild wurde in einem neuen Tab geöffnet.",
-                  });
-                }, 500);
-              }
-            }
-          } else {
-            // No Web Share API available
-            console.log("No Web Share API; using platform-specific fallback");
-            if (isMobile) {
-              // On mobile (iOS Firefox/Safari), opening the data URL works best
-              window.open(pngUri, '_blank');
-              setProgressValue(100);
-              setProgressMessage("Bild geöffnet!");
-              setTimeout(() => {
-                setShowProgressDialog(false);
-                setImageLoadStatus([]);
-                toast({
-                  title: "Bild geöffnet",
-                  description: "Das Bild wurde in einem neuen Tab geöffnet.",
-                });
-              }, 500);
-            } else {
-              // Desktop: use direct download
-              const link = document.createElement('a');
-              link.download = fileName;
-              link.href = pngUri;
-              link.style.display = 'none';
-              document.body.appendChild(link);
-              link.click();
-              setTimeout(() => {
-                document.body.removeChild(link);
-              }, 100);
-              setProgressValue(100);
-              setProgressMessage("Download erfolgreich!");
-              setTimeout(() => {
-                setShowProgressDialog(false);
-                setImageLoadStatus([]);
-                toast({
-                  title: "Erfolgreich!",
-                  description: "Das Bild wurde heruntergeladen.",
-                });
-              }, 500);
-            }
-          }
-        } catch (error) {
-          console.error('Share failed:', error);
-          setShowProgressDialog(false);
-          setImageLoadStatus([]);
-          throw error;
+          setProgressValue(100);
+          setProgressMessage("Bild geöffnet!");
+
+          setTimeout(() => {
+            setShowProgressDialog(false);
+            setImageLoadStatus([]);
+            toast({
+              title: "Bild geöffnet",
+              description: "Das Bild wurde in einem neuen Tab geöffnet. Du kannst es jetzt speichern oder teilen.",
+            });
+          }, 500);
+        } else {
+          // Desktop web: Direct download
+          downloadDataUrl(dataUrl, fileName);
+
+          setProgressValue(100);
+          setProgressMessage("Download erfolgreich!");
+
+          setTimeout(() => {
+            setShowProgressDialog(false);
+            setImageLoadStatus([]);
+            toast({
+              title: "Download erfolgreich",
+              description: "Das Bild wurde erfolgreich heruntergeladen.",
+            });
+          }, 500);
         }
       }
     } catch (error) {
       console.error("Export failed:", error);
       setShowProgressDialog(false);
       setImageLoadStatus([]);
-      // Don't show error if user cancelled the share dialog
+
+      // Don't show error if user cancelled
       if ((error as Error).name !== 'AbortError') {
         toast({
           title: "Fehler",
-          description: "Bild konnte nicht erstellt werden. Bitte versuche es erneut.",
+          description: error instanceof Error ? error.message : "Bild konnte nicht erstellt werden.",
           variant: "destructive",
         });
       }

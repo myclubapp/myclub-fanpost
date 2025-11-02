@@ -1,0 +1,330 @@
+/**
+ * Utility for converting SVG elements to downloadable images
+ * Handles all image inlining and conversion in a unified way
+ */
+
+export interface ImageLoadProgress {
+  url: string;
+  status: 'pending' | 'loading' | 'loaded' | 'error';
+  size?: string;
+  error?: string;
+}
+
+export interface ConversionOptions {
+  width?: number;
+  height?: number;
+  scale?: number;
+  backgroundColor?: string;
+  onProgress?: (progress: number, message: string) => void;
+  onImageStatusUpdate?: (statuses: ImageLoadProgress[]) => void;
+}
+
+/**
+ * Converts a blob to base64 string
+ */
+const blobToBase64 = (blob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = (reader.result as string).split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
+
+/**
+ * Converts a blob to data URL
+ */
+const blobToDataUrl = (blob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
+
+/**
+ * Fetches an image and converts it to a data URL
+ * Tries direct fetch first, then falls back to proxy
+ */
+const fetchImageAsDataUrl = async (url: string): Promise<string> => {
+  const proxyBase = `https://rgufivgtyonitgjlozog.functions.supabase.co/image-proxy?url=`;
+
+  // Try direct fetch first
+  try {
+    const response = await fetch(url, { mode: 'cors' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const blob = await response.blob();
+    return await blobToDataUrl(blob);
+  } catch (error) {
+    console.warn(`Direct fetch failed for ${url}, trying proxy...`, error);
+
+    // Fallback to proxy
+    try {
+      const proxyUrl = proxyBase + encodeURIComponent(url);
+      const response = await fetch(proxyUrl, { mode: 'cors' });
+      if (!response.ok) throw new Error(`Proxy HTTP ${response.status}`);
+      const blob = await response.blob();
+      return await blobToDataUrl(blob);
+    } catch (proxyError) {
+      console.error(`Failed to fetch image via proxy: ${url}`, proxyError);
+      throw new Error(`Failed to load image: ${url}`);
+    }
+  }
+};
+
+/**
+ * Extracts all image elements from an SVG and tracks their loading status
+ */
+const extractImageElements = (svgElement: SVGSVGElement): HTMLImageElement[] => {
+  const images = svgElement.querySelectorAll('image');
+  return Array.from(images) as unknown as HTMLImageElement[];
+};
+
+/**
+ * Waits for all images in the SVG to load and inlines them as data URLs
+ */
+export const inlineAllImages = async (
+  svgElement: SVGSVGElement,
+  onImageStatusUpdate?: (statuses: ImageLoadProgress[]) => void
+): Promise<void> => {
+  const images = extractImageElements(svgElement);
+
+  // Initialize status tracking
+  const imageStatuses: ImageLoadProgress[] = images.map((img) => {
+    const href = img.getAttribute('href') || img.getAttribute('xlink:href') || '';
+    const isDataUrl = href.startsWith('data:');
+
+    let urlPreview: string;
+    let size: string | undefined;
+
+    if (isDataUrl) {
+      size = `${(href.length / 1024).toFixed(1)} KB`;
+      urlPreview = `data-url (${size})`;
+    } else {
+      urlPreview = href.substring(0, 50) + (href.length > 50 ? '...' : '');
+    }
+
+    return {
+      url: urlPreview,
+      status: (href && !isDataUrl) ? 'pending' : 'loaded',
+      size,
+    };
+  });
+
+  // Report initial status
+  if (onImageStatusUpdate) {
+    onImageStatusUpdate([...imageStatuses]);
+  }
+
+  // Process each image
+  const promises = images.map(async (img, index) => {
+    const href = img.getAttribute('href') || img.getAttribute('xlink:href');
+
+    // Skip if no href or already a data URL
+    if (!href || href.startsWith('data:')) {
+      return;
+    }
+
+    // Skip if not an HTTP/HTTPS URL
+    if (!/^https?:\/\//i.test(href)) {
+      imageStatuses[index].status = 'loaded';
+      if (onImageStatusUpdate) {
+        onImageStatusUpdate([...imageStatuses]);
+      }
+      return;
+    }
+
+    try {
+      // Update status to loading
+      imageStatuses[index].status = 'loading';
+      if (onImageStatusUpdate) {
+        onImageStatusUpdate([...imageStatuses]);
+      }
+
+      // Fetch and convert image
+      const dataUrl = await fetchImageAsDataUrl(href);
+
+      // Update the image element
+      img.setAttribute('href', dataUrl);
+      img.removeAttribute('xlink:href');
+
+      // Update status to loaded
+      imageStatuses[index].status = 'loaded';
+      imageStatuses[index].size = `${(dataUrl.length / 1024).toFixed(1)} KB`;
+      if (onImageStatusUpdate) {
+        onImageStatusUpdate([...imageStatuses]);
+      }
+    } catch (error) {
+      console.error(`Failed to inline image:`, error);
+      imageStatuses[index].status = 'error';
+      imageStatuses[index].error = error instanceof Error ? error.message : 'Unknown error';
+      if (onImageStatusUpdate) {
+        onImageStatusUpdate([...imageStatuses]);
+      }
+    }
+  });
+
+  await Promise.all(promises);
+};
+
+/**
+ * Converts an SVG element to a PNG data URL
+ */
+export const svgToPngDataUrl = async (
+  svgElement: SVGSVGElement,
+  options: ConversionOptions = {}
+): Promise<string> => {
+  const {
+    width: targetWidth,
+    height: targetHeight,
+    scale = 2,
+    backgroundColor = 'white',
+    onProgress,
+  } = options;
+
+  // Get SVG dimensions
+  let width = targetWidth || 1080;
+  let height = targetHeight || 1350;
+
+  if (!targetWidth || !targetHeight) {
+    if (svgElement.viewBox && svgElement.viewBox.baseVal) {
+      width = svgElement.viewBox.baseVal.width;
+      height = svgElement.viewBox.baseVal.height;
+    } else if (svgElement.getAttribute('width') && svgElement.getAttribute('height')) {
+      width = parseFloat(svgElement.getAttribute('width') || '1080');
+      height = parseFloat(svgElement.getAttribute('height') || '1350');
+    }
+  }
+
+  if (onProgress) {
+    onProgress(70, 'SVG wird in Bild konvertiert...');
+  }
+
+  // Create a canvas element
+  const canvas = document.createElement('canvas');
+  canvas.width = width * scale;
+  canvas.height = height * scale;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    throw new Error('Could not get canvas context');
+  }
+
+  // Fill background
+  ctx.fillStyle = backgroundColor;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Convert SVG to string
+  const svgString = new XMLSerializer().serializeToString(svgElement);
+  const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+
+  try {
+    // Load SVG as image
+    const img = new Image();
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error('Failed to load SVG as image'));
+      img.src = url;
+    });
+
+    // Draw image on canvas
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    if (onProgress) {
+      onProgress(90, 'Bild wird finalisiert...');
+    }
+
+    // Convert canvas to data URL
+    return canvas.toDataURL('image/png');
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+};
+
+/**
+ * Downloads a data URL as a file
+ */
+export const downloadDataUrl = (dataUrl: string, fileName: string): void => {
+  const link = document.createElement('a');
+  link.download = fileName;
+  link.href = dataUrl;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+
+  // Cleanup
+  setTimeout(() => {
+    document.body.removeChild(link);
+  }, 100);
+};
+
+/**
+ * Opens a data URL in a new window (useful for mobile devices)
+ */
+export const openDataUrlInNewWindow = (dataUrl: string): Window | null => {
+  return window.open(dataUrl, '_blank');
+};
+
+/**
+ * Complete SVG to image conversion with progress tracking
+ */
+export const convertSvgToImage = async (
+  svgElement: SVGSVGElement,
+  options: ConversionOptions = {}
+): Promise<{ dataUrl: string; blob: Blob; width: number; height: number }> => {
+  const { onProgress, onImageStatusUpdate } = options;
+
+  // Step 1: Clone SVG to avoid modifying the original
+  if (onProgress) {
+    onProgress(10, 'SVG wird vorbereitet...');
+  }
+
+  const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
+
+  // Step 2: Wait for all external images to load
+  if (onProgress) {
+    onProgress(20, 'Bilder werden geladen...');
+  }
+
+  await inlineAllImages(clonedSvg, onImageStatusUpdate);
+
+  if (onProgress) {
+    onProgress(60, 'Alle Bilder geladen...');
+  }
+
+  // Step 3: Convert to PNG
+  const dataUrl = await svgToPngDataUrl(clonedSvg, options);
+
+  if (onProgress) {
+    onProgress(95, 'Bild erstellt...');
+  }
+
+  // Step 4: Convert to blob
+  const response = await fetch(dataUrl);
+  const blob = await response.blob();
+
+  // Get dimensions
+  let width = options.width || 1080;
+  let height = options.height || 1350;
+
+  if (!options.width || !options.height) {
+    if (clonedSvg.viewBox && clonedSvg.viewBox.baseVal) {
+      width = clonedSvg.viewBox.baseVal.width;
+      height = clonedSvg.viewBox.baseVal.height;
+    } else if (clonedSvg.getAttribute('width') && clonedSvg.getAttribute('height')) {
+      width = parseFloat(clonedSvg.getAttribute('width') || '1080');
+      height = parseFloat(clonedSvg.getAttribute('height') || '1350');
+    }
+  }
+
+  if (onProgress) {
+    onProgress(100, 'Fertig!');
+  }
+
+  return { dataUrl, blob, width, height };
+};
