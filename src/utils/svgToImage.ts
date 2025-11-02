@@ -264,10 +264,134 @@ export const downloadDataUrl = (dataUrl: string, fileName: string): void => {
 };
 
 /**
- * Opens a data URL in a new window (useful for mobile devices)
+ * Detects if running on iOS
  */
-export const openDataUrlInNewWindow = (dataUrl: string): Window | null => {
-  return window.open(dataUrl, '_blank');
+const isIOS = (): boolean => {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+};
+
+/**
+ * Opens a data URL in a new window (useful for mobile devices)
+ * iOS-specific: Creates a temporary download link with better compatibility
+ */
+export const openDataUrlInNewWindow = (dataUrl: string, fileName?: string): boolean => {
+  // iOS-specific approach: use blob URL instead of data URL
+  if (isIOS()) {
+    try {
+      // Convert data URL to blob
+      const arr = dataUrl.split(',');
+      const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      const blob = new Blob([u8arr], { type: mime });
+      const blobUrl = URL.createObjectURL(blob);
+
+      // Try to open in new window
+      const newWindow = window.open(blobUrl, '_blank');
+
+      // Cleanup after a delay
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+
+      return newWindow !== null;
+    } catch (error) {
+      console.error('iOS blob URL approach failed:', error);
+      // Fallback to standard approach
+    }
+  }
+
+  // Standard approach for other platforms
+  const newWindow = window.open(dataUrl, '_blank');
+  return newWindow !== null;
+};
+
+/**
+ * iOS-specific: Show image in a modal-like experience
+ * Creates a full-screen image viewer that allows long-press to save
+ */
+export const showImageFullscreen = (dataUrl: string, onClose: () => void): void => {
+  // Create overlay
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  `;
+
+  // Create instructions
+  const instructions = document.createElement('div');
+  instructions.style.cssText = `
+    color: white;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 14px;
+    padding: 0 20px;
+  `;
+  instructions.innerHTML = `
+    <p style="margin-bottom: 10px; font-weight: bold;">📱 Bild lang drücken zum Speichern</p>
+    <p style="font-size: 12px; opacity: 0.8;">Halte das Bild gedrückt und wähle "Bild sichern"</p>
+  `;
+
+  // Create image
+  const img = document.createElement('img');
+  img.src = dataUrl;
+  img.style.cssText = `
+    max-width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+    border-radius: 8px;
+  `;
+
+  // Create close button
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕ Schließen';
+  closeBtn.style.cssText = `
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+  `;
+
+  closeBtn.onclick = () => {
+    document.body.removeChild(overlay);
+    onClose();
+  };
+
+  // Assemble overlay
+  overlay.appendChild(closeBtn);
+  overlay.appendChild(instructions);
+  overlay.appendChild(img);
+
+  // Add to document
+  document.body.appendChild(overlay);
+
+  // Close on background click
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      document.body.removeChild(overlay);
+      onClose();
+    }
+  });
 };
 
 /**

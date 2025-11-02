@@ -36,7 +36,7 @@ import { ImageCropper } from "./ImageCropper";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { convertSvgToImage, downloadDataUrl, openDataUrlInNewWindow, type ImageLoadProgress } from "@/utils/svgToImage";
+import { convertSvgToImage, downloadDataUrl, openDataUrlInNewWindow, showImageFullscreen, type ImageLoadProgress } from "@/utils/svgToImage";
 
 type SportType = "unihockey" | "volleyball" | "handball";
 
@@ -601,6 +601,14 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   };
 
   /**
+   * Detects if running on iOS
+   */
+  const isIOS = (): boolean => {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  };
+
+  /**
    * Extracts the SVG element from either web component or custom template
    */
   const extractSvgElement = (): SVGSVGElement | null => {
@@ -835,20 +843,64 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         setProgressMessage("Download wird vorbereitet...");
 
         if (isMobile) {
-          // Mobile web: Open in new window (works better for iOS/Android browsers)
-          openDataUrlInNewWindow(dataUrl);
+          // Mobile web behavior
+          if (isIOS()) {
+            // iOS-specific: Show fullscreen image viewer with instructions
+            // This works reliably on iOS Safari and Firefox
+            setProgressValue(100);
+            setProgressMessage("Bild bereit!");
 
-          setProgressValue(100);
-          setProgressMessage("Bild geöffnet!");
+            setTimeout(() => {
+              setShowProgressDialog(false);
+              setImageLoadStatus([]);
 
-          setTimeout(() => {
-            setShowProgressDialog(false);
-            setImageLoadStatus([]);
-            toast({
-              title: "Bild geöffnet",
-              description: "Das Bild wurde in einem neuen Tab geöffnet. Du kannst es jetzt speichern oder teilen.",
-            });
-          }, 500);
+              // Show fullscreen image viewer
+              showImageFullscreen(dataUrl, () => {
+                toast({
+                  title: "Bild geschlossen",
+                  description: "Du kannst das Bild jederzeit erneut herunterladen.",
+                });
+              });
+
+              toast({
+                title: "Bild anzeigen",
+                description: "Drücke lang auf das Bild, um es zu speichern.",
+                duration: 4000,
+              });
+            }, 300);
+          } else {
+            // Android and other mobile browsers: Try to open in new window
+            const opened = openDataUrlInNewWindow(dataUrl, fileName);
+
+            setProgressValue(100);
+            setProgressMessage(opened ? "Bild geöffnet!" : "Download vorbereitet!");
+
+            setTimeout(() => {
+              setShowProgressDialog(false);
+              setImageLoadStatus([]);
+
+              if (opened) {
+                toast({
+                  title: "Bild geöffnet",
+                  description: "Das Bild wurde in einem neuen Tab geöffnet.",
+                });
+              } else {
+                // Fallback: Show fullscreen viewer
+                showImageFullscreen(dataUrl, () => {
+                  toast({
+                    title: "Bild geschlossen",
+                    description: "Du kannst das Bild jederzeit erneut herunterladen.",
+                  });
+                });
+
+                toast({
+                  title: "Bild anzeigen",
+                  description: "Drücke lang auf das Bild, um es zu speichern.",
+                  duration: 4000,
+                });
+              }
+            }, 500);
+          }
         } else {
           // Desktop web: Direct download
           downloadDataUrl(dataUrl, fileName);
