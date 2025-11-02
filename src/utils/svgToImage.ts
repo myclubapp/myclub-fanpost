@@ -343,21 +343,61 @@ export const openDataUrlInNewWindow = (dataUrl: string, fileName?: string): bool
  * @param blob - The image blob to create a URL for
  * @param fileName - Optional file name (for reference)
  * @param cleanupDelay - Delay in milliseconds before revoking the blob URL (default: 60000 = 1 minute)
- * @returns The blob URL string and a cleanup function
+ * @returns The blob URL string, cleanup function, and success status
  */
 export const createAndOpenBlobUrl = (
   blob: Blob,
   fileName?: string,
   cleanupDelay: number = 60000
-): { blobUrl: string; cleanup: () => void } => {
+): { blobUrl: string; cleanup: () => void; success: boolean } => {
   // Create a blob URL - this acts like a "local file" in the browser
   const blobUrl = URL.createObjectURL(blob);
   
-  // Open the blob URL in a new tab
-  const newWindow = window.open(blobUrl, '_blank');
+  // Special handling for Firefox on iOS - use link click instead of window.open
+  const isIOSDevice = isIOS();
+  const isFirefoxBrowser = isFirefox();
   
-  if (!newWindow) {
-    console.warn('Popup blocker may have prevented opening the image in a new window');
+  let newWindow: Window | null = null;
+  let success = false;
+  
+  if (isIOSDevice && isFirefoxBrowser) {
+    // Firefox on iOS: window.open() often doesn't work, use link click approach
+    try {
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.style.display = 'none';
+      
+      // Add to DOM temporarily
+      document.body.appendChild(link);
+      
+      // Trigger click
+      link.click();
+      
+      // Small delay before cleanup
+      setTimeout(() => {
+        if (link.parentNode) {
+          document.body.removeChild(link);
+        }
+      }, 100);
+      
+      success = true;
+      console.log('Firefox iOS: Using link click approach for blob URL');
+    } catch (error) {
+      console.error('Firefox iOS link click approach failed:', error);
+      // Fallback to window.open
+      newWindow = window.open(blobUrl, '_blank');
+      success = newWindow !== null;
+    }
+  } else {
+    // Standard approach: Open the blob URL in a new tab
+    newWindow = window.open(blobUrl, '_blank');
+    success = newWindow !== null;
+    
+    if (!success) {
+      console.warn('Popup blocker may have prevented opening the image in a new window');
+    }
   }
   
   // Cleanup function to revoke the blob URL and free memory
@@ -369,19 +409,21 @@ export const createAndOpenBlobUrl = (
   // Note: We use a longer delay because the user might want to save the image from the tab
   setTimeout(() => {
     // Only cleanup if the window was closed or is not accessible
-    try {
-      if (newWindow && !newWindow.closed) {
-        // Window still open, don't cleanup yet
-        // The browser will handle cleanup when the window is closed
-        return;
+    if (newWindow) {
+      try {
+        if (!newWindow.closed) {
+          // Window still open, don't cleanup yet
+          // The browser will handle cleanup when the window is closed
+          return;
+        }
+      } catch (e) {
+        // Cross-origin or closed window, safe to cleanup
       }
-    } catch (e) {
-      // Cross-origin or closed window, safe to cleanup
     }
     cleanup();
   }, cleanupDelay);
   
-  return { blobUrl, cleanup };
+  return { blobUrl, cleanup, success };
 };
 
 /**

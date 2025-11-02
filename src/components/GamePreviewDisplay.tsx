@@ -797,7 +797,34 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
           
           // Create blob URL and open in new tab
           // This creates a "local file" in the browser that can be saved by the user
-          const { blobUrl, cleanup } = createAndOpenBlobUrl(blob, fileName, 120000); // 2 minutes cleanup delay
+          const { blobUrl, cleanup, success } = createAndOpenBlobUrl(blob, fileName, 120000); // 2 minutes cleanup delay
+          
+          if (!success) {
+            // Fallback: Use fullscreen viewer if blob URL opening failed
+            console.log('Blob URL opening failed, falling back to fullscreen viewer');
+            setProgressValue(100);
+            setProgressMessage("Bild bereit!");
+
+            setTimeout(() => {
+              setShowProgressDialog(false);
+              setImageLoadStatus([]);
+
+              showImageFullscreen(dataUrl, fileName, () => {
+                cleanup(); // Cleanup blob URL when viewer is closed
+                toast({
+                  title: "Bild geschlossen",
+                  description: "Du kannst das Bild jederzeit erneut herunterladen.",
+                });
+              });
+
+              toast({
+                title: "Bild bereit zum Speichern",
+                description: "Drücke lang auf das Bild, um es zu speichern.",
+                duration: 5000,
+              });
+            }, 300);
+            return;
+          }
           
           setProgressValue(100);
           setProgressMessage("Bild geöffnet!");
@@ -824,7 +851,29 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
           // Create blob URL and open in new tab
           // This creates a "local file" in the browser that can be saved by the user
           // This is often more reliable than direct downloads, especially if browser blocks downloads
-          const { blobUrl, cleanup } = createAndOpenBlobUrl(blob, fileName, 120000); // 2 minutes cleanup delay
+          const { blobUrl, cleanup, success } = createAndOpenBlobUrl(blob, fileName, 120000); // 2 minutes cleanup delay
+          
+          if (!success) {
+            // Fallback: Try direct download if blob URL opening failed
+            console.log('Blob URL opening failed, falling back to direct download');
+            const downloadSuccess = downloadDataUrl(dataUrl, fileName);
+            
+            setProgressValue(100);
+            setProgressMessage(downloadSuccess ? "Download erfolgreich!" : "Download vorbereitet!");
+
+            setTimeout(() => {
+              setShowProgressDialog(false);
+              setImageLoadStatus([]);
+              toast({
+                title: downloadSuccess ? "Download erfolgreich" : "Download vorbereitet",
+                description: downloadSuccess 
+                  ? "Das Bild wurde erfolgreich heruntergeladen."
+                  : "Versuche, das Bild herunterzuladen.",
+                duration: 5000,
+              });
+            }, 500);
+            return;
+          }
           
           setProgressValue(100);
           setProgressMessage("Bild geöffnet!");
