@@ -644,6 +644,14 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   };
 
   /**
+   * Detects if the browser is Firefox (works on all platforms including iOS)
+   */
+  const isFirefox = (): boolean => {
+    const userAgent = navigator.userAgent.toLowerCase();
+    return userAgent.includes('firefox') || userAgent.includes('fxios');
+  };
+
+  /**
    * Extracts the SVG element from either web component or custom template
    */
   const extractSvgElement = (): SVGSVGElement | null => {
@@ -892,28 +900,78 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
 
         // iOS handling (works for both native app web view AND web browsers on iOS)
         if (iosDevice) {
-          console.log('Using iOS fullscreen viewer approach');
-          setProgressValue(100);
-          setProgressMessage("Bild bereit!");
+          const firefox = isFirefox();
+          
+          if (firefox) {
+            // Firefox on iOS: Use blob URL approach for better download compatibility
+            console.log('Using iOS Firefox download approach');
+            setProgressMessage("Download wird vorbereitet...");
+            
+            // Convert data URL to blob URL for better compatibility
+            const arr = dataUrl.split(',');
+            const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) {
+              u8arr[n] = bstr.charCodeAt(n);
+            }
+            const blob = new Blob([u8arr], { type: mime });
+            const blobUrl = URL.createObjectURL(blob);
+            
+            // Try to trigger download using blob URL
+            const downloadSuccess = downloadDataUrl(blobUrl, fileName);
+            
+            // Also try opening in new window as fallback
+            if (!downloadSuccess) {
+              const opened = openDataUrlInNewWindow(blobUrl, fileName);
+              if (opened) {
+                setProgressMessage("Bild in neuem Tab geöffnet!");
+              }
+            }
+            
+            // Cleanup blob URL after delay
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+            
+            setProgressValue(100);
+            setProgressMessage(downloadSuccess ? "Download erfolgreich!" : "Bild geöffnet!");
 
-          setTimeout(() => {
-            setShowProgressDialog(false);
-            setImageLoadStatus([]);
-
-            // Show fullscreen image viewer with the converted PNG
-            showImageFullscreen(dataUrl, fileName, () => {
+            setTimeout(() => {
+              setShowProgressDialog(false);
+              setImageLoadStatus([]);
               toast({
-                title: "Bild geschlossen",
-                description: "Du kannst das Bild jederzeit erneut herunterladen.",
+                title: downloadSuccess ? "Download erfolgreich" : "Bild geöffnet",
+                description: downloadSuccess 
+                  ? "Das Bild wurde erfolgreich heruntergeladen."
+                  : "Das Bild wurde in einem neuen Tab geöffnet. Du kannst es dort speichern.",
+                duration: 5000,
               });
-            });
+            }, 500);
+          } else {
+            // Safari or other browsers on iOS: Use fullscreen viewer
+            console.log('Using iOS fullscreen viewer approach');
+            setProgressValue(100);
+            setProgressMessage("Bild bereit!");
 
-            toast({
-              title: "Bild bereit zum Speichern",
-              description: "Das PNG-Bild wird angezeigt. Drücke lang darauf, um es zu speichern.",
-              duration: 5000,
-            });
-          }, 300);
+            setTimeout(() => {
+              setShowProgressDialog(false);
+              setImageLoadStatus([]);
+
+              // Show fullscreen image viewer with the converted PNG
+              showImageFullscreen(dataUrl, fileName, () => {
+                toast({
+                  title: "Bild geschlossen",
+                  description: "Du kannst das Bild jederzeit erneut herunterladen.",
+                });
+              });
+
+              toast({
+                title: "Bild bereit zum Speichern",
+                description: "Das PNG-Bild wird angezeigt. Drücke lang darauf, um es zu speichern.",
+                duration: 5000,
+              });
+            }, 300);
+          }
         }
         // Android or other mobile devices
         else if (isMobileDevice) {
