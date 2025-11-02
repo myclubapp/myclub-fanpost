@@ -22,6 +22,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Share } from "@capacitor/share";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Capacitor } from "@capacitor/core";
+import { Device } from "@capacitor/device";
 import {
   Select,
   SelectContent,
@@ -601,11 +602,45 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   };
 
   /**
-   * Detects if running on iOS
+   * Detects if running on iOS using Capacitor's reliable platform detection
+   * This works for both native apps AND web browsers on iOS
    */
-  const isIOS = (): boolean => {
-    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isIOSPlatform = (): boolean => {
+    // Capacitor.getPlatform() returns: 'ios', 'android', or 'web'
+    const platform = Capacitor.getPlatform();
+
+    // For native iOS app
+    if (platform === 'ios') {
+      console.log('iOS detected: Native iOS app');
+      return true;
+    }
+
+    // For web (including iOS browsers like Firefox, Safari, Chrome on iOS)
+    // We need to check the actual device OS
+    if (platform === 'web') {
+      // Use multiple detection methods for iOS browsers
+      const isIOSUserAgent = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isIPadPro = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+      const isIPad13Plus = navigator.userAgent.includes('Mac') && 'ontouchend' in document;
+
+      const result = isIOSUserAgent || isIPadPro || isIPad13Plus;
+
+      console.log('Platform Detection (Web):', {
+        capacitorPlatform: platform,
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        maxTouchPoints: navigator.maxTouchPoints,
+        isIOSUserAgent,
+        isIPadPro,
+        isIPad13Plus,
+        finalResult: result
+      });
+
+      return result;
+    }
+
+    console.log('Platform detected:', platform);
+    return false;
   };
 
   /**
@@ -842,19 +877,64 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         // Web platforms: Platform-specific behavior
         setProgressMessage("Download wird vorbereitet...");
 
-        if (isMobile) {
-          // Mobile web behavior
-          if (isIOS()) {
-            // iOS-specific: Show fullscreen image viewer with instructions
-            // This works reliably on iOS Safari and Firefox
-            setProgressValue(100);
-            setProgressMessage("Bild bereit!");
+        const iosDevice = isIOSPlatform();
+        const isAndroid = Capacitor.getPlatform() === 'android' || /Android/i.test(navigator.userAgent);
+        const isMobileDevice = isMobile || iosDevice || isAndroid;
 
-            setTimeout(() => {
-              setShowProgressDialog(false);
-              setImageLoadStatus([]);
+        console.log('Download Platform Detection:', {
+          isMobile,
+          isMobileDevice,
+          isIOS: iosDevice,
+          isAndroid,
+          userAgent: navigator.userAgent,
+          capacitorPlatform: Capacitor.getPlatform()
+        });
 
-              // Show fullscreen image viewer with the converted PNG
+        // iOS handling (works for both native app web view AND web browsers on iOS)
+        if (iosDevice) {
+          console.log('Using iOS fullscreen viewer approach');
+          setProgressValue(100);
+          setProgressMessage("Bild bereit!");
+
+          setTimeout(() => {
+            setShowProgressDialog(false);
+            setImageLoadStatus([]);
+
+            // Show fullscreen image viewer with the converted PNG
+            showImageFullscreen(dataUrl, fileName, () => {
+              toast({
+                title: "Bild geschlossen",
+                description: "Du kannst das Bild jederzeit erneut herunterladen.",
+              });
+            });
+
+            toast({
+              title: "Bild bereit zum Speichern",
+              description: "Das PNG-Bild wird angezeigt. Drücke lang darauf, um es zu speichern.",
+              duration: 5000,
+            });
+          }, 300);
+        }
+        // Android or other mobile devices
+        else if (isMobileDevice) {
+          console.log('Using mobile approach (Android or other mobile)');
+          // Try to open in new window
+          const opened = openDataUrlInNewWindow(dataUrl, fileName);
+
+          setProgressValue(100);
+          setProgressMessage(opened ? "Bild geöffnet!" : "Download vorbereitet!");
+
+          setTimeout(() => {
+            setShowProgressDialog(false);
+            setImageLoadStatus([]);
+
+            if (opened) {
+              toast({
+                title: "Bild geöffnet",
+                description: "Das Bild wurde in einem neuen Tab geöffnet.",
+              });
+            } else {
+              // Fallback: Show fullscreen viewer with converted PNG
               showImageFullscreen(dataUrl, fileName, () => {
                 toast({
                   title: "Bild geschlossen",
@@ -867,42 +947,12 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
                 description: "Das PNG-Bild wird angezeigt. Drücke lang darauf, um es zu speichern.",
                 duration: 5000,
               });
-            }, 300);
-          } else {
-            // Android and other mobile browsers: Try to open in new window
-            const opened = openDataUrlInNewWindow(dataUrl, fileName);
-
-            setProgressValue(100);
-            setProgressMessage(opened ? "Bild geöffnet!" : "Download vorbereitet!");
-
-            setTimeout(() => {
-              setShowProgressDialog(false);
-              setImageLoadStatus([]);
-
-              if (opened) {
-                toast({
-                  title: "Bild geöffnet",
-                  description: "Das Bild wurde in einem neuen Tab geöffnet.",
-                });
-              } else {
-                // Fallback: Show fullscreen viewer with converted PNG
-                showImageFullscreen(dataUrl, fileName, () => {
-                  toast({
-                    title: "Bild geschlossen",
-                    description: "Du kannst das Bild jederzeit erneut herunterladen.",
-                  });
-                });
-
-                toast({
-                  title: "Bild bereit zum Speichern",
-                  description: "Das PNG-Bild wird angezeigt. Drücke lang darauf, um es zu speichern.",
-                  duration: 5000,
-                });
-              }
-            }, 500);
-          }
-        } else {
-          // Desktop web: Direct download
+            }
+          }, 500);
+        }
+        // Desktop web
+        else {
+          console.log('Using desktop download approach');
           downloadDataUrl(dataUrl, fileName);
 
           setProgressValue(100);
