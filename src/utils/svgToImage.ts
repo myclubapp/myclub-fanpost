@@ -328,6 +328,55 @@ export const openDataUrlInNewWindow = (dataUrl: string, fileName?: string): bool
 };
 
 /**
+ * Creates a Blob URL from an image blob and opens it in a new browser tab
+ * This creates a "local file" in the browser's memory that can be opened as a URL
+ * The blob URL can be used like a regular file URL and works on all browsers
+ * 
+ * @param blob - The image blob to create a URL for
+ * @param fileName - Optional file name (for reference)
+ * @param cleanupDelay - Delay in milliseconds before revoking the blob URL (default: 60000 = 1 minute)
+ * @returns The blob URL string and a cleanup function
+ */
+export const createAndOpenBlobUrl = (
+  blob: Blob,
+  fileName?: string,
+  cleanupDelay: number = 60000
+): { blobUrl: string; cleanup: () => void } => {
+  // Create a blob URL - this acts like a "local file" in the browser
+  const blobUrl = URL.createObjectURL(blob);
+  
+  // Open the blob URL in a new tab
+  const newWindow = window.open(blobUrl, '_blank');
+  
+  if (!newWindow) {
+    console.warn('Popup blocker may have prevented opening the image in a new window');
+  }
+  
+  // Cleanup function to revoke the blob URL and free memory
+  const cleanup = () => {
+    URL.revokeObjectURL(blobUrl);
+  };
+  
+  // Auto-cleanup after delay (to prevent memory leaks if user doesn't close the tab)
+  // Note: We use a longer delay because the user might want to save the image from the tab
+  setTimeout(() => {
+    // Only cleanup if the window was closed or is not accessible
+    try {
+      if (newWindow && !newWindow.closed) {
+        // Window still open, don't cleanup yet
+        // The browser will handle cleanup when the window is closed
+        return;
+      }
+    } catch (e) {
+      // Cross-origin or closed window, safe to cleanup
+    }
+    cleanup();
+  }, cleanupDelay);
+  
+  return { blobUrl, cleanup };
+};
+
+/**
  * iOS-specific: Show image in a modal-like experience
  * Creates a full-screen image viewer that allows long-press to save
  * NOTE: The image passed here is already a converted PNG (data URL), not SVG!
@@ -463,7 +512,7 @@ export const showImageFullscreen = (dataUrl: string, fileName: string, onClose: 
 export const convertSvgToImage = async (
   svgElement: SVGSVGElement,
   options: ConversionOptions = {}
-): Promise<{ dataUrl: string; blob: Blob; width: number; height: number }> => {
+): Promise<{ dataUrl: string; blob: Blob; width: number; height: number; blobUrl?: string }> => {
   const { onProgress, onImageStatusUpdate } = options;
 
   // Step 1: Clone SVG to avoid modifying the original
@@ -513,5 +562,8 @@ export const convertSvgToImage = async (
     onProgress(100, 'Fertig!');
   }
 
-  return { dataUrl, blob, width, height };
+  // Optionally create blob URL for direct browser access
+  const blobUrl = URL.createObjectURL(blob);
+
+  return { dataUrl, blob, width, height, blobUrl };
 };

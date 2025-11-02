@@ -2,16 +2,6 @@ import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "re
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Image as ImageIcon, FileText, Palette, Upload, X, Check, Loader2 } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -37,7 +27,7 @@ import { ImageCropper } from "./ImageCropper";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { convertSvgToImage, downloadDataUrl, openDataUrlInNewWindow, showImageFullscreen, type ImageLoadProgress } from "@/utils/svgToImage";
+import { convertSvgToImage, downloadDataUrl, openDataUrlInNewWindow, showImageFullscreen, createAndOpenBlobUrl, type ImageLoadProgress } from "@/utils/svgToImage";
 
 type SportType = "unihockey" | "volleyball" | "handball";
 
@@ -61,7 +51,6 @@ export interface GamePreviewDisplayProps {
 
 export interface GamePreviewDisplayRef {
   triggerDownload: () => void;
-  triggerInstagramShare: () => void;
 }
 
 const STANDARD_THEMES = [
@@ -206,7 +195,6 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     setShowResultDetail(initialShowResultDetail);
   }, [initialShowResultDetail]);
   const [svgDimensions, setSvgDimensions] = useState({ width: "500", height: "625" });
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [customTemplates, setCustomTemplates] = useState<CustomTemplate[]>([]);
   const [gameData, setGameData] = useState<GameData[]>([]);
   const [loadingGameData, setLoadingGameData] = useState(false);
@@ -218,10 +206,9 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   const [progressMessage, setProgressMessage] = useState("");
   const [imageLoadStatus, setImageLoadStatus] = useState<ImageLoadProgress[]>([]);
 
-  // Expose the handleDownload and handleInstagramShare functions to parent via ref
+  // Expose the handleDownload function to parent via ref
   useImperativeHandle(ref, () => ({
-    triggerDownload: handleDownload,
-    triggerInstagramShare: handleInstagramShare
+    triggerDownload: handleDownload
   }));
   // Map sport type to API type
   const apiType = sportType === "unihockey" ? "swissunihockey" : sportType === "volleyball" ? "swissvolley" : sportType === "handball" ? "swisshandball" : sportType;
@@ -695,109 +682,14 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       return;
     }
 
-    // Show confirmation dialog
-    setShowConfirmDialog(true);
+    // Start download directly
+    confirmDownload();
   };
 
   /**
-   * Simplified download/share handler using the new unified utility
-   */
-  const handleInstagramShare = async () => {
-    // Check if user is logged in
-    if (!user) {
-      toast({
-        title: "Anmeldung erforderlich",
-        description: "Bitte melde dich an, um Posts zu erstellen",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      // Show progress dialog
-      setShowProgressDialog(true);
-      setImageLoadStatus([]);
-
-      // Extract SVG element
-      const svgElement = extractSvgElement();
-      if (!svgElement) {
-        throw new Error("SVG-Element konnte nicht gefunden werden");
-      }
-
-      // Convert SVG to image with progress tracking
-      const { dataUrl, blob } = await convertSvgToImage(svgElement, {
-        scale: 2,
-        backgroundColor: 'white',
-        onProgress: (progress, message) => {
-          setProgressValue(progress);
-          setProgressMessage(message);
-        },
-        onImageStatusUpdate: (statuses) => {
-          setImageLoadStatus(statuses);
-        },
-      });
-
-      // Generate file name
-      const fileName = `kanva-${activeTab}-${gameId}-${Date.now()}.png`;
-
-      // Simple download - works on all platforms
-      downloadDataUrl(dataUrl, fileName);
-
-      // Success feedback
-      setProgressValue(100);
-      setProgressMessage("Download erfolgreich!");
-
-      setTimeout(() => {
-        setShowProgressDialog(false);
-        setImageLoadStatus([]);
-        toast({
-          title: "Download erfolgreich",
-          description: "Das Bild wurde erfolgreich heruntergeladen.",
-        });
-      }, 500);
-
-    } catch (error) {
-      console.error("Export failed:", error);
-      setShowProgressDialog(false);
-      setImageLoadStatus([]);
-      toast({
-        title: "Fehler",
-        description: error instanceof Error ? error.message : "Bild konnte nicht heruntergeladen werden.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleOpenInstagram = () => {
-    setShowConfirmDialog(false);
-    
-    // Try to open Instagram app or website
-    const isNative = Capacitor.isNativePlatform();
-    
-    if (isNative) {
-      // Try Instagram app deep link on mobile
-      try {
-        window.location.href = 'instagram://';
-      } catch (e) {
-        // Fallback to Instagram website
-        window.open('https://www.instagram.com', '_blank');
-      }
-    } else {
-      // Open Instagram website on desktop
-      window.open('https://www.instagram.com', '_blank');
-    }
-    
-    toast({
-      title: "Instagram geöffnet",
-      description: "Du kannst das Bild jetzt in deiner Instagram Story hochladen.",
-    });
-  };
-
-  /**
-   * Simplified confirm download handler with platform-specific behavior
+   * Download handler with platform-specific behavior
    */
   const confirmDownload = async () => {
-    setShowConfirmDialog(false);
 
     try {
       // Show progress dialog
@@ -898,132 +790,58 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
           capacitorPlatform: Capacitor.getPlatform()
         });
 
-        // iOS handling (works for both native app web view AND web browsers on iOS)
-        if (iosDevice) {
-          const firefox = isFirefox();
+        // Mobile devices: Use blob URL approach (opens image in new tab as local file)
+        if (isMobileDevice) {
+          console.log('Using mobile blob URL approach - opening image in new tab');
+          setProgressMessage("Bild wird in neuem Tab geöffnet...");
           
-          if (firefox) {
-            // Firefox on iOS: Use blob URL approach for better download compatibility
-            console.log('Using iOS Firefox download approach');
-            setProgressMessage("Download wird vorbereitet...");
-            
-            // Convert data URL to blob URL for better compatibility
-            const arr = dataUrl.split(',');
-            const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
-            const bstr = atob(arr[1]);
-            let n = bstr.length;
-            const u8arr = new Uint8Array(n);
-            while (n--) {
-              u8arr[n] = bstr.charCodeAt(n);
-            }
-            const blob = new Blob([u8arr], { type: mime });
-            const blobUrl = URL.createObjectURL(blob);
-            
-            // Try to trigger download using blob URL
-            const downloadSuccess = downloadDataUrl(blobUrl, fileName);
-            
-            // Also try opening in new window as fallback
-            if (!downloadSuccess) {
-              const opened = openDataUrlInNewWindow(blobUrl, fileName);
-              if (opened) {
-                setProgressMessage("Bild in neuem Tab geöffnet!");
-              }
-            }
-            
-            // Cleanup blob URL after delay
-            setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-            
-            setProgressValue(100);
-            setProgressMessage(downloadSuccess ? "Download erfolgreich!" : "Bild geöffnet!");
-
-            setTimeout(() => {
-              setShowProgressDialog(false);
-              setImageLoadStatus([]);
-              toast({
-                title: downloadSuccess ? "Download erfolgreich" : "Bild geöffnet",
-                description: downloadSuccess 
-                  ? "Das Bild wurde erfolgreich heruntergeladen."
-                  : "Das Bild wurde in einem neuen Tab geöffnet. Du kannst es dort speichern.",
-                duration: 5000,
-              });
-            }, 500);
-          } else {
-            // Safari or other browsers on iOS: Use fullscreen viewer
-            console.log('Using iOS fullscreen viewer approach');
-            setProgressValue(100);
-            setProgressMessage("Bild bereit!");
-
-            setTimeout(() => {
-              setShowProgressDialog(false);
-              setImageLoadStatus([]);
-
-              // Show fullscreen image viewer with the converted PNG
-              showImageFullscreen(dataUrl, fileName, () => {
-                toast({
-                  title: "Bild geschlossen",
-                  description: "Du kannst das Bild jederzeit erneut herunterladen.",
-                });
-              });
-
-              toast({
-                title: "Bild bereit zum Speichern",
-                description: "Das PNG-Bild wird angezeigt. Drücke lang darauf, um es zu speichern.",
-                duration: 5000,
-              });
-            }, 300);
-          }
-        }
-        // Android or other mobile devices
-        else if (isMobileDevice) {
-          console.log('Using mobile approach (Android or other mobile)');
-          // Try to open in new window
-          const opened = openDataUrlInNewWindow(dataUrl, fileName);
-
+          // Create blob URL and open in new tab
+          // This creates a "local file" in the browser that can be saved by the user
+          const { blobUrl, cleanup } = createAndOpenBlobUrl(blob, fileName, 120000); // 2 minutes cleanup delay
+          
           setProgressValue(100);
-          setProgressMessage(opened ? "Bild geöffnet!" : "Download vorbereitet!");
+          setProgressMessage("Bild geöffnet!");
 
           setTimeout(() => {
             setShowProgressDialog(false);
             setImageLoadStatus([]);
-
-            if (opened) {
-              toast({
-                title: "Bild geöffnet",
-                description: "Das Bild wurde in einem neuen Tab geöffnet.",
-              });
-            } else {
-              // Fallback: Show fullscreen viewer with converted PNG
-              showImageFullscreen(dataUrl, fileName, () => {
-                toast({
-                  title: "Bild geschlossen",
-                  description: "Du kannst das Bild jederzeit erneut herunterladen.",
-                });
-              });
-
-              toast({
-                title: "Bild bereit zum Speichern",
-                description: "Das PNG-Bild wird angezeigt. Drücke lang darauf, um es zu speichern.",
-                duration: 5000,
-              });
-            }
-          }, 500);
-        }
-        // Desktop web
-        else {
-          console.log('Using desktop download approach');
-          downloadDataUrl(dataUrl, fileName);
-
-          setProgressValue(100);
-          setProgressMessage("Download erfolgreich!");
-
-          setTimeout(() => {
-            setShowProgressDialog(false);
-            setImageLoadStatus([]);
+            
+            // Store cleanup function for later (in case tab is closed manually)
+            (window as any).__kanvaBlobCleanup = cleanup;
+            
             toast({
-              title: "Download erfolgreich",
-              description: "Das Bild wurde erfolgreich heruntergeladen.",
+              title: "Bild geöffnet",
+              description: "Das Bild wurde in einem neuen Tab geöffnet. Du kannst es dort speichern.",
+              duration: 5000,
             });
-          }, 500);
+          }, 300);
+        }
+        // Desktop web: Use blob URL approach (opens image in new tab as local file)
+        else {
+          console.log('Using desktop blob URL approach - opening image in new tab');
+          setProgressMessage("Bild wird in neuem Tab geöffnet...");
+          
+          // Create blob URL and open in new tab
+          // This creates a "local file" in the browser that can be saved by the user
+          // This is often more reliable than direct downloads, especially if browser blocks downloads
+          const { blobUrl, cleanup } = createAndOpenBlobUrl(blob, fileName, 120000); // 2 minutes cleanup delay
+          
+          setProgressValue(100);
+          setProgressMessage("Bild geöffnet!");
+
+          setTimeout(() => {
+            setShowProgressDialog(false);
+            setImageLoadStatus([]);
+            
+            // Store cleanup function for later (in case tab is closed manually)
+            (window as any).__kanvaBlobCleanup = cleanup;
+            
+            toast({
+              title: "Bild geöffnet",
+              description: "Das Bild wurde in einem neuen Tab geöffnet. Du kannst es dort speichern (Rechtsklick > 'Bild speichern unter...').",
+              duration: 5000,
+            });
+          }, 300);
         }
       }
     } catch (error) {
@@ -1387,23 +1205,6 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
       </CardContent>
 
     </Card>
-
-      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Instagram öffnen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Dein Bild wurde erfolgreich heruntergeladen. Möchtest du Instagram öffnen, um das Bild zu teilen?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Nein, danke</AlertDialogCancel>
-            <AlertDialogAction onClick={handleOpenInstagram}>
-              Ja, Instagram öffnen
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
   }
