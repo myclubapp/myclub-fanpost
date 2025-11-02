@@ -290,6 +290,14 @@ const isIOS = (): boolean => {
 };
 
 /**
+ * Detects if the browser is Firefox (works on all platforms including iOS)
+ */
+const isFirefox = (): boolean => {
+  const userAgent = navigator.userAgent.toLowerCase();
+  return userAgent.includes('firefox') || userAgent.includes('fxios');
+};
+
+/**
  * Opens a data URL in a new window (useful for mobile devices)
  * iOS-specific: Creates a temporary download link with better compatibility
  */
