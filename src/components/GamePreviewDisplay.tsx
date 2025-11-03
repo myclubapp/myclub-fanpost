@@ -790,15 +790,53 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
           capacitorPlatform: Capacitor.getPlatform()
         });
 
-        // Mobile devices: Use blob URL approach (opens image in new tab as local file)
+        // Mobile devices: Prefer Web Share API to share the PNG file; fallback to blob URL or fullscreen
         if (isMobileDevice) {
+          const supportsShare = typeof (navigator as any).share === 'function';
+          const supportsCanShare = typeof (navigator as any).canShare === 'function';
+          const file = new File([blob], fileName, { type: 'image/png' });
+
+          if (supportsShare && (!supportsCanShare || (navigator as any).canShare({ files: [file] }))) {
+            try {
+              setProgressMessage("Teilen wird geöffnet...");
+              await (navigator as any).share({
+                title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
+                text: activeTab === "preview" ? "Schau dir diese Spielvorschau an!" : "Schau dir dieses Resultat an!",
+                files: [file],
+              });
+
+              setProgressValue(100);
+              setProgressMessage("Erfolgreich geteilt!");
+
+              setTimeout(() => {
+                setShowProgressDialog(false);
+                setImageLoadStatus([]);
+                toast({
+                  title: "Erfolgreich",
+                  description: "Das Bild wurde geteilt.",
+                });
+              }, 300);
+              return;
+            } catch (shareError: any) {
+              if (shareError && shareError.name === 'AbortError') {
+                setShowProgressDialog(false);
+                setImageLoadStatus([]);
+                toast({
+                  title: "Abgebrochen",
+                  description: "Der Teilen-Dialog wurde abgebrochen.",
+                });
+                return;
+              }
+              console.warn('Web Share API failed, falling back to blob URL:', shareError);
+            }
+          }
+
           console.log('Using mobile blob URL approach - opening image in new tab');
           setProgressMessage("Bild wird in neuem Tab geöffnet...");
-          
+
           // Create blob URL and open in new tab
-          // This creates a "local file" in the browser that can be saved by the user
           const { blobUrl, cleanup, success } = createAndOpenBlobUrl(blob, fileName, 120000); // 2 minutes cleanup delay
-          
+
           if (!success) {
             // Fallback: Use fullscreen viewer if blob URL opening failed
             console.log('Blob URL opening failed, falling back to fullscreen viewer');
@@ -810,7 +848,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
               setImageLoadStatus([]);
 
               showImageFullscreen(dataUrl, fileName, () => {
-                cleanup(); // Cleanup blob URL when viewer is closed
+                cleanup();
                 toast({
                   title: "Bild geschlossen",
                   description: "Du kannst das Bild jederzeit erneut herunterladen.",
@@ -825,17 +863,14 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
             }, 300);
             return;
           }
-          
+
           setProgressValue(100);
           setProgressMessage("Bild geöffnet!");
 
           setTimeout(() => {
             setShowProgressDialog(false);
             setImageLoadStatus([]);
-            
-            // Store cleanup function for later (in case tab is closed manually)
             (window as any).__kanvaBlobCleanup = cleanup;
-            
             toast({
               title: "Bild geöffnet",
               description: "Das Bild wurde in einem neuen Tab geöffnet. Du kannst es dort speichern.",
