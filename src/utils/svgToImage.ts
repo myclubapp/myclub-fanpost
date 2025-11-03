@@ -364,23 +364,27 @@ export const createAndOpenBlobUrl = (
     // Firefox on iOS: window.open() often doesn't work, use link click approach
     try {
       const link = document.createElement('a');
-      link.href = blobUrl;
+      // Convert blob to data URL (PNG) for better compatibility on iOS Firefox
+      // Some versions of iOS Firefox do not handle blob: URLs opened in a new tab reliably
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        link.href = dataUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          if (link.parentNode) {
+            document.body.removeChild(link);
+          }
+        }, 100);
+      };
+      reader.readAsDataURL(blob);
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       link.style.display = 'none';
-      
-      // Add to DOM temporarily
-      document.body.appendChild(link);
-      
-      // Trigger click
-      link.click();
-      
-      // Small delay before cleanup
-      setTimeout(() => {
-        if (link.parentNode) {
-          document.body.removeChild(link);
-        }
-      }, 100);
       
       success = true;
       console.log('Firefox iOS: Using link click approach for blob URL');
