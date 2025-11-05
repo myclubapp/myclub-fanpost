@@ -576,6 +576,38 @@ export const convertSvgToImage = async (
 
   const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
 
+  // Step 1b: Embed required web fonts into the cloned SVG (e.g., Bebas Neue)
+  // This ensures text renders with the correct font when drawn onto a canvas
+  try {
+    const embedFont = async (
+      familyName: string,
+      fontUrl: string,
+      fontFormat: 'truetype' | 'woff' | 'woff2' = 'truetype',
+      fontWeight: string = 'normal',
+      fontStyle: string = 'normal'
+    ) => {
+      // Resolve relative URLs to absolute based on current document
+      const resolvedUrl = new URL(fontUrl, document.baseURI).toString();
+      const resp = await fetch(resolvedUrl);
+      if (!resp.ok) throw new Error(`Font HTTP ${resp.status}`);
+      const blob = await resp.blob();
+      const base64 = await blobToBase64(blob);
+      const dataUrl = `data:font/${fontFormat};base64,${base64}`;
+
+      const styleEl = document.createElementNS(clonedSvg.namespaceURI, 'style');
+      styleEl.setAttribute('type', 'text/css');
+      styleEl.textContent = `@font-face { font-family: '${familyName}'; src: url('${dataUrl}') format('${fontFormat}'); font-weight: ${fontWeight}; font-style: ${fontStyle}; font-display: swap; }`;
+      clonedSvg.insertBefore(styleEl, clonedSvg.firstChild);
+    };
+
+    // Try to embed Bebas Neue which is used by the themes and present in /assets
+    // If fetching fails, we continue without throwing (fallback to system fonts)
+    await embedFont('Bebas Neue', '/assets/BebasNeue-Regular.ttf', 'truetype').catch(() => {});
+  } catch (e) {
+    // Non-fatal: if fonts cannot be embedded, proceed with conversion
+    console.warn('Font embedding skipped due to error:', e);
+  }
+
   // Step 2: Wait for all external images to load
   if (onProgress) {
     onProgress(20, 'Bilder werden geladen...');
@@ -620,4 +652,274 @@ export const convertSvgToImage = async (
   const blobUrl = URL.createObjectURL(blob);
 
   return { dataUrl, blob, width, height, blobUrl };
+};
+
+/**
+ * Platform detection utilities
+ */
+
+/**
+ * Detects if running on iOS using Capacitor's reliable platform detection
+ * This works for both native apps AND web browsers on iOS
+ */
+export const isIOSPlatform = (): boolean => {
+  // Check if Capacitor is available
+  if (typeof window !== 'undefined' && (window as any).Capacitor) {
+    const Capacitor = (window as any).Capacitor;
+    const platform = Capacitor.getPlatform();
+
+    // For native iOS app
+    if (platform === 'ios') {
+      console.log('iOS detected: Native iOS app');
+      return true;
+    }
+
+    // For web (including iOS browsers like Firefox, Safari, Chrome on iOS)
+    if (platform === 'web') {
+      // Use multiple detection methods for iOS browsers
+      const isIOSUserAgent = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isIPadPro = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+      const isIPad13Plus = navigator.userAgent.includes('Mac') && 'ontouchend' in document;
+
+      const result = isIOSUserAgent || isIPadPro || isIPad13Plus;
+
+      console.log('Platform Detection (Web):', {
+        capacitorPlatform: platform,
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        maxTouchPoints: navigator.maxTouchPoints,
+        isIOSUserAgent,
+        isIPadPro,
+        isIPad13Plus,
+        finalResult: result
+      });
+
+      return result;
+    }
+
+    console.log('Platform detected:', platform);
+    return false;
+  }
+
+  // Fallback if Capacitor is not available
+  return isIOS();
+};
+
+/**
+ * Shared download handler options
+ */
+export interface DownloadHandlerOptions {
+  svgElement: SVGSVGElement;
+  fileName: string;
+  isMobile: boolean;
+  onProgressUpdate: (progress: number, message: string) => void;
+  onImageStatusUpdate: (statuses: ImageLoadProgress[]) => void;
+  onSuccess: (message: { title: string; description: string; duration?: number }) => void;
+  onError: (message: { title: string; description: string }) => void;
+}
+
+/**
+ * Shared download handler with platform-specific behavior
+ * Handles native platforms, mobile web, and desktop web downloads
+ */
+export const handlePlatformDownload = async (options: DownloadHandlerOptions): Promise<void> => {
+  const {
+    svgElement,
+    fileName,
+    isMobile,
+    onProgressUpdate,
+    onImageStatusUpdate,
+    onSuccess,
+    onError,
+  } = options;
+
+  try {
+    // Convert SVG to image with progress tracking
+    const { dataUrl, blob } = await convertSvgToImage(svgElement, {
+      scale: 2,
+      backgroundColor: 'white',
+      onProgress: onProgressUpdate,
+      onImageStatusUpdate,
+    });
+
+    // Check if running on native platform (iOS/Android)
+    const isNative = typeof window !== 'undefined' &&
+                     (window as any).Capacitor?.isNativePlatform?.() === true;
+
+    if (isNative) {
+      // Native platforms: Use Capacitor Share API
+      onProgressUpdate(100, "Wird geteilt...");
+
+      try {
+        const Capacitor = (window as any).Capacitor;
+        const { Share } = await import('@capacitor/share');
+        const { Filesystem, Directory } = await import('@capacitor/filesystem');
+
+        const base64Data = await blobToBase64(blob);
+
+        // Save to filesystem
+        await Filesystem.writeFile({
+          path: fileName,
+          data: base64Data,
+          directory: Directory.Cache,
+        });
+
+        // Get file URI
+        const fileUri = await Filesystem.getUri({
+          directory: Directory.Cache,
+          path: fileName,
+        });
+
+        // Share using Capacitor
+        await Share.share({
+          title: "Spielvorschau",
+          text: "Schau dir diese Spielvorschau an!",
+          url: fileUri.uri,
+          dialogTitle: "Bild teilen",
+        });
+
+        onSuccess({
+          title: "Erfolgreich!",
+          description: "Das Bild wurde geteilt.",
+        });
+      } catch (error) {
+        // User might have cancelled the share dialog
+        if ((error as Error).name === 'AbortError') {
+          onError({
+            title: "Abgebrochen",
+            description: "Der Share-Dialog wurde abgebrochen.",
+          });
+        } else {
+          throw error;
+        }
+      }
+    } else {
+      // Web platforms: Platform-specific behavior
+      onProgressUpdate(100, "Download wird vorbereitet...");
+
+      const iosDevice = isIOSPlatform();
+      const Capacitor = typeof window !== 'undefined' ? (window as any).Capacitor : null;
+      const isAndroid = (Capacitor?.getPlatform?.() === 'android') || /Android/i.test(navigator.userAgent);
+      const isMobileDevice = isMobile || iosDevice || isAndroid;
+
+      console.log('Download Platform Detection:', {
+        isMobile,
+        isMobileDevice,
+        isIOS: iosDevice,
+        isAndroid,
+        userAgent: navigator.userAgent,
+        capacitorPlatform: Capacitor?.getPlatform?.()
+      });
+
+      // Mobile devices: Prefer Web Share API to share the PNG file; fallback to blob URL or fullscreen
+      if (isMobileDevice) {
+        const supportsShare = typeof (navigator as any).share === 'function';
+        const supportsCanShare = typeof (navigator as any).canShare === 'function';
+        const file = new File([blob], fileName, { type: 'image/png' });
+
+        if (supportsShare && (!supportsCanShare || (navigator as any).canShare({ files: [file] }))) {
+          try {
+            onProgressUpdate(100, "Teilen wird geöffnet...");
+            await (navigator as any).share({
+              title: "Spielvorschau",
+              text: "Schau dir diese Spielvorschau an!",
+              files: [file],
+            });
+
+            onSuccess({
+              title: "Erfolgreich",
+              description: "Das Bild wurde geteilt.",
+            });
+            return;
+          } catch (shareError: any) {
+            if (shareError && shareError.name === 'AbortError') {
+              onError({
+                title: "Abgebrochen",
+                description: "Der Teilen-Dialog wurde abgebrochen.",
+              });
+              return;
+            }
+            console.warn('Web Share API failed, falling back to blob URL:', shareError);
+          }
+        }
+
+        console.log('Using mobile blob URL approach - opening image in new tab');
+        onProgressUpdate(100, "Bild wird in neuem Tab geöffnet...");
+
+        // Create blob URL and open in new tab
+        const { blobUrl, cleanup, success } = createAndOpenBlobUrl(blob, fileName, 120000); // 2 minutes cleanup delay
+
+        if (!success) {
+          // Fallback: Use fullscreen viewer if blob URL opening failed
+          console.log('Blob URL opening failed, falling back to fullscreen viewer');
+          onProgressUpdate(100, "Bild bereit!");
+
+          showImageFullscreen(dataUrl, fileName, () => {
+            cleanup();
+            onSuccess({
+              title: "Bild geschlossen",
+              description: "Du kannst das Bild jederzeit erneut herunterladen.",
+            });
+          });
+
+          onSuccess({
+            title: "Bild bereit zum Speichern",
+            description: "Drücke lang auf das Bild, um es zu speichern.",
+            duration: 5000,
+          });
+          return;
+        }
+
+        // Store cleanup function for later (in case tab is closed manually)
+        (window as any).__kanvaBlobCleanup = cleanup;
+
+        onSuccess({
+          title: "Bild geöffnet",
+          description: "Das Bild wurde in einem neuen Tab geöffnet. Du kannst es dort speichern.",
+          duration: 5000,
+        });
+      }
+      // Desktop web: Use blob URL approach (opens image in new tab as local file)
+      else {
+        console.log('Using desktop blob URL approach - opening image in new tab');
+        onProgressUpdate(100, "Bild wird in neuem Tab geöffnet...");
+
+        // Create blob URL and open in new tab
+        const { blobUrl, cleanup, success } = createAndOpenBlobUrl(blob, fileName, 120000); // 2 minutes cleanup delay
+
+        if (!success) {
+          // Fallback: Try direct download if blob URL opening failed
+          console.log('Blob URL opening failed, falling back to direct download');
+          const downloadSuccess = downloadDataUrl(dataUrl, fileName);
+
+          onSuccess({
+            title: downloadSuccess ? "Download erfolgreich" : "Download vorbereitet",
+            description: downloadSuccess
+              ? "Das Bild wurde erfolgreich heruntergeladen."
+              : "Versuche, das Bild herunterzuladen.",
+            duration: 5000,
+          });
+          return;
+        }
+
+        // Store cleanup function for later (in case tab is closed manually)
+        (window as any).__kanvaBlobCleanup = cleanup;
+
+        onSuccess({
+          title: "Bild geöffnet",
+          description: "Das Bild wurde in einem neuen Tab geöffnet. Du kannst es dort speichern (Rechtsklick > 'Bild speichern unter...').",
+          duration: 5000,
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Export failed:", error);
+    // Don't show error if user cancelled
+    if ((error as Error).name !== 'AbortError') {
+      onError({
+        title: "Fehler",
+        description: error instanceof Error ? error.message : "Bild konnte nicht erstellt werden.",
+      });
+    }
+  }
 };

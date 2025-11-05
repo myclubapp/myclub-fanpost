@@ -9,10 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useQuery } from "@tanstack/react-query";
-import { Share } from "@capacitor/share";
-import { Filesystem, Directory } from "@capacitor/filesystem";
-import { Capacitor } from "@capacitor/core";
-import { Device } from "@capacitor/device";
 import {
   Select,
   SelectContent,
@@ -27,7 +23,7 @@ import { ImageCropper } from "./ImageCropper";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { convertSvgToImage, downloadDataUrl, openDataUrlInNewWindow, showImageFullscreen, createAndOpenBlobUrl, type ImageLoadProgress } from "@/utils/svgToImage";
+import { handlePlatformDownload, type ImageLoadProgress } from "@/utils/svgToImage";
 
 type SportType = "unihockey" | "volleyball" | "handball";
 
@@ -574,71 +570,6 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   };
 
   /**
-   * Helper to convert blob to base64 (for Capacitor)
-   */
-  const blobToBase64 = (blob: Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = (reader.result as string).split(",")[1]; // remove prefix
-        resolve(base64);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  };
-
-  /**
-   * Detects if running on iOS using Capacitor's reliable platform detection
-   * This works for both native apps AND web browsers on iOS
-   */
-  const isIOSPlatform = (): boolean => {
-    // Capacitor.getPlatform() returns: 'ios', 'android', or 'web'
-    const platform = Capacitor.getPlatform();
-
-    // For native iOS app
-    if (platform === 'ios') {
-      console.log('iOS detected: Native iOS app');
-      return true;
-    }
-
-    // For web (including iOS browsers like Firefox, Safari, Chrome on iOS)
-    // We need to check the actual device OS
-    if (platform === 'web') {
-      // Use multiple detection methods for iOS browsers
-      const isIOSUserAgent = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const isIPadPro = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
-      const isIPad13Plus = navigator.userAgent.includes('Mac') && 'ontouchend' in document;
-
-      const result = isIOSUserAgent || isIPadPro || isIPad13Plus;
-
-      console.log('Platform Detection (Web):', {
-        capacitorPlatform: platform,
-        userAgent: navigator.userAgent,
-        platform: navigator.platform,
-        maxTouchPoints: navigator.maxTouchPoints,
-        isIOSUserAgent,
-        isIPadPro,
-        isIPad13Plus,
-        finalResult: result
-      });
-
-      return result;
-    }
-
-    console.log('Platform detected:', platform);
-    return false;
-  };
-
-  /**
-   * Detects if the browser is Firefox (works on all platforms including iOS)
-   */
-  const isFirefox = (): boolean => {
-    const userAgent = navigator.userAgent.toLowerCase();
-    return userAgent.includes('firefox') || userAgent.includes('fxios');
-  };
-
-  /**
    * Extracts the SVG element from either web component or custom template
    */
   const extractSvgElement = (): SVGSVGElement | null => {
@@ -690,258 +621,55 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
    * Download handler with platform-specific behavior
    */
   const confirmDownload = async () => {
+    // Show progress dialog
+    setShowProgressDialog(true);
+    setImageLoadStatus([]);
 
-    try {
-      // Show progress dialog
-      setShowProgressDialog(true);
-      setImageLoadStatus([]);
-
-      // Extract SVG element
-      const svgElement = extractSvgElement();
-      if (!svgElement) {
-        throw new Error("SVG-Element konnte nicht gefunden werden");
-      }
-
-      // Convert SVG to image with progress tracking
-      const { dataUrl, blob } = await convertSvgToImage(svgElement, {
-        scale: 2,
-        backgroundColor: 'white',
-        onProgress: (progress, message) => {
-          setProgressValue(progress);
-          setProgressMessage(message);
-        },
-        onImageStatusUpdate: (statuses) => {
-          setImageLoadStatus(statuses);
-        },
-      });
-
-      // Generate file name
-      const fileName = `kanva-${activeTab}-${gameId}-${Date.now()}.png`;
-
-      // Check if running on native platform (iOS/Android)
-      const isNative = Capacitor.isNativePlatform();
-
-      if (isNative) {
-        // Native platforms: Use Capacitor Share API
-        setProgressMessage("Wird geteilt...");
-
-        try {
-          const base64Data = await blobToBase64(blob);
-
-          // Save to filesystem
-          await Filesystem.writeFile({
-            path: fileName,
-            data: base64Data,
-            directory: Directory.Cache,
-          });
-
-          // Get file URI
-          const fileUri = await Filesystem.getUri({
-            directory: Directory.Cache,
-            path: fileName,
-          });
-
-          // Share using Capacitor
-          await Share.share({
-            title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
-            text: activeTab === "preview" ? "Schau dir diese Spielvorschau an!" : "Schau dir dieses Resultat an!",
-            url: fileUri.uri,
-            dialogTitle: "Bild teilen",
-          });
-
-          setProgressValue(100);
-          setProgressMessage("Erfolgreich geteilt!");
-
-          setTimeout(() => {
-            setShowProgressDialog(false);
-            setImageLoadStatus([]);
-            toast({
-              title: "Erfolgreich!",
-              description: "Das Bild wurde geteilt.",
-            });
-          }, 500);
-        } catch (error) {
-          // User might have cancelled the share dialog
-          if ((error as Error).name === 'AbortError') {
-            setShowProgressDialog(false);
-            setImageLoadStatus([]);
-            toast({
-              title: "Abgebrochen",
-              description: "Der Share-Dialog wurde abgebrochen.",
-            });
-          } else {
-            throw error;
-          }
-        }
-      } else {
-        // Web platforms: Platform-specific behavior
-        setProgressMessage("Download wird vorbereitet...");
-
-        const iosDevice = isIOSPlatform();
-        const isAndroid = Capacitor.getPlatform() === 'android' || /Android/i.test(navigator.userAgent);
-        const isMobileDevice = isMobile || iosDevice || isAndroid;
-
-        console.log('Download Platform Detection:', {
-          isMobile,
-          isMobileDevice,
-          isIOS: iosDevice,
-          isAndroid,
-          userAgent: navigator.userAgent,
-          capacitorPlatform: Capacitor.getPlatform()
-        });
-
-        // Mobile devices: Prefer Web Share API to share the PNG file; fallback to blob URL or fullscreen
-        if (isMobileDevice) {
-          const supportsShare = typeof (navigator as any).share === 'function';
-          const supportsCanShare = typeof (navigator as any).canShare === 'function';
-          const file = new File([blob], fileName, { type: 'image/png' });
-
-          if (supportsShare && (!supportsCanShare || (navigator as any).canShare({ files: [file] }))) {
-            try {
-              setProgressMessage("Teilen wird geöffnet...");
-              await (navigator as any).share({
-                title: activeTab === "preview" ? "Spielvorschau" : "Resultat",
-                text: activeTab === "preview" ? "Schau dir diese Spielvorschau an!" : "Schau dir dieses Resultat an!",
-                files: [file],
-              });
-
-              setProgressValue(100);
-              setProgressMessage("Erfolgreich geteilt!");
-
-              setTimeout(() => {
-                setShowProgressDialog(false);
-                setImageLoadStatus([]);
-                toast({
-                  title: "Erfolgreich",
-                  description: "Das Bild wurde geteilt.",
-                });
-              }, 300);
-              return;
-            } catch (shareError: any) {
-              if (shareError && shareError.name === 'AbortError') {
-                setShowProgressDialog(false);
-                setImageLoadStatus([]);
-                toast({
-                  title: "Abgebrochen",
-                  description: "Der Teilen-Dialog wurde abgebrochen.",
-                });
-                return;
-              }
-              console.warn('Web Share API failed, falling back to blob URL:', shareError);
-            }
-          }
-
-          console.log('Using mobile blob URL approach - opening image in new tab');
-          setProgressMessage("Bild wird in neuem Tab geöffnet...");
-
-          // Create blob URL and open in new tab
-          const { blobUrl, cleanup, success } = createAndOpenBlobUrl(blob, fileName, 120000); // 2 minutes cleanup delay
-
-          if (!success) {
-            // Fallback: Use fullscreen viewer if blob URL opening failed
-            console.log('Blob URL opening failed, falling back to fullscreen viewer');
-            setProgressValue(100);
-            setProgressMessage("Bild bereit!");
-
-            setTimeout(() => {
-              setShowProgressDialog(false);
-              setImageLoadStatus([]);
-
-              showImageFullscreen(dataUrl, fileName, () => {
-                cleanup();
-                toast({
-                  title: "Bild geschlossen",
-                  description: "Du kannst das Bild jederzeit erneut herunterladen.",
-                });
-              });
-
-              toast({
-                title: "Bild bereit zum Speichern",
-                description: "Drücke lang auf das Bild, um es zu speichern.",
-                duration: 5000,
-              });
-            }, 300);
-            return;
-          }
-
-          setProgressValue(100);
-          setProgressMessage("Bild geöffnet!");
-
-          setTimeout(() => {
-            setShowProgressDialog(false);
-            setImageLoadStatus([]);
-            (window as any).__kanvaBlobCleanup = cleanup;
-            toast({
-              title: "Bild geöffnet",
-              description: "Das Bild wurde in einem neuen Tab geöffnet. Du kannst es dort speichern.",
-              duration: 5000,
-            });
-          }, 300);
-        }
-        // Desktop web: Use blob URL approach (opens image in new tab as local file)
-        else {
-          console.log('Using desktop blob URL approach - opening image in new tab');
-          setProgressMessage("Bild wird in neuem Tab geöffnet...");
-          
-          // Create blob URL and open in new tab
-          // This creates a "local file" in the browser that can be saved by the user
-          // This is often more reliable than direct downloads, especially if browser blocks downloads
-          const { blobUrl, cleanup, success } = createAndOpenBlobUrl(blob, fileName, 120000); // 2 minutes cleanup delay
-          
-          if (!success) {
-            // Fallback: Try direct download if blob URL opening failed
-            console.log('Blob URL opening failed, falling back to direct download');
-            const downloadSuccess = downloadDataUrl(dataUrl, fileName);
-            
-            setProgressValue(100);
-            setProgressMessage(downloadSuccess ? "Download erfolgreich!" : "Download vorbereitet!");
-
-            setTimeout(() => {
-              setShowProgressDialog(false);
-              setImageLoadStatus([]);
-              toast({
-                title: downloadSuccess ? "Download erfolgreich" : "Download vorbereitet",
-                description: downloadSuccess 
-                  ? "Das Bild wurde erfolgreich heruntergeladen."
-                  : "Versuche, das Bild herunterzuladen.",
-                duration: 5000,
-              });
-            }, 500);
-            return;
-          }
-          
-          setProgressValue(100);
-          setProgressMessage("Bild geöffnet!");
-
-          setTimeout(() => {
-            setShowProgressDialog(false);
-            setImageLoadStatus([]);
-            
-            // Store cleanup function for later (in case tab is closed manually)
-            (window as any).__kanvaBlobCleanup = cleanup;
-            
-            toast({
-              title: "Bild geöffnet",
-              description: "Das Bild wurde in einem neuen Tab geöffnet. Du kannst es dort speichern (Rechtsklick > 'Bild speichern unter...').",
-              duration: 5000,
-            });
-          }, 300);
-        }
-      }
-    } catch (error) {
-      console.error("Export failed:", error);
+    // Extract SVG element
+    const svgElement = extractSvgElement();
+    if (!svgElement) {
       setShowProgressDialog(false);
-      setImageLoadStatus([]);
+      toast({
+        title: "Fehler",
+        description: "SVG-Element konnte nicht gefunden werden",
+        variant: "destructive",
+      });
+      return;
+    }
 
-      // Don't show error if user cancelled
-      if ((error as Error).name !== 'AbortError') {
+    // Generate file name
+    const fileName = `kanva-${activeTab}-${gameId}-${Date.now()}.png`;
+
+    // Use the shared download handler
+    await handlePlatformDownload({
+      svgElement,
+      fileName,
+      isMobile,
+      onProgressUpdate: (progress, message) => {
+        setProgressValue(progress);
+        setProgressMessage(message);
+      },
+      onImageStatusUpdate: (statuses) => {
+        setImageLoadStatus(statuses);
+      },
+      onSuccess: (message) => {
+        setProgressValue(100);
+        setProgressMessage(message.description);
+        setTimeout(() => {
+          setShowProgressDialog(false);
+          setImageLoadStatus([]);
+          toast(message);
+        }, 300);
+      },
+      onError: (message) => {
+        setShowProgressDialog(false);
+        setImageLoadStatus([]);
         toast({
-          title: "Fehler",
-          description: error instanceof Error ? error.message : "Bild konnte nicht erstellt werden.",
+          ...message,
           variant: "destructive",
         });
-      }
-    }
+      },
+    });
   };
 
   return (
