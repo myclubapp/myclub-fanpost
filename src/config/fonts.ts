@@ -29,7 +29,7 @@ export const AVAILABLE_FONTS: Record<string, FontConfig> = {
       {
         weight: '400',
         style: 'normal',
-        url: 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9WdhyzbiDCsg.woff2'
+        url: 'https://fonts.gstatic.com/s/bebasneue/v16/JTUSjIg69CK48gW7PXoo9WdhyyTh89ZNpQ.woff2'
       }
     ]
   },
