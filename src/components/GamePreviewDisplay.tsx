@@ -436,6 +436,20 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         viewBox={`0 0 ${canvasWidth} ${canvasHeight}`}
         className="max-w-full h-auto"
       >
+        {/* Embed Bebas Neue font for export */}
+        <defs>
+          <style type="text/css">
+            {`
+              @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+              @font-face {
+                font-family: 'Bebas Neue';
+                font-style: normal;
+                font-weight: 400;
+                src: url(https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2) format('woff2');
+              }
+            `}
+          </style>
+        </defs>
         {/* Background */}
         {config.useBackgroundPlaceholder && backgroundImage ? (
           <image
@@ -508,7 +522,13 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
                 fontFamily={element.fontFamily}
                 fill={element.fill}
                 fontWeight={element.fontWeight}
+                fontStyle={element.fontStyle}
                 textAnchor={element.textAnchor}
+                stroke={element.stroke}
+                strokeWidth={element.strokeWidth}
+                paintOrder={element.paintOrder}
+                letterSpacing={element.letterSpacing}
+                opacity={element.opacity}
               >
                 {content}
               </text>
