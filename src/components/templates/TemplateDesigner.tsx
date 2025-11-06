@@ -1380,15 +1380,26 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="100">Thin (100)</SelectItem>
-                        <SelectItem value="200">Extra Light (200)</SelectItem>
-                        <SelectItem value="300">Light (300)</SelectItem>
-                        <SelectItem value="400">Normal (400)</SelectItem>
-                        <SelectItem value="500">Medium (500)</SelectItem>
-                        <SelectItem value="600">Semi Bold (600)</SelectItem>
-                        <SelectItem value="700">Bold (700)</SelectItem>
-                        <SelectItem value="800">Extra Bold (800)</SelectItem>
-                        <SelectItem value="900">Black (900)</SelectItem>
+                        {(() => {
+                          const cleanFamily = selectedElementData.fontFamily?.split(',')[0].trim();
+                          const availableWeights = cleanFamily ? getAvailableFontWeights(cleanFamily) : ['400'];
+                          const weightLabels: Record<string, string> = {
+                            '100': 'Thin (100)',
+                            '200': 'Extra Light (200)',
+                            '300': 'Light (300)',
+                            '400': 'Normal (400)',
+                            '500': 'Medium (500)',
+                            '600': 'Semi Bold (600)',
+                            '700': 'Bold (700)',
+                            '800': 'Extra Bold (800)',
+                            '900': 'Black (900)'
+                          };
+                          return availableWeights.map(weight => (
+                            <SelectItem key={weight} value={weight}>
+                              {weightLabels[weight] || `Weight ${weight}`}
+                            </SelectItem>
+                          ));
+                        })()}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1403,8 +1414,20 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="normal">Normal</SelectItem>
-                        <SelectItem value="italic">Kursiv</SelectItem>
+                        {(() => {
+                          const cleanFamily = selectedElementData.fontFamily?.split(',')[0].trim();
+                          const currentWeight = selectedElementData.fontWeight || '400';
+                          const availableStyles = cleanFamily ? getAvailableFontStyles(cleanFamily, currentWeight) : ['normal'];
+                          const styleLabels: Record<string, string> = {
+                            'normal': 'Normal',
+                            'italic': 'Kursiv'
+                          };
+                          return availableStyles.map(style => (
+                            <SelectItem key={style} value={style}>
+                              {styleLabels[style] || style}
+                            </SelectItem>
+                          ));
+                        })()}
                       </SelectContent>
                     </Select>
                   </div>
