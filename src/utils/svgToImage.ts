@@ -260,6 +260,45 @@ export const svgToPngDataUrl = async (
     await document.fonts.ready;
   }
 
+  // Extract all font families from the SVG to ensure they're loaded
+  const textElements = svgElement.querySelectorAll('text, tspan');
+  const fontFamilies = new Set<string>();
+  
+  textElements.forEach((element) => {
+    const fontFamily = element.getAttribute('font-family');
+    if (fontFamily) {
+      // Clean up font family string (remove quotes, fallbacks)
+      const cleanFamily = fontFamily.split(',')[0].replace(/['"]/g, '').trim();
+      if (cleanFamily && cleanFamily !== 'sans-serif' && cleanFamily !== 'serif' && cleanFamily !== 'monospace') {
+        fontFamilies.add(cleanFamily);
+      }
+    }
+  });
+
+  // Wait for all fonts used in the SVG to be loaded
+  if (document.fonts && document.fonts.load && fontFamilies.size > 0) {
+    const fontLoadPromises: Promise<void>[] = [];
+    for (const fontFamily of fontFamilies) {
+      // Try to load the font with different weights/styles
+      for (const weight of ['400', '700']) {
+        for (const style of ['normal', 'italic']) {
+          const fontSpec = `${style} ${weight} 16px "${fontFamily}"`;
+          fontLoadPromises.push(
+            document.fonts.load(fontSpec).then(() => {
+              // Font loaded successfully
+            }).catch(() => {
+              // Ignore errors - font might not be available in that variant
+            })
+          );
+        }
+      }
+    }
+    await Promise.all(fontLoadPromises);
+  }
+
+  // Additional delay to ensure fonts are fully applied
+  await new Promise(resolve => setTimeout(resolve, 200));
+
   // Create a canvas element
   const canvas = document.createElement('canvas');
   canvas.width = width * scale;
@@ -288,8 +327,9 @@ export const svgToPngDataUrl = async (
       img.src = url;
     });
 
-    // Small delay to ensure fonts are applied in the image
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Additional delay to ensure fonts are applied in the rendered image
+    // This is important because when SVG is loaded as Image, fonts need time to render
+    await new Promise(resolve => setTimeout(resolve, 300));
 
     // Draw image on canvas
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -690,7 +730,7 @@ export const convertSvgToImage = async (
           }
 
           let normalizedWeight = fontWeight.toString();
-          let normalizedStyle = fontStyle;
+          const normalizedStyle = fontStyle;
 
           // Bebas Neue from Google Fonts only provides 400; clamp to 400 to avoid fallbacks
           if (cleanFamily === 'Bebas Neue') {
@@ -772,10 +812,20 @@ export const convertSvgToImage = async (
 
         const dataUrl = `data:font/${fontFormat};base64,${base64}`;
 
+        // Ensure defs element exists
+        let defsEl = clonedSvg.querySelector('defs') as SVGDefsElement | null;
+        if (!defsEl) {
+          defsEl = document.createElementNS(clonedSvg.namespaceURI, 'defs') as SVGDefsElement;
+          clonedSvg.insertBefore(defsEl, clonedSvg.firstChild);
+        }
+
+        // Create style element for font-face
         const styleEl = document.createElementNS(clonedSvg.namespaceURI, 'style');
         styleEl.setAttribute('type', 'text/css');
         styleEl.textContent = `@font-face { font-family: '${familyName}'; src: url('${dataUrl}') format('${fontFormat}'); font-weight: ${fontWeight}; font-style: ${fontStyle}; font-display: block; }`;
-        clonedSvg.insertBefore(styleEl, clonedSvg.firstChild);
+        
+        // Insert style into defs to ensure proper SVG structure
+        defsEl.appendChild(styleEl);
         console.log(`Successfully embedded font: ${familyName} (${fontWeight} ${fontStyle})`);
       } catch (e) {
         console.warn(`Failed to embed font ${familyName} (${fontWeight} ${fontStyle}):`, e);
