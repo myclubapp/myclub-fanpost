@@ -3,6 +3,56 @@
  * Handles all image inlining and conversion in a unified way
  */
 
+/**
+ * Dynamically loads Google Fonts into the document
+ * This ensures fonts are available when rendering to canvas
+ */
+const loadGoogleFontsIntoDocument = (fontFamilies: Map<string, Set<{ weight: string; style: string }>>) => {
+  const existingLinks = document.querySelectorAll('link[data-svg-font]');
+  const existingFonts = new Set<string>(
+    Array.from(existingLinks).map(link => link.getAttribute('href') || '')
+  );
+
+  const fontsToLoad: string[] = [];
+
+  for (const [fontFamily, styles] of fontFamilies.entries()) {
+    // Build Google Fonts URL for this family
+    const weights: string[] = [];
+    const hasItalic = Array.from(styles).some(s => s.style === 'italic');
+
+    for (const style of styles) {
+      const weight = parseInt(style.weight, 10) || 400;
+      if (style.style === 'italic') {
+        weights.push(`1,${weight}`);
+      } else {
+        weights.push(`0,${weight}`);
+      }
+    }
+
+    // Remove duplicates and sort
+    const uniqueWeights = Array.from(new Set(weights)).sort();
+
+    // Build Google Fonts URL
+    const fontNameEncoded = fontFamily.replace(/ /g, '+');
+    const fontUrl = `https://fonts.googleapis.com/css2?family=${fontNameEncoded}:ital,wght@${uniqueWeights.join(';')}&display=block`;
+
+    if (!existingFonts.has(fontUrl)) {
+      fontsToLoad.push(fontUrl);
+    }
+  }
+
+  // Load fonts into document
+  fontsToLoad.forEach(fontUrl => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = fontUrl;
+    link.setAttribute('data-svg-font', 'true');
+    document.head.appendChild(link);
+  });
+
+  return fontsToLoad.length > 0;
+};
+
 export interface ImageLoadProgress {
   url: string;
   status: 'pending' | 'loading' | 'loaded' | 'error';
@@ -584,8 +634,8 @@ export const convertSvgToImage = async (
 
   const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
 
-  // Step 1b: Embed required web fonts into the cloned SVG
-  // This ensures text renders with the correct font when drawn onto a canvas
+  // Step 1b: Load Google Fonts into the document AND embed into SVG
+  // This two-pronged approach ensures fonts work in both browser and canvas
   try {
     // Extract all unique font families and their styles used in the SVG
     const fontConfigs = new Map<string, Set<{ weight: string; style: string }>>();
@@ -617,6 +667,14 @@ export const convertSvgToImage = async (
     console.log('Detected fonts in SVG:', Array.from(fontConfigs.entries()).map(([name, styles]) =>
       `${name}: ${Array.from(styles).map(s => `${s.weight} ${s.style}`).join(', ')}`
     ));
+
+    // Step 1: Load fonts into document using Google Fonts API
+    const fontsLoadedIntoDocument = loadGoogleFontsIntoDocument(fontConfigs);
+    if (fontsLoadedIntoDocument) {
+      console.log('Loading Google Fonts into document...');
+      // Wait a bit for Google Fonts to load
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
 
     // Map of common Google Fonts to their woff2 URLs (with variants)
     const googleFontUrls: Record<string, Record<string, string>> = {
@@ -804,15 +862,39 @@ export const convertSvgToImage = async (
       }
     }
 
-    // Wait for all fonts to be fully loaded
+    // Wait for all embedded fonts to be fully loaded
     await Promise.all(fontLoadPromises);
 
-    // Additional safety: wait for document.fonts.ready
+    console.log('All fonts embedded successfully');
+
+    // Step 2: Wait for all fonts in the document to be ready
     if (document.fonts && document.fonts.ready) {
+      console.log('Waiting for document fonts to be ready...');
       await document.fonts.ready;
+      console.log('Document fonts ready');
     }
 
-    console.log('All fonts embedded and loaded successfully');
+    // Step 3: Explicitly load each font variant we need
+    const fontLoadChecks: Promise<void>[] = [];
+    for (const [fontFamily, styles] of fontConfigs.entries()) {
+      for (const style of styles) {
+        const normalizedWeight = normalizeFontWeight(style.weight);
+        const fontSpec = `${style.style} ${normalizedWeight} 16px "${fontFamily}"`;
+
+        if (document.fonts && document.fonts.load) {
+          fontLoadChecks.push(
+            document.fonts.load(fontSpec).then(() => {
+              console.log(`✓ Font ready in document: ${fontFamily} (${normalizedWeight} ${style.style})`);
+            }).catch((err) => {
+              console.warn(`✗ Font load check failed: ${fontFamily}`, err);
+            })
+          );
+        }
+      }
+    }
+
+    await Promise.all(fontLoadChecks);
+    console.log('All fonts loaded and verified');
   } catch (e) {
     // Non-fatal: if fonts cannot be embedded, proceed with conversion
     console.warn('Font embedding skipped due to error:', e);
