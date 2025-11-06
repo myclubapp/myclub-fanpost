@@ -299,26 +299,95 @@ export const svgToPngDataUrl = async (
   // Additional delay to ensure fonts are fully applied
   await new Promise(resolve => setTimeout(resolve, 200));
 
-  // Create a canvas element
-  const canvas = document.createElement('canvas');
-  canvas.width = width * scale;
-  canvas.height = height * scale;
-
-  const ctx = canvas.getContext('2d');
-  if (!ctx) {
-    throw new Error('Could not get canvas context');
-  }
-
-  // Fill background
-  ctx.fillStyle = backgroundColor;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // Convert SVG to string
-  const svgString = new XMLSerializer().serializeToString(svgElement);
-  const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-  const url = URL.createObjectURL(svgBlob);
+  // Create a temporary container and add SVG to DOM to ensure fonts are loaded
+  // This is critical: fonts embedded in SVG won't load unless SVG is in DOM
+  const tempContainer = document.createElement('div');
+  tempContainer.style.cssText = 'position:fixed; left:-99999px; top:-99999px; width:0; height:0; overflow:hidden; visibility:hidden;';
+  const svgClone = svgElement.cloneNode(true) as SVGSVGElement;
+  tempContainer.appendChild(svgClone);
+  document.body.appendChild(tempContainer);
 
   try {
+    // Wait for fonts to load in the DOM context
+    if (document.fonts && document.fonts.load && fontFamilies.size > 0) {
+      const fontLoadPromises: Promise<void>[] = [];
+      const cloneTextElements = svgClone.querySelectorAll('text, tspan');
+      
+      for (const fontFamily of fontFamilies) {
+        // Load font with actual weight from SVG elements
+        cloneTextElements.forEach((element) => {
+          const elementFontFamily = element.getAttribute('font-family');
+          const elementFontWeight = element.getAttribute('font-weight') || '400';
+          const elementFontStyle = element.getAttribute('font-style') || 'normal';
+          
+          if (elementFontFamily) {
+            const cleanFamily = elementFontFamily.split(',')[0].replace(/['"]/g, '').trim();
+            if (cleanFamily === fontFamily) {
+              const normalizedWeight = parseInt(elementFontWeight, 10) || 400;
+              const fontSpec = `${elementFontStyle} ${normalizedWeight} 16px "${fontFamily}"`;
+              fontLoadPromises.push(
+                document.fonts.load(fontSpec).then(() => {
+                  console.log(`Font loaded for rendering: ${fontFamily} (${normalizedWeight} ${elementFontStyle})`);
+                }).catch((err) => {
+                  console.warn(`Font load failed: ${fontFamily}`, err);
+                })
+              );
+            }
+          }
+        });
+      }
+      await Promise.all(fontLoadPromises);
+    }
+
+    // Additional delay to ensure fonts are fully applied in DOM
+    // Also verify fonts are actually loaded
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Verify fonts are loaded by checking if they're available
+    if (document.fonts && document.fonts.check) {
+      for (const fontFamily of fontFamilies) {
+        const cloneTextElements = svgClone.querySelectorAll('text, tspan');
+        cloneTextElements.forEach((element) => {
+          const elementFontFamily = element.getAttribute('font-family');
+          const elementFontWeight = element.getAttribute('font-weight') || '400';
+          const elementFontStyle = element.getAttribute('font-style') || 'normal';
+          
+          if (elementFontFamily) {
+            const cleanFamily = elementFontFamily.split(',')[0].replace(/['"]/g, '').trim();
+            if (cleanFamily === fontFamily) {
+              const normalizedWeight = parseInt(elementFontWeight, 10) || 400;
+              const fontSpec = `${elementFontStyle} ${normalizedWeight} 16px "${fontFamily}"`;
+              const isLoaded = document.fonts.check(fontSpec);
+              if (!isLoaded) {
+                console.warn(`Font not loaded yet: ${fontSpec}`);
+              } else {
+                console.log(`Font verified loaded: ${fontSpec}`);
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // Create a canvas element
+    const canvas = document.createElement('canvas');
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Could not get canvas context');
+    }
+
+    // Fill background
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Convert SVG to string (use the clone that's in DOM)
+    const svgString = new XMLSerializer().serializeToString(svgClone);
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
     // Load SVG as image
     const img = new Image();
     await new Promise<void>((resolve, reject) => {
@@ -329,7 +398,7 @@ export const svgToPngDataUrl = async (
 
     // Additional delay to ensure fonts are applied in the rendered image
     // This is important because when SVG is loaded as Image, fonts need time to render
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Draw image on canvas
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -339,9 +408,17 @@ export const svgToPngDataUrl = async (
     }
 
     // Convert canvas to data URL
-    return canvas.toDataURL('image/png');
-  } finally {
+    const dataUrl = canvas.toDataURL('image/png');
+    
+    // Cleanup
     URL.revokeObjectURL(url);
+    
+    return dataUrl;
+  } finally {
+    // Cleanup temporary container
+    if (tempContainer.parentNode) {
+      document.body.removeChild(tempContainer);
+    }
   }
 };
 
