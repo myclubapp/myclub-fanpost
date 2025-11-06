@@ -493,12 +493,6 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
               } else if (apiFieldName.startsWith('game.')) {
                 apiFieldName = apiFieldName.replace('game.', '');
               }
-              // Support suffix system: teamHome2, teamHome3 (for backward compatibility)
-              else if (apiFieldName.match(/\d$/)) {
-                const suffix = apiFieldName.slice(-1);
-                gameIndex = parseInt(suffix) - 1;
-                apiFieldName = apiFieldName.slice(0, -1);
-              }
               
               // Handle comma-separated multiple fields (e.g., "date,time,location")
               if (apiFieldName.includes(',')) {
@@ -553,12 +547,6 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
                 apiFieldName = apiFieldName.replace('game-3.', '');
               } else if (apiFieldName.startsWith('game.')) {
                 apiFieldName = apiFieldName.replace('game.', '');
-              }
-              // Support suffix system: teamHomeLogo2, teamHomeLogo3 (for backward compatibility)
-              else if (apiFieldName.match(/\d$/)) {
-                const suffix = apiFieldName.slice(-1);
-                gameIndex = parseInt(suffix) - 1;
-                apiFieldName = apiFieldName.slice(0, -1);
               }
               
               const targetGame = gameData[gameIndex];
