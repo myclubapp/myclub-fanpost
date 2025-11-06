@@ -442,7 +442,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
             {`
               @import url('https://use.typekit.net/xiw8zet.css');
               @font-face {
-                font-family: 'bebas-neue-pro';
+                font-family: 'Bebas Neue';
                 font-style: normal;
                 font-weight: 400;
                 src: url(https://use.typekit.net/af/419abb/00000000000000007735c8b6/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3) format('woff2');

@@ -3,6 +3,8 @@
  * Handles all image inlining and conversion in a unified way
  */
 
+import { AVAILABLE_FONTS, getFontConfig } from '@/config/fonts';
+
 /**
  * Dynamically loads fonts into the document
  * This ensures fonts are available when rendering to canvas
@@ -16,16 +18,7 @@ const loadGoogleFontsIntoDocument = (fontFamilies: Map<string, Set<{ weight: str
   const fontsToLoad: string[] = [];
 
   for (const [fontFamily, styles] of fontFamilies.entries()) {
-    // Special handling for Adobe Typekit fonts
-    if (fontFamily === 'bebas-neue-pro') {
-      const typekitUrl = 'https://use.typekit.net/xiw8zet.css';
-      if (!existingFonts.has(typekitUrl)) {
-        fontsToLoad.push(typekitUrl);
-      }
-      continue;
-    }
-
-    // Build Google Fonts URL for other families
+    // Build Google Fonts URL
     const weights: string[] = [];
 
     for (const style of styles) {
@@ -689,26 +682,17 @@ export const convertSvgToImage = async (
             fontConfigs.set(cleanFamily, new Set());
           }
 
-          // Normalize font names: map 'Bebas Neue' to 'bebas-neue-pro'
-          let finalFontFamily = cleanFamily;
-          if (cleanFamily === 'Bebas Neue') {
-            finalFontFamily = 'bebas-neue-pro';
-          }
-
           let normalizedWeight = fontWeight.toString();
           let normalizedStyle = fontStyle;
 
           // Store font config for embedding
-          if (!fontConfigs.has(finalFontFamily)) {
-            fontConfigs.set(finalFontFamily, new Set());
-          }
-          fontConfigs.get(finalFontFamily)!.add({
+          fontConfigs.get(cleanFamily)!.add({
             weight: normalizedWeight,
             style: normalizedStyle
           });
 
           // Ensure explicit attributes are present on elements for serialization
-          if (!element.getAttribute('font-family')) element.setAttribute('font-family', finalFontFamily);
+          if (!element.getAttribute('font-family')) element.setAttribute('font-family', cleanFamily);
           if (!element.getAttribute('font-weight')) element.setAttribute('font-weight', normalizedWeight);
           if (!element.getAttribute('font-style')) element.setAttribute('font-style', normalizedStyle);
         }
@@ -727,9 +711,29 @@ export const convertSvgToImage = async (
       await new Promise(resolve => setTimeout(resolve, 300));
     }
 
-    // Map of font families to their font file URLs (with variants)
-    // bebas-neue-pro: Adobe Typekit font with full weight/italic support
-    const googleFontUrls: Record<string, Record<string, string>> = {
+    // Build font URL map from central configuration
+    const buildFontUrlMap = (): Record<string, Record<string, string>> => {
+      const map: Record<string, Record<string, string>> = {};
+
+      for (const fontConfig of Object.values(AVAILABLE_FONTS)) {
+        const variantMap: Record<string, string> = {};
+
+        for (const variant of fontConfig.variants) {
+          const variantKey = `${variant.weight}-${variant.style}`;
+          variantMap[variantKey] = variant.url;
+        }
+
+        map[fontConfig.cssFamily] = variantMap;
+      }
+
+      return map;
+    };
+
+    const googleFontUrls = buildFontUrlMap();
+    console.log('Using central font configuration for:', Object.keys(googleFontUrls));
+
+    // OLD CODE BELOW - TO BE REMOVED AFTER VERIFICATION
+    const DEPRECATED_googleFontUrls: Record<string, Record<string, string>> = {
       'bebas-neue-pro': {
         '100-normal': 'https://use.typekit.net/af/99669a/00000000000000007735c890/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n1&v=3',
         '100-italic': 'https://use.typekit.net/af/9a6a29/00000000000000007735c897/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=i1&v=3',
