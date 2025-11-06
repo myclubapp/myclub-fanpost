@@ -213,13 +213,24 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
           setAllTemplates(templates);
           console.log('Templates set:', templates);
 
-          // Auto-select first template if none selected or current not available
-          if (!selectedTheme || !templates.find(t => t.value === selectedTheme)) {
-            const firstTemplate = templates[0];
-            if (firstTemplate) {
-              console.log('Auto-selecting first template:', firstTemplate.name);
-              setSelectedTheme(firstTemplate.value);
-              onThemeChange?.(firstTemplate.value);
+          // Auto-select first template matching game count if none selected or current not available
+          const currentTemplate = templates.find(t => t.value === selectedTheme);
+          const matchingTemplates = templates
+            .filter(t => t.supported_games === gameIds.length)
+            .sort((a, b) => {
+              // Sort by supported_games first, then by name
+              if (a.supported_games !== b.supported_games) {
+                return a.supported_games - b.supported_games;
+              }
+              return a.name.localeCompare(b.name);
+            });
+          
+          if (!selectedTheme || !currentTemplate || currentTemplate.supported_games !== gameIds.length) {
+            const firstMatchingTemplate = matchingTemplates[0];
+            if (firstMatchingTemplate) {
+              console.log('Auto-selecting first matching template:', firstMatchingTemplate.name);
+              setSelectedTheme(firstMatchingTemplate.value);
+              onThemeChange?.(firstMatchingTemplate.value);
             }
           }
         } else {
