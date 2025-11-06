@@ -680,14 +680,46 @@ export const convertSvgToImage = async (
           if (!fontConfigs.has(cleanFamily)) {
             fontConfigs.set(cleanFamily, new Set());
           }
-          fontConfigs.get(cleanFamily)!.add({
-            weight: fontWeight.toString(),
-            style: fontStyle
-          });
-          // Ensure explicit attributes are present on elements for serialization
-          if (!element.getAttribute('font-family')) element.setAttribute('font-family', cleanFamily);
-          if (!element.getAttribute('font-weight')) element.setAttribute('font-weight', fontWeight.toString());
-          if (!element.getAttribute('font-style')) element.setAttribute('font-style', fontStyle);
+
+          // For Bebas Neue: force to 400/normal since it only has one weight
+          let normalizedWeight = fontWeight.toString();
+          let normalizedStyle = fontStyle;
+
+          if (cleanFamily === 'Bebas Neue') {
+            // Bebas Neue only exists in one weight (Regular/400)
+            // Store what we need to embed (always 400-normal)
+            fontConfigs.get(cleanFamily)!.add({
+              weight: '400',
+              style: 'normal'
+            });
+
+            // Set attributes to 400/normal for proper rendering
+            element.setAttribute('font-family', cleanFamily);
+            element.setAttribute('font-weight', '400');
+            element.setAttribute('font-style', 'normal');
+
+            // Apply manual skew transform for italic simulation
+            if (fontStyle === 'italic' || fontStyle === 'oblique') {
+              const existingTransform = element.getAttribute('transform') || '';
+              // Add skewX to simulate italic (14 degrees is standard)
+              const skewTransform = 'skewX(-14)';
+              const newTransform = existingTransform
+                ? `${existingTransform} ${skewTransform}`
+                : skewTransform;
+              element.setAttribute('transform', newTransform);
+            }
+          } else {
+            // For other fonts, use the detected weight/style
+            fontConfigs.get(cleanFamily)!.add({
+              weight: normalizedWeight,
+              style: normalizedStyle
+            });
+
+            // Ensure explicit attributes are present on elements for serialization
+            if (!element.getAttribute('font-family')) element.setAttribute('font-family', cleanFamily);
+            if (!element.getAttribute('font-weight')) element.setAttribute('font-weight', normalizedWeight);
+            if (!element.getAttribute('font-style')) element.setAttribute('font-style', normalizedStyle);
+          }
         }
       }
     });
@@ -705,14 +737,10 @@ export const convertSvgToImage = async (
     }
 
     // Map of common Google Fonts to their woff2 URLs (with variants)
+    // Note: Bebas Neue only has one weight (Regular/400), no italic variant exists
     const googleFontUrls: Record<string, Record<string, string>> = {
       'Bebas Neue': {
         '400-normal': 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2',
-        '700-normal': 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2',
-        '900-normal': 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2',
-        '400-italic': 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2',
-        '700-italic': 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2',
-        '900-italic': 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2',
       },
       'Roboto': {
         '400-normal': 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.woff2',
