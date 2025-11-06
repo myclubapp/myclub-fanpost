@@ -582,7 +582,7 @@ export const convertSvgToImage = async (
     const embedFont = async (
       familyName: string,
       fontUrl: string,
-      fontFormat: 'truetype' | 'woff' | 'woff2' = 'truetype',
+      fontFormat: 'truetype' | 'woff' | 'woff2' = 'woff2',
       fontWeight: string = 'normal',
       fontStyle: string = 'normal'
     ) => {
@@ -600,9 +600,16 @@ export const convertSvgToImage = async (
       clonedSvg.insertBefore(styleEl, clonedSvg.firstChild);
     };
 
-    // Try to embed Bebas Neue which is used by the themes and present in /assets
-    // If fetching fails, we continue without throwing (fallback to system fonts)
-    await embedFont('Bebas Neue', '/assets/BebasNeue-Regular.ttf', 'truetype').catch(() => {});
+    // Embed Bebas Neue from Google Fonts
+    // Using the direct woff2 URL which is more reliable than ttf
+    await embedFont('Bebas Neue', 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2', 'woff2').catch((e) => {
+      console.warn('Failed to embed Bebas Neue:', e);
+    });
+    
+    // Wait for fonts to be loaded in the document
+    if (document.fonts && document.fonts.ready) {
+      await document.fonts.ready;
+    }
   } catch (e) {
     // Non-fatal: if fonts cannot be embedded, proceed with conversion
     console.warn('Font embedding skipped due to error:', e);
