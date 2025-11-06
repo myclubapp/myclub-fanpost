@@ -576,9 +576,42 @@ export const convertSvgToImage = async (
 
   const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
 
-  // Step 1b: Embed required web fonts into the cloned SVG (e.g., Bebas Neue)
+  // Step 1b: Embed required web fonts into the cloned SVG
   // This ensures text renders with the correct font when drawn onto a canvas
   try {
+    // Extract all unique font families used in the SVG
+    const fontFamilies = new Set<string>();
+    const textElements = clonedSvg.querySelectorAll('text, tspan');
+    
+    textElements.forEach((element) => {
+      const fontFamily = element.getAttribute('font-family') || 
+                        window.getComputedStyle(element).fontFamily;
+      if (fontFamily) {
+        // Clean up font family string (remove quotes, fallbacks)
+        const cleanFamily = fontFamily.split(',')[0].replace(/['"]/g, '').trim();
+        if (cleanFamily && cleanFamily !== 'sans-serif' && cleanFamily !== 'serif') {
+          fontFamilies.add(cleanFamily);
+        }
+      }
+    });
+
+    console.log('Detected font families in SVG:', Array.from(fontFamilies));
+
+    // Map of common Google Fonts to their woff2 URLs
+    const googleFontUrls: Record<string, string> = {
+      'Bebas Neue': 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2',
+      'Roboto': 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.woff2',
+      'Open Sans': 'https://fonts.gstatic.com/s/opensans/v35/memSYaGs126MiZpBA-UvWbX2vVnXBbObj2OVZyOOSr4dVJWUgsjZ0B4gaVI.woff2',
+      'Lato': 'https://fonts.gstatic.com/s/lato/v24/S6uyw4BMUTPHjx4wXiWtFCc.woff2',
+      'Montserrat': 'https://fonts.gstatic.com/s/montserrat/v25/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2',
+      'Oswald': 'https://fonts.gstatic.com/s/oswald/v53/TK3_WkUHHAIjg75cFRf3bXL8LICs1_FvsUtiZTaR.woff2',
+      'Raleway': 'https://fonts.gstatic.com/s/raleway/v29/1Ptxg8zYS_SKggPN4iEgvnHyvveLxVvaorCIPrCFRjldz1SsbqN7PtM.woff2',
+      'Poppins': 'https://fonts.gstatic.com/s/poppins/v20/pxiEyp8kv8JHgFVrJJfecg.woff2',
+      'PT Sans': 'https://fonts.gstatic.com/s/ptsans/v17/jizaRExUiTo99u79D0KExcOPIDU.woff2',
+      'Merriweather': 'https://fonts.gstatic.com/s/merriweather/v30/u-440qyriQwlOrhSvowK_l5OeyxNV-bnrw.woff2',
+      'Vollkorn': 'https://fonts.gstatic.com/s/vollkorn/v22/0ybgGDoxxrvAnPhYGzMlQLzuMasz6Df2MHGeHmmS.woff2',
+    };
+
     const embedFont = async (
       familyName: string,
       fontUrl: string,
@@ -586,25 +619,35 @@ export const convertSvgToImage = async (
       fontWeight: string = 'normal',
       fontStyle: string = 'normal'
     ) => {
-      // Resolve relative URLs to absolute based on current document
-      const resolvedUrl = new URL(fontUrl, document.baseURI).toString();
-      const resp = await fetch(resolvedUrl);
-      if (!resp.ok) throw new Error(`Font HTTP ${resp.status}`);
-      const blob = await resp.blob();
-      const base64 = await blobToBase64(blob);
-      const dataUrl = `data:font/${fontFormat};base64,${base64}`;
+      try {
+        const resolvedUrl = new URL(fontUrl, document.baseURI).toString();
+        const resp = await fetch(resolvedUrl);
+        if (!resp.ok) throw new Error(`Font HTTP ${resp.status}`);
+        const blob = await resp.blob();
+        const base64 = await blobToBase64(blob);
+        const dataUrl = `data:font/${fontFormat};base64,${base64}`;
 
-      const styleEl = document.createElementNS(clonedSvg.namespaceURI, 'style');
-      styleEl.setAttribute('type', 'text/css');
-      styleEl.textContent = `@font-face { font-family: '${familyName}'; src: url('${dataUrl}') format('${fontFormat}'); font-weight: ${fontWeight}; font-style: ${fontStyle}; font-display: swap; }`;
-      clonedSvg.insertBefore(styleEl, clonedSvg.firstChild);
+        const styleEl = document.createElementNS(clonedSvg.namespaceURI, 'style');
+        styleEl.setAttribute('type', 'text/css');
+        styleEl.textContent = `@font-face { font-family: '${familyName}'; src: url('${dataUrl}') format('${fontFormat}'); font-weight: ${fontWeight}; font-style: ${fontStyle}; font-display: swap; }`;
+        clonedSvg.insertBefore(styleEl, clonedSvg.firstChild);
+        console.log(`Successfully embedded font: ${familyName}`);
+      } catch (e) {
+        console.warn(`Failed to embed font ${familyName}:`, e);
+      }
     };
 
-    // Embed Bebas Neue from Google Fonts
-    // Using the direct woff2 URL which is more reliable than ttf
-    await embedFont('Bebas Neue', 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2', 'woff2').catch((e) => {
-      console.warn('Failed to embed Bebas Neue:', e);
+    // Embed all detected Google Fonts
+    const embedPromises = Array.from(fontFamilies).map(async (fontFamily) => {
+      const fontUrl = googleFontUrls[fontFamily];
+      if (fontUrl) {
+        await embedFont(fontFamily, fontUrl, 'woff2');
+      } else {
+        console.warn(`No Google Fonts URL found for: ${fontFamily}`);
+      }
     });
+
+    await Promise.all(embedPromises);
     
     // Wait for fonts to be loaded in the document
     if (document.fonts && document.fonts.ready) {
