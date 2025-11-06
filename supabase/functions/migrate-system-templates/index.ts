@@ -39,30 +39,52 @@ Deno.serve(async (req) => {
       if (!svgConfig || !svgConfig.elements) continue
 
       let modified = false
+      const changes: string[] = []
 
-      // Update elements with suffix-based apiFields to prefix-based
+      // Update elements with suffix-based apiFields to prefix-based AND fix Bebas Neue font-weight
       const updatedElements = svgConfig.elements.map((element: any) => {
-        if (!element.apiField) return element
+        let elementModified = false
+        const updatedElement = { ...element }
 
-        const apiField = element.apiField
-
-        // Convert suffix notation (teamHome2, teamHomeLogo3) to prefix notation (game-2.teamHome, game-3.teamHomeLogo)
-        const suffixMatch = apiField.match(/^(.+?)(\d)$/)
-        
-        if (suffixMatch) {
-          const [, fieldName, gameNumber] = suffixMatch
-          const newApiField = `game-${gameNumber}.${fieldName}`
+        // 1. Convert suffix notation (teamHome2, teamHomeLogo3) to prefix notation (game-2.teamHome, game-3.teamHomeLogo)
+        if (element.apiField) {
+          const apiField = element.apiField
+          const suffixMatch = apiField.match(/^(.+?)(\d)$/)
           
-          console.log(`Converting ${apiField} to ${newApiField}`)
-          modified = true
-          
-          return {
-            ...element,
-            apiField: newApiField
+          if (suffixMatch) {
+            const [, fieldName, gameNumber] = suffixMatch
+            const newApiField = `game-${gameNumber}.${fieldName}`
+            
+            console.log(`[${template.name}] Converting apiField: ${apiField} -> ${newApiField}`)
+            changes.push(`apiField: ${apiField} -> ${newApiField}`)
+            updatedElement.apiField = newApiField
+            elementModified = true
           }
         }
 
-        return element
+        // 2. Fix Bebas Neue font-weight (must be 400, not 700 or 900)
+        if (updatedElement.fontFamily && 
+            updatedElement.fontFamily.toLowerCase().includes('bebas neue') &&
+            updatedElement.fontWeight) {
+          
+          // Normalize fontWeight to string for comparison
+          const currentWeight = String(updatedElement.fontWeight)
+          
+          if (currentWeight !== '400') {
+            const oldWeight = updatedElement.fontWeight
+            updatedElement.fontWeight = '400'
+            
+            console.log(`[${template.name}] Fixing fontWeight for element "${updatedElement.id}": ${oldWeight} -> 400`)
+            changes.push(`fontWeight (${updatedElement.id}): ${oldWeight} -> 400`)
+            elementModified = true
+          }
+        }
+
+        if (elementModified) {
+          modified = true
+        }
+
+        return updatedElement
       })
 
       if (modified) {
@@ -83,7 +105,7 @@ Deno.serve(async (req) => {
         }
 
         updatedCount++
-        console.log(`Updated template: ${template.name}`)
+        console.log(`Updated template: ${template.name}`, changes)
       }
     }
 
