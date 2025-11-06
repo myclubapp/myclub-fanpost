@@ -198,6 +198,10 @@ export const svgToPngDataUrl = async (
   const svgId = svgElement.id || `svg-export-${Date.now()}`;
   svgElement.id = svgId;
 
+  // Set explicit width and height for proper scaling
+  svgElement.setAttribute('width', String(width));
+  svgElement.setAttribute('height', String(height));
+
   // Use react-svg-to-image to convert with proper CSS styling support
   const fileData = await toImg(`#${svgId}`, `export-${Date.now()}`, {
     scale,
@@ -366,114 +370,37 @@ export const createAndOpenBlobUrl = (
 };
 
 /**
- * iOS-specific: Show image in a modal-like experience
+ * Share image using native share sheet (Capacitor Share API)
  */
-export const showImageFullscreen = (dataUrl: string, fileName: string, onClose: () => void): void => {
-  const overlay = document.createElement('div');
-  overlay.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.95);
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    overflow: auto;
-  `;
+export const shareImageNative = async (blob: Blob, fileName: string): Promise<boolean> => {
+  try {
+    // Check if Capacitor Share is available
+    const { Share } = await import('@capacitor/share');
+    
+    // Convert blob to base64
+    const reader = new FileReader();
+    const base64Data = await new Promise<string>((resolve, reject) => {
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        resolve(result);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
 
-  const instructions = document.createElement('div');
-  instructions.style.cssText = `
-    color: white;
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 14px;
-    padding: 0 20px;
-    flex-shrink: 0;
-  `;
-  instructions.innerHTML = `
-    <p style="margin-bottom: 10px; font-weight: bold;">📱 So speicherst du das Bild:</p>
-    <p style="font-size: 13px; opacity: 0.9; margin-bottom: 8px;">1. Drücke <strong>lang</strong> auf das Bild unten</p>
-    <p style="font-size: 13px; opacity: 0.9; margin-bottom: 8px;">2. Wähle "<strong>Bild sichern</strong>" oder "<strong>Zu Fotos hinzufügen</strong>"</p>
-  `;
+    // Share using native share sheet
+    await Share.share({
+      title: fileName,
+      text: 'Mein Kanva Bild',
+      url: base64Data,
+      dialogTitle: 'Bild teilen',
+    });
 
-  const imgContainer = document.createElement('div');
-  imgContainer.style.cssText = `
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    overflow: auto;
-  `;
-
-  const img = document.createElement('img');
-  img.src = dataUrl;
-  img.alt = fileName;
-  img.style.cssText = `
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    border-radius: 8px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-    cursor: pointer;
-  `;
-
-  img.addEventListener('touchstart', () => {
-    img.style.opacity = '0.8';
-  });
-  img.addEventListener('touchend', () => {
-    img.style.opacity = '1';
-  });
-
-  imgContainer.appendChild(img);
-
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '✕ Schließen';
-  closeBtn.style.cssText = `
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 14px;
-    cursor: pointer;
-    backdrop-filter: blur(10px);
-    z-index: 10000;
-  `;
-
-  closeBtn.onclick = () => {
-    if (overlay.parentNode) {
-      document.body.removeChild(overlay);
-    }
-    onClose();
-  };
-
-  overlay.appendChild(closeBtn);
-  overlay.appendChild(instructions);
-  overlay.appendChild(imgContainer);
-  document.body.appendChild(overlay);
-
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay || e.target === imgContainer) {
-      if (overlay.parentNode) {
-        document.body.removeChild(overlay);
-      }
-      onClose();
-    }
-  });
-
-  document.body.style.overflow = 'hidden';
-  (overlay as any)._cleanup = () => {
-    document.body.style.overflow = '';
-  };
+    return true;
+  } catch (error) {
+    console.error('Native share failed:', error);
+    return false;
+  }
 };
 
 /**
@@ -582,15 +509,16 @@ export const handlePlatformDownload = async (options: PlatformDownloadOptions): 
     });
 
     if (isMobile) {
-      if (isIOS()) {
-        showImageFullscreen(result.dataUrl, fileName, () => {
-          console.log('Image viewer closed');
-        });
+      // Try native share first
+      const shareSuccess = await shareImageNative(result.blob, fileName);
+      
+      if (shareSuccess) {
         onSuccess?.({
-          title: 'Bild bereit',
-          description: 'Drücke lang auf das Bild um es zu speichern'
+          title: 'Erfolgreich',
+          description: 'Bild geteilt'
         });
       } else {
+        // Fallback to opening in new window
         const success = openDataUrlInNewWindow(result.dataUrl, fileName);
         if (!success) {
           downloadDataUrl(result.dataUrl, fileName);
