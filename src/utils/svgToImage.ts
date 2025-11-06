@@ -911,13 +911,31 @@ export const convertSvgToImage = async (
         }
 
         // Create style element for font-face
+        // IMPORTANT: Use exact font family name with quotes to ensure it matches SVG attributes
         const styleEl = document.createElementNS(clonedSvg.namespaceURI, 'style');
         styleEl.setAttribute('type', 'text/css');
-        styleEl.textContent = `@font-face { font-family: '${familyName}'; src: url('${dataUrl}') format('${fontFormat}'); font-weight: ${fontWeight}; font-style: ${fontStyle}; font-display: block; }`;
+        // Use quoted font-family name to ensure it matches exactly with SVG font-family attributes
+        // Escape single quotes in font name if present
+        const escapedFamilyName = familyName.replace(/'/g, "\\'");
+        styleEl.textContent = `@font-face { font-family: '${escapedFamilyName}'; src: url('${dataUrl}') format('${fontFormat}'); font-weight: ${fontWeight}; font-style: ${fontStyle}; font-display: block; }`;
         
         // Insert style into defs to ensure proper SVG structure
         defsEl.appendChild(styleEl);
         console.log(`Successfully embedded font: ${familyName} (${fontWeight} ${fontStyle})`);
+        
+        // Also load font into DOM to ensure it's available when SVG is rendered as image
+        try {
+          const fontFace = new FontFace(familyName, `url('${dataUrl}') format('${fontFormat}')`, {
+            weight: fontWeight,
+            style: fontStyle as 'normal' | 'italic',
+            display: 'block'
+          });
+          await fontFace.load();
+          document.fonts.add(fontFace);
+          console.log(`Font added to document.fonts: ${familyName} (${fontWeight} ${fontStyle})`);
+        } catch (e) {
+          console.warn(`Failed to add font to document.fonts: ${familyName}`, e);
+        }
       } catch (e) {
         console.warn(`Failed to embed font ${familyName} (${fontWeight} ${fontStyle}):`, e);
       }
@@ -974,6 +992,8 @@ export const convertSvgToImage = async (
     }
 
     await Promise.all(embedPromises);
+    
+    console.log('All fonts embedded, waiting for fonts to be fully loaded...');
 
     // Force browser to load all embedded fonts by creating hidden text elements
     // This ensures fonts are fully loaded before canvas rendering
@@ -1052,6 +1072,25 @@ export const convertSvgToImage = async (
 
     await Promise.all(fontLoadChecks);
     console.log('All fonts loaded and verified');
+    
+    // Final verification: Check that fonts are actually available
+    if (document.fonts && document.fonts.check) {
+      for (const [fontFamily, styles] of fontConfigs.entries()) {
+        for (const style of styles) {
+          const normalizedWeight = normalizeFontWeight(style.weight);
+          const fontSpec = `${style.style} ${normalizedWeight} 16px "${fontFamily}"`;
+          const isAvailable = document.fonts.check(fontSpec);
+          if (isAvailable) {
+            console.log(`✓ Font verified available: ${fontSpec}`);
+          } else {
+            console.error(`✗ Font NOT available: ${fontSpec}`);
+          }
+        }
+      }
+    }
+    
+    // Additional delay to ensure fonts are fully ready
+    await new Promise(resolve => setTimeout(resolve, 500));
   } catch (e) {
     // Non-fatal: if fonts cannot be embedded, proceed with conversion
     console.warn('Font embedding skipped due to error:', e);
