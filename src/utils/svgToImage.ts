@@ -4,6 +4,7 @@
  */
 
 import toImg from 'react-svg-to-image';
+import { svgAsPngUri } from 'save-svg-as-png';
 import { normalizeFontFamilyName, AVAILABLE_FONTS } from '@/config/fonts';
 
 const DEFAULT_FONT_FAMILY = Object.values(AVAILABLE_FONTS)[0]?.cssFamily ?? 'Bebas Neue';
@@ -273,33 +274,47 @@ export const svgToPngDataUrl = async (
     onProgress(70, 'SVG wird in Bild konvertiert...');
   }
 
-  // Ensure SVG has a unique ID for selection
-  const svgId = svgElement.id || `svg-export-${Date.now()}`;
-  svgElement.id = svgId;
-
-  // Make sure nothing gets clipped
+  // Compute tight viewBox and export from a translated clone to avoid top-left cropping
   svgElement.setAttribute('overflow', 'visible');
-
-  // Compute tight viewBox from actual drawn content (handles negative x/y and transforms)
   const bbox = ensureTightViewBox(svgElement);
   const size = computeTargetSize(bbox.width, bbox.height, targetWidth, targetHeight);
   width = size.width;
   height = size.height;
 
-  // Set explicit width/height for proper scaling and preserve aspect ratio
-  svgElement.setAttribute('width', String(width));
-  svgElement.setAttribute('height', String(height));
-  svgElement.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  // Create an offscreen clone and translate content so (0,0) is the top-left of the drawn area
+  const exportClone = svgElement.cloneNode(true) as SVGSVGElement;
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  while (exportClone.firstChild) {
+    g.appendChild(exportClone.firstChild);
+  }
+  exportClone.appendChild(g);
+  g.setAttribute('transform', `translate(${-bbox.x}, ${-bbox.y})`);
 
-  // Use react-svg-to-image to convert with proper CSS styling support
-  const fileData = await toImg(`#${svgId}`, `export-${Date.now()}`, {
-    scale,
-    format: 'png',
-    quality: 1,
-    download: false,
-  });
+  exportClone.setAttribute('viewBox', `0 0 ${bbox.width} ${bbox.height}`);
+  exportClone.setAttribute('width', String(width));
+  exportClone.setAttribute('height', String(height));
+  exportClone.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  exportClone.setAttribute('overflow', 'visible');
 
-  const dataUrl = fileData as string;
+  // Mount offscreen so computed styles are available
+  exportClone.style.position = 'absolute';
+  exportClone.style.left = '-100000px';
+  exportClone.style.top = '-100000px';
+  exportClone.style.opacity = '0';
+  document.body.appendChild(exportClone);
+
+  // Convert using save-svg-as-png
+  let dataUrl: string;
+  try {
+    dataUrl = await svgAsPngUri(exportClone, {
+      scale,
+      backgroundColor,
+      encoderOptions: 1,
+    });
+  } finally {
+    if (exportClone.parentNode) document.body.removeChild(exportClone);
+  }
+
 
   if (onProgress) {
     onProgress(90, 'Bild wird finalisiert...');
