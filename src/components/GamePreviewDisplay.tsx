@@ -749,29 +749,47 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
                 ) : (
                   <>
                     {/* System templates */}
-                    {allTemplates.filter(t => t.is_system).length > 0 && (
+                    {allTemplates.filter(t => t.is_system && t.supported_games === gameIds.length).length > 0 && (
                       <>
                         <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                           System Vorlagen
                         </div>
-                        {allTemplates.filter(t => t.is_system).map((template) => (
-                          <SelectItem key={template.value} value={template.value}>
-                            {template.name} ({template.supported_games} {template.supported_games === 1 ? 'Spiel' : 'Spiele'})
-                          </SelectItem>
-                        ))}
+                        {allTemplates
+                          .filter(t => t.is_system && t.supported_games === gameIds.length)
+                          .sort((a, b) => {
+                            // Sort by supported_games first, then by name
+                            if (a.supported_games !== b.supported_games) {
+                              return a.supported_games - b.supported_games;
+                            }
+                            return a.name.localeCompare(b.name);
+                          })
+                          .map((template) => (
+                            <SelectItem key={template.value} value={template.value}>
+                              {template.name} ({template.supported_games} {template.supported_games === 1 ? 'Spiel' : 'Spiele'})
+                            </SelectItem>
+                          ))}
                       </>
                     )}
                     {/* User templates (for paid users) */}
-                    {isPaidUser && allTemplates.filter(t => !t.is_system).length > 0 && (
+                    {isPaidUser && allTemplates.filter(t => !t.is_system && t.supported_games === gameIds.length).length > 0 && (
                       <>
                         <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                           Eigene Vorlagen
                         </div>
-                        {allTemplates.filter(t => !t.is_system).map((template) => (
-                          <SelectItem key={template.value} value={template.value}>
-                            {template.name} ({template.supported_games} {template.supported_games === 1 ? 'Spiel' : 'Spiele'})
-                          </SelectItem>
-                        ))}
+                        {allTemplates
+                          .filter(t => !t.is_system && t.supported_games === gameIds.length)
+                          .sort((a, b) => {
+                            // Sort by supported_games first, then by name
+                            if (a.supported_games !== b.supported_games) {
+                              return a.supported_games - b.supported_games;
+                            }
+                            return a.name.localeCompare(b.name);
+                          })
+                          .map((template) => (
+                            <SelectItem key={template.value} value={template.value}>
+                              {template.name} ({template.supported_games} {template.supported_games === 1 ? 'Spiel' : 'Spiele'})
+                            </SelectItem>
+                          ))}
                       </>
                     )}
                   </>
