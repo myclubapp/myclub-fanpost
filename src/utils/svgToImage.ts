@@ -370,35 +370,74 @@ export const createAndOpenBlobUrl = (
 };
 
 /**
- * Share image using native share sheet (Capacitor Share API)
+ * Share image using Web Share API or Capacitor Share
  */
 export const shareImageNative = async (blob: Blob, fileName: string): Promise<boolean> => {
+  // Try Web Share API first (works on modern mobile browsers)
+  if (navigator.share && navigator.canShare) {
+    try {
+      const file = new File([blob], fileName, { type: blob.type });
+      const canShare = navigator.canShare({ files: [file] });
+      
+      if (canShare) {
+        await navigator.share({
+          files: [file],
+          title: fileName,
+          text: 'Mein Kanva Bild',
+        });
+        return true;
+      }
+    } catch (error) {
+      console.warn('Web Share API failed:', error);
+    }
+  }
+
+  // Fallback to Capacitor Share
   try {
-    // Check if Capacitor Share is available
     const { Share } = await import('@capacitor/share');
+    const { Filesystem, Directory } = await import('@capacitor/filesystem');
     
     // Convert blob to base64
     const reader = new FileReader();
     const base64Data = await new Promise<string>((resolve, reject) => {
       reader.onloadend = () => {
         const result = reader.result as string;
-        resolve(result);
+        // Remove data URL prefix to get pure base64
+        const base64 = result.split(',')[1];
+        resolve(base64);
       };
       reader.onerror = reject;
       reader.readAsDataURL(blob);
     });
 
-    // Share using native share sheet
+    // Write to temporary file
+    const writeResult = await Filesystem.writeFile({
+      path: fileName,
+      data: base64Data,
+      directory: Directory.Cache,
+    });
+
+    // Share the file
     await Share.share({
       title: fileName,
       text: 'Mein Kanva Bild',
-      url: base64Data,
+      url: writeResult.uri,
       dialogTitle: 'Bild teilen',
     });
 
+    // Clean up temporary file
+    try {
+      await Filesystem.deleteFile({
+        path: fileName,
+        directory: Directory.Cache,
+      });
+    } catch (cleanupError) {
+      console.warn('Failed to clean up temporary file:', cleanupError);
+    }
+
     return true;
   } catch (error) {
-    console.error('Native share failed:', error);
+    console.error('Capacitor share failed:', error);
     return false;
   }
 };
@@ -518,15 +557,22 @@ export const handlePlatformDownload = async (options: PlatformDownloadOptions): 
           description: 'Bild geteilt'
         });
       } else {
-        // Fallback to opening in new window
-        const success = openDataUrlInNewWindow(result.dataUrl, fileName);
-        if (!success) {
+        // Fallback: Create blob URL and open in new tab
+        const { success } = createAndOpenBlobUrl(result.blob, fileName);
+        
+        if (success) {
+          onSuccess?.({
+            title: 'Erfolgreich',
+            description: 'Das Bild wurde in einem neuen Tab geöffnet. Halte das Bild gedrückt, um es zu speichern.'
+          });
+        } else {
+          // Last resort: try direct download
           downloadDataUrl(result.dataUrl, fileName);
+          onSuccess?.({
+            title: 'Download gestartet',
+            description: 'Das Bild wird heruntergeladen'
+          });
         }
-        onSuccess?.({
-          title: 'Erfolgreich',
-          description: 'Das Bild wurde in einem neuen Tab geöffnet'
-        });
       }
     } else {
       downloadDataUrl(result.dataUrl, fileName);
