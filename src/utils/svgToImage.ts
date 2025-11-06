@@ -729,7 +729,21 @@ export const convertSvgToImage = async (
             fontConfigs.set(cleanFamily, new Set());
           }
 
+          // Normalize font weight first
           let normalizedWeight = fontWeight.toString();
+          const numWeight = parseInt(normalizedWeight, 10);
+          if (!isNaN(numWeight)) {
+            normalizedWeight = numWeight.toString();
+          } else {
+            switch (normalizedWeight.toLowerCase()) {
+              case 'normal': normalizedWeight = '400'; break;
+              case 'bold': normalizedWeight = '700'; break;
+              case 'lighter': normalizedWeight = '300'; break;
+              case 'bolder': normalizedWeight = '700'; break;
+              default: normalizedWeight = '400';
+            }
+          }
+
           const normalizedStyle = fontStyle;
 
           // Bebas Neue from Google Fonts only provides 400; clamp to 400 to avoid fallbacks
@@ -737,7 +751,7 @@ export const convertSvgToImage = async (
             normalizedWeight = '400';
           }
 
-          // Store font config for embedding
+          // Store font config for embedding (use normalized weight)
           fontConfigs.get(cleanFamily)!.add({
             weight: normalizedWeight,
             style: normalizedStyle
@@ -853,13 +867,18 @@ export const convertSvgToImage = async (
     for (const [fontFamily, styles] of fontConfigs.entries()) {
       const fontVariants = googleFontUrls[fontFamily];
 
+      console.log(`Processing font: ${fontFamily}, available variants:`, Object.keys(fontVariants || {}));
+
       if (fontVariants) {
         for (const style of styles) {
           const normalizedWeight = normalizeFontWeight(style.weight);
           const key = `${normalizedWeight}-${style.style}`;
           const fontUrl = fontVariants[key];
 
+          console.log(`Looking for font variant: ${fontFamily} (${key})`);
+
           if (fontUrl) {
+            console.log(`Found font URL for ${fontFamily} (${key}): ${fontUrl}`);
             embedPromises.push(embedFont(fontFamily, fontUrl, normalizedWeight, style.style));
           } else {
             // Fallback to 400-normal if specific variant not found
@@ -868,12 +887,12 @@ export const convertSvgToImage = async (
               console.warn(`Font variant ${fontFamily} (${key}) not found, using 400-normal`);
               embedPromises.push(embedFont(fontFamily, fallbackUrl, normalizedWeight, style.style));
             } else {
-              console.warn(`No font variants found for: ${fontFamily}`);
+              console.error(`No font variants found for: ${fontFamily}, available keys:`, Object.keys(fontVariants));
             }
           }
         }
       } else {
-        console.warn(`No Google Fonts URLs found for: ${fontFamily}`);
+        console.error(`No Google Fonts URLs found for: ${fontFamily}, available fonts:`, Object.keys(googleFontUrls));
       }
     }
 
