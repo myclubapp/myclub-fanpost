@@ -1,60 +1,12 @@
 /**
  * Utility for converting SVG elements to downloadable images
- * Handles all image inlining and conversion in a unified way
+ * Uses react-svg-to-image to preserve CSS styling and fonts
  */
 
-import { AVAILABLE_FONTS, getFontConfig, normalizeFontFamilyName } from '@/config/fonts';
+import { toPng } from 'react-svg-to-image';
+import { normalizeFontFamilyName, AVAILABLE_FONTS } from '@/config/fonts';
 
 const DEFAULT_FONT_FAMILY = Object.values(AVAILABLE_FONTS)[0]?.cssFamily ?? 'Bebas Neue';
-
-/**
- * Dynamically loads fonts into the document
- * This ensures fonts are available when rendering to canvas
- */
-const loadGoogleFontsIntoDocument = (fontFamilies: Map<string, Set<{ weight: string; style: string }>>) => {
-  const existingLinks = document.querySelectorAll('link[data-svg-font]');
-  const existingFonts = new Set<string>(
-    Array.from(existingLinks).map(link => link.getAttribute('href') || '')
-  );
-
-  const fontsToLoad: string[] = [];
-
-  for (const [fontFamily, styles] of fontFamilies.entries()) {
-    // Build Google Fonts URL
-    const weights: string[] = [];
-
-    for (const style of styles) {
-      const weight = parseInt(style.weight, 10) || 400;
-      if (style.style === 'italic') {
-        weights.push(`1,${weight}`);
-      } else {
-        weights.push(`0,${weight}`);
-      }
-    }
-
-    // Remove duplicates and sort
-    const uniqueWeights = Array.from(new Set(weights)).sort();
-
-    // Build Google Fonts URL
-    const fontNameEncoded = fontFamily.replace(/ /g, '+');
-    const fontUrl = `https://fonts.googleapis.com/css2?family=${fontNameEncoded}:ital,wght@${uniqueWeights.join(';')}&display=block`;
-
-    if (!existingFonts.has(fontUrl)) {
-      fontsToLoad.push(fontUrl);
-    }
-  }
-
-  // Load fonts into document
-  fontsToLoad.forEach(fontUrl => {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = fontUrl;
-    link.setAttribute('data-svg-font', 'true');
-    document.head.appendChild(link);
-  });
-
-  return fontsToLoad.length > 0;
-};
 
 export interface ImageLoadProgress {
   url: string;
@@ -71,21 +23,6 @@ export interface ConversionOptions {
   onProgress?: (progress: number, message: string) => void;
   onImageStatusUpdate?: (statuses: ImageLoadProgress[]) => void;
 }
-
-/**
- * Converts a blob to base64 string
- */
-const blobToBase64 = (blob: Blob): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64 = (reader.result as string).split(',')[1];
-      resolve(base64);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-};
 
 /**
  * Converts a blob to data URL
@@ -130,7 +67,7 @@ const fetchImageAsDataUrl = async (url: string): Promise<string> => {
 };
 
 /**
- * Extracts all image elements from an SVG and tracks their loading status
+ * Extracts all image elements from an SVG
  */
 const extractImageElements = (svgElement: SVGSVGElement): HTMLImageElement[] => {
   const images = svgElement.querySelectorAll('image');
@@ -225,7 +162,7 @@ export const inlineAllImages = async (
 };
 
 /**
- * Converts an SVG element to a PNG data URL
+ * Converts an SVG element to a PNG data URL using react-svg-to-image
  */
 export const svgToPngDataUrl = async (
   svgElement: SVGSVGElement,
@@ -257,171 +194,23 @@ export const svgToPngDataUrl = async (
     onProgress(70, 'SVG wird in Bild konvertiert...');
   }
 
-  // Ensure all fonts are fully loaded before rendering
-  if (document.fonts && document.fonts.ready) {
-    await document.fonts.ready;
-  }
-
-  // Extract all font families from the SVG to ensure they're loaded
-  const textElements = svgElement.querySelectorAll('text, tspan');
-  const fontFamilies = new Set<string>();
-  
-  textElements.forEach((element) => {
-    const fontFamily = element.getAttribute('font-family');
-    if (fontFamily) {
-      const normalizedFamily = normalizeFontFamilyName(fontFamily) || DEFAULT_FONT_FAMILY;
-      if (normalizedFamily) {
-        fontFamilies.add(normalizedFamily);
-      }
+  // Use react-svg-to-image to convert with proper CSS styling support
+  const dataUrl = await toPng(svgElement, {
+    quality: 1,
+    width: width * scale,
+    height: height * scale,
+    backgroundColor,
+    cacheBust: true,
+    style: {
+      fontDisplay: 'block',
     }
   });
 
-  // Wait for all fonts used in the SVG to be loaded
-  if (document.fonts && document.fonts.load && fontFamilies.size > 0) {
-    const fontLoadPromises: Promise<void>[] = [];
-    for (const fontFamily of fontFamilies) {
-      // Try to load the font with different weights/styles
-      for (const weight of ['400', '700']) {
-        for (const style of ['normal', 'italic']) {
-          const fontSpec = `${style} ${weight} 16px "${fontFamily}"`;
-          fontLoadPromises.push(
-            document.fonts.load(fontSpec).then(() => {
-              // Font loaded successfully
-            }).catch(() => {
-              // Ignore errors - font might not be available in that variant
-            })
-          );
-        }
-      }
-    }
-    await Promise.all(fontLoadPromises);
+  if (onProgress) {
+    onProgress(90, 'Bild wird finalisiert...');
   }
 
-  // Additional delay to ensure fonts are fully applied
-  await new Promise(resolve => setTimeout(resolve, 200));
-
-  // Create a temporary container and add SVG to DOM to ensure fonts are loaded
-  // This is critical: fonts embedded in SVG won't load unless SVG is in DOM
-  const tempContainer = document.createElement('div');
-  tempContainer.style.cssText = 'position:fixed; left:-99999px; top:-99999px; width:0; height:0; overflow:hidden; visibility:hidden;';
-  const svgClone = svgElement.cloneNode(true) as SVGSVGElement;
-  tempContainer.appendChild(svgClone);
-  document.body.appendChild(tempContainer);
-
-  try {
-    // Wait for fonts to load in the DOM context
-    if (document.fonts && document.fonts.load && fontFamilies.size > 0) {
-      const fontLoadPromises: Promise<void>[] = [];
-      const cloneTextElements = svgClone.querySelectorAll('text, tspan');
-      
-      for (const fontFamily of fontFamilies) {
-        // Load font with actual weight from SVG elements
-        cloneTextElements.forEach((element) => {
-          const elementFontFamily = element.getAttribute('font-family');
-          const elementFontWeight = element.getAttribute('font-weight') || '400';
-          const elementFontStyle = element.getAttribute('font-style') || 'normal';
-          
-          if (elementFontFamily) {
-            const cleanFamily = elementFontFamily.split(',')[0].replace(/['"]/g, '').trim();
-            if (cleanFamily === fontFamily) {
-              const normalizedWeight = parseInt(elementFontWeight, 10) || 400;
-              const fontSpec = `${elementFontStyle} ${normalizedWeight} 16px "${fontFamily}"`;
-              fontLoadPromises.push(
-                document.fonts.load(fontSpec).then(() => {
-                  console.log(`Font loaded for rendering: ${fontFamily} (${normalizedWeight} ${elementFontStyle})`);
-                }).catch((err) => {
-                  console.warn(`Font load failed: ${fontFamily}`, err);
-                })
-              );
-            }
-          }
-        });
-      }
-      await Promise.all(fontLoadPromises);
-    }
-
-    // Additional delay to ensure fonts are fully applied in DOM
-    // Also verify fonts are actually loaded
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Verify fonts are loaded by checking if they're available
-    if (document.fonts && document.fonts.check) {
-      for (const fontFamily of fontFamilies) {
-        const cloneTextElements = svgClone.querySelectorAll('text, tspan');
-        cloneTextElements.forEach((element) => {
-          const elementFontFamily = element.getAttribute('font-family');
-          const elementFontWeight = element.getAttribute('font-weight') || '400';
-          const elementFontStyle = element.getAttribute('font-style') || 'normal';
-          
-          if (elementFontFamily) {
-            const cleanFamily = elementFontFamily.split(',')[0].replace(/['"]/g, '').trim();
-            if (cleanFamily === fontFamily) {
-              const normalizedWeight = parseInt(elementFontWeight, 10) || 400;
-              const fontSpec = `${elementFontStyle} ${normalizedWeight} 16px "${fontFamily}"`;
-              const isLoaded = document.fonts.check(fontSpec);
-              if (!isLoaded) {
-                console.warn(`Font not loaded yet: ${fontSpec}`);
-              } else {
-                console.log(`Font verified loaded: ${fontSpec}`);
-              }
-            }
-          }
-        });
-      }
-    }
-
-    // Create a canvas element
-    const canvas = document.createElement('canvas');
-    canvas.width = width * scale;
-    canvas.height = height * scale;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      throw new Error('Could not get canvas context');
-    }
-
-    // Fill background
-    ctx.fillStyle = backgroundColor;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Convert SVG to string (use the clone that's in DOM)
-    console.log('[SVG Export]', svgClone.outerHTML);
-    const svgString = new XMLSerializer().serializeToString(svgClone);
-    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(svgBlob);
-
-    // Load SVG as image
-    const img = new Image();
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve();
-      img.onerror = () => reject(new Error('Failed to load SVG as image'));
-      img.src = url;
-    });
-
-    // Additional delay to ensure fonts are applied in the rendered image
-    // This is important because when SVG is loaded as Image, fonts need time to render
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Draw image on canvas
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-    if (onProgress) {
-      onProgress(90, 'Bild wird finalisiert...');
-    }
-
-    // Convert canvas to data URL
-    const dataUrl = canvas.toDataURL('image/png');
-    
-    // Cleanup
-    URL.revokeObjectURL(url);
-    
-    return dataUrl;
-  } finally {
-    // Cleanup temporary container
-    if (tempContainer.parentNode) {
-      document.body.removeChild(tempContainer);
-    }
-  }
+  return dataUrl;
 };
 
 /**
@@ -430,22 +219,17 @@ export const svgToPngDataUrl = async (
  */
 export const downloadDataUrl = (dataUrl: string, fileName: string): boolean => {
   try {
-    // Approach 1: Standard download attribute (works on most platforms)
+    // Standard download approach
     const link = document.createElement('a');
     link.download = fileName;
     link.href = dataUrl;
     link.style.display = 'none';
-
-    // iOS Safari/Firefox workaround: Set target to force download
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
 
     document.body.appendChild(link);
-
-    // Trigger click
     link.click();
 
-    // Cleanup
     setTimeout(() => {
       if (link.parentNode) {
         document.body.removeChild(link);
@@ -468,7 +252,7 @@ const isIOS = (): boolean => {
 };
 
 /**
- * Detects if the browser is Firefox (works on all platforms including iOS)
+ * Detects if the browser is Firefox
  */
 const isFirefox = (): boolean => {
   const userAgent = navigator.userAgent.toLowerCase();
@@ -476,14 +260,12 @@ const isFirefox = (): boolean => {
 };
 
 /**
- * Opens a data URL in a new window (useful for mobile devices)
- * iOS-specific: Creates a temporary download link with better compatibility
+ * Opens a data URL in a new window
  */
 export const openDataUrlInNewWindow = (dataUrl: string, fileName?: string): boolean => {
-  // iOS-specific approach: use blob URL instead of data URL
+  // iOS-specific approach: use blob URL
   if (isIOS()) {
     try {
-      // Convert data URL to blob
       const arr = dataUrl.split(',');
       const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
       const bstr = atob(arr[1]);
@@ -495,43 +277,30 @@ export const openDataUrlInNewWindow = (dataUrl: string, fileName?: string): bool
       const blob = new Blob([u8arr], { type: mime });
       const blobUrl = URL.createObjectURL(blob);
 
-      // Try to open in new window
       const newWindow = window.open(blobUrl, '_blank');
-
-      // Cleanup after a delay
       setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
 
       return newWindow !== null;
     } catch (error) {
       console.error('iOS blob URL approach failed:', error);
-      // Fallback to standard approach
     }
   }
 
-  // Standard approach for other platforms
+  // Standard approach
   const newWindow = window.open(dataUrl, '_blank');
   return newWindow !== null;
 };
 
 /**
  * Creates a Blob URL from an image blob and opens it in a new browser tab
- * This creates a "local file" in the browser's memory that can be opened as a URL
- * The blob URL can be used like a regular file URL and works on all browsers
- * 
- * @param blob - The image blob to create a URL for
- * @param fileName - Optional file name (for reference)
- * @param cleanupDelay - Delay in milliseconds before revoking the blob URL (default: 60000 = 1 minute)
- * @returns The blob URL string, cleanup function, and success status
  */
 export const createAndOpenBlobUrl = (
   blob: Blob,
   fileName?: string,
   cleanupDelay: number = 60000
 ): { blobUrl: string; cleanup: () => void; success: boolean } => {
-  // Create a blob URL - this acts like a "local file" in the browser
   const blobUrl = URL.createObjectURL(blob);
   
-  // Special handling for Firefox on iOS - use link click instead of window.open
   const isIOSDevice = isIOS();
   const isFirefoxBrowser = isFirefox();
   
@@ -539,11 +308,9 @@ export const createAndOpenBlobUrl = (
   let success = false;
   
   if (isIOSDevice && isFirefoxBrowser) {
-    // Firefox on iOS: window.open() often doesn't work, use link click approach
+    // Firefox on iOS: use link click approach
     try {
       const link = document.createElement('a');
-      // Convert blob to data URL (PNG) for better compatibility on iOS Firefox
-      // Some versions of iOS Firefox do not handle blob: URLs opened in a new tab reliably
       const reader = new FileReader();
       reader.onloadend = () => {
         const dataUrl = reader.result as string;
@@ -560,42 +327,30 @@ export const createAndOpenBlobUrl = (
         }, 100);
       };
       reader.readAsDataURL(blob);
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      link.style.display = 'none';
-      
       success = true;
-      console.log('Firefox iOS: Using link click approach for blob URL');
     } catch (error) {
       console.error('Firefox iOS link click approach failed:', error);
-      // Fallback to window.open
       newWindow = window.open(blobUrl, '_blank');
       success = newWindow !== null;
     }
   } else {
-    // Standard approach: Open the blob URL in a new tab
+    // Standard approach
     newWindow = window.open(blobUrl, '_blank');
     success = newWindow !== null;
     
     if (!success) {
-      console.warn('Popup blocker may have prevented opening the image in a new window');
+      console.warn('Popup blocker may have prevented opening the image');
     }
   }
   
-  // Cleanup function to revoke the blob URL and free memory
   const cleanup = () => {
     URL.revokeObjectURL(blobUrl);
   };
   
-  // Auto-cleanup after delay (to prevent memory leaks if user doesn't close the tab)
-  // Note: We use a longer delay because the user might want to save the image from the tab
   setTimeout(() => {
-    // Only cleanup if the window was closed or is not accessible
     if (newWindow) {
       try {
         if (!newWindow.closed) {
-          // Window still open, don't cleanup yet
-          // The browser will handle cleanup when the window is closed
           return;
         }
       } catch (e) {
@@ -610,11 +365,8 @@ export const createAndOpenBlobUrl = (
 
 /**
  * iOS-specific: Show image in a modal-like experience
- * Creates a full-screen image viewer that allows long-press to save
- * NOTE: The image passed here is already a converted PNG (data URL), not SVG!
  */
 export const showImageFullscreen = (dataUrl: string, fileName: string, onClose: () => void): void => {
-  // Create overlay
   const overlay = document.createElement('div');
   overlay.style.cssText = `
     position: fixed;
@@ -632,7 +384,6 @@ export const showImageFullscreen = (dataUrl: string, fileName: string, onClose: 
     overflow: auto;
   `;
 
-  // Create instructions
   const instructions = document.createElement('div');
   instructions.style.cssText = `
     color: white;
@@ -646,10 +397,8 @@ export const showImageFullscreen = (dataUrl: string, fileName: string, onClose: 
     <p style="margin-bottom: 10px; font-weight: bold;">📱 So speicherst du das Bild:</p>
     <p style="font-size: 13px; opacity: 0.9; margin-bottom: 8px;">1. Drücke <strong>lang</strong> auf das Bild unten</p>
     <p style="font-size: 13px; opacity: 0.9; margin-bottom: 8px;">2. Wähle "<strong>Bild sichern</strong>" oder "<strong>Zu Fotos hinzufügen</strong>"</p>
-    <p style="font-size: 11px; opacity: 0.7; margin-top: 12px;">Das Bild ist bereits als PNG konvertiert und bereit zum Speichern</p>
   `;
 
-  // Create image container for better control
   const imgContainer = document.createElement('div');
   imgContainer.style.cssText = `
     flex: 1;
@@ -660,7 +409,6 @@ export const showImageFullscreen = (dataUrl: string, fileName: string, onClose: 
     overflow: auto;
   `;
 
-  // Create image (this is the converted PNG!)
   const img = document.createElement('img');
   img.src = dataUrl;
   img.alt = fileName;
@@ -673,7 +421,6 @@ export const showImageFullscreen = (dataUrl: string, fileName: string, onClose: 
     cursor: pointer;
   `;
 
-  // Add visual feedback on touch
   img.addEventListener('touchstart', () => {
     img.style.opacity = '0.8';
   });
@@ -683,7 +430,6 @@ export const showImageFullscreen = (dataUrl: string, fileName: string, onClose: 
 
   imgContainer.appendChild(img);
 
-  // Create close button
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '✕ Schließen';
   closeBtn.style.cssText = `
@@ -708,15 +454,11 @@ export const showImageFullscreen = (dataUrl: string, fileName: string, onClose: 
     onClose();
   };
 
-  // Assemble overlay
   overlay.appendChild(closeBtn);
   overlay.appendChild(instructions);
   overlay.appendChild(imgContainer);
-
-  // Add to document
   document.body.appendChild(overlay);
 
-  // Close on background click (but not on image or instructions)
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay || e.target === imgContainer) {
       if (overlay.parentNode) {
@@ -726,16 +468,10 @@ export const showImageFullscreen = (dataUrl: string, fileName: string, onClose: 
     }
   });
 
-  // Prevent body scroll when overlay is open
   document.body.style.overflow = 'hidden';
-
-  // Cleanup function
-  const cleanup = () => {
+  (overlay as any)._cleanup = () => {
     document.body.style.overflow = '';
   };
-
-  // Store cleanup for later
-  (overlay as any)._cleanup = cleanup;
 };
 
 /**
@@ -747,648 +483,133 @@ export const convertSvgToImage = async (
 ): Promise<{ dataUrl: string; blob: Blob; width: number; height: number; blobUrl?: string }> => {
   const { onProgress, onImageStatusUpdate } = options;
 
-  // Step 1: Clone SVG to avoid modifying the original
+  // Step 1: Prepare SVG
   if (onProgress) {
     onProgress(10, 'SVG wird vorbereitet...');
   }
 
-  const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
-
-  // Attach cloned SVG to a hidden container to ensure getComputedStyle resolves correctly
-  const hiddenContainer = document.createElement('div');
-  hiddenContainer.style.cssText = 'position:fixed; left:-99999px; top:-99999px; width:0; height:0; overflow:hidden; visibility:hidden;';
-  hiddenContainer.appendChild(clonedSvg);
-  document.body.appendChild(hiddenContainer);
-
-  // Helper: remove external @import rules and <link> tags inside the SVG to avoid ignored/tainting resources
-  const sanitizeSvgStyles = () => {
-    const styleNodes = clonedSvg.querySelectorAll('style');
-    styleNodes.forEach((styleEl) => {
-      const text = styleEl.textContent || '';
-      if (/@import\s+url\(/i.test(text)) {
-        // Strip @import lines
-        const cleaned = text
-          .split('\n')
-          .filter((line) => !/@import\s+url\(/i.test(line))
-          .join('\n');
-        styleEl.textContent = cleaned;
-      }
-    });
-    // Remove any nested link elements inside the SVG
-    const linkNodes = clonedSvg.querySelectorAll('link, LINK');
-    linkNodes.forEach((node) => node.parentNode?.removeChild(node));
-  };
-  sanitizeSvgStyles();
-
-  // Step 1b: Load Google Fonts into the document AND embed into SVG
-  // This two-pronged approach ensures fonts work in both browser and canvas
-  try {
-    // Extract all unique font families and their styles used in the SVG
-    const fontConfigs = new Map<string, Set<{ weight: string; style: string }>>();
-    const textElements = clonedSvg.querySelectorAll('text, tspan');
-
-    textElements.forEach((element) => {
-      const computed = window.getComputedStyle(element as unknown as Element);
-      const fontFamily = element.getAttribute('font-family') || computed.fontFamily;
-      const fontWeight = element.getAttribute('font-weight') || computed.fontWeight || '400';
-      const fontStyle = element.getAttribute('font-style') || computed.fontStyle || 'normal';
-
-      const cleanFamily = normalizeFontFamilyName(fontFamily) || DEFAULT_FONT_FAMILY;
-      if (cleanFamily) {
-        if (!fontConfigs.has(cleanFamily)) {
-          fontConfigs.set(cleanFamily, new Set());
-        }
-
-        let normalizedWeight = fontWeight.toString();
-        const normalizedStyle = fontStyle;
-
-        // Bebas Neue from Google Fonts only provides 400; clamp to 400 to avoid fallbacks
-        if (cleanFamily === 'Bebas Neue') {
-          normalizedWeight = '400';
-        }
-
-        // Store font config for embedding
-        fontConfigs.get(cleanFamily)!.add({
-          weight: normalizedWeight,
-          style: normalizedStyle
-        });
-
-        // Ensure explicit, normalized attributes are present on elements for serialization
-        element.setAttribute('font-family', cleanFamily);
-        element.setAttribute('font-weight', normalizedWeight);
-        element.setAttribute('font-style', normalizedStyle);
-      }
-    });
-
-    console.log('Detected fonts in SVG:', Array.from(fontConfigs.entries()).map(([name, styles]) =>
-      `${name}: ${Array.from(styles).map(s => `${s.weight} ${s.style}`).join(', ')}`
-    ));
-
-    // Step 1: Load fonts into document using Google Fonts API
-    const fontsLoadedIntoDocument = loadGoogleFontsIntoDocument(fontConfigs);
-    if (fontsLoadedIntoDocument) {
-      console.log('Loading Google Fonts into document...');
-      // Wait a bit for Google Fonts to load
-      await new Promise(resolve => setTimeout(resolve, 300));
-    }
-
-    // Build font URL map from central configuration
-    const buildFontUrlMap = (): Record<string, Record<string, string>> => {
-      const map: Record<string, Record<string, string>> = {};
-
-      for (const fontConfig of Object.values(AVAILABLE_FONTS)) {
-        const variantMap: Record<string, string> = {};
-
-        for (const variant of fontConfig.variants) {
-          const variantKey = `${variant.weight}-${variant.style}`;
-          variantMap[variantKey] = variant.url;
-        }
-
-        map[fontConfig.cssFamily] = variantMap;
-      }
-
-      return map;
-    };
-
-    const googleFontUrls = buildFontUrlMap();
-    console.log('Using central font configuration for:', Object.keys(googleFontUrls));
-
-    const embedFont = async (
-      familyName: string,
-      fontUrl: string,
-      fontWeight: string = '400',
-      fontStyle: string = 'normal'
-    ) => {
-      try {
-        const resolvedUrl = new URL(fontUrl, document.baseURI).toString();
-        const resp = await fetch(resolvedUrl);
-        if (!resp.ok) throw new Error(`Font HTTP ${resp.status}`);
-        const blob = await resp.blob();
-        const base64 = await blobToBase64(blob);
-
-        // Detect format from URL or content-type
-        let fontFormat: 'woff2' | 'woff' | 'opentype' | 'truetype' = 'woff2';
-        const contentType = resp.headers.get('content-type') || '';
-        if (fontUrl.includes('.woff2') || contentType.includes('woff2')) {
-          fontFormat = 'woff2';
-        } else if (fontUrl.includes('.woff') || contentType.includes('woff')) {
-          fontFormat = 'woff';
-        } else if (fontUrl.includes('.otf') || contentType.includes('opentype')) {
-          fontFormat = 'opentype';
-        } else if (fontUrl.includes('.ttf') || contentType.includes('truetype')) {
-          fontFormat = 'truetype';
-        }
-
-        const dataUrl = `data:font/${fontFormat};base64,${base64}`;
-
-        // Ensure we have a dedicated style element at the SVG root for embedded fonts
-        let fontStyleEl = clonedSvg.querySelector('style[data-embedded-fonts]') as SVGStyleElement | null;
-        if (!fontStyleEl) {
-          fontStyleEl = document.createElementNS(clonedSvg.namespaceURI, 'style') as SVGStyleElement;
-          fontStyleEl.setAttribute('type', 'text/css');
-          fontStyleEl.setAttribute('data-embedded-fonts', 'true');
-          clonedSvg.insertBefore(fontStyleEl, clonedSvg.firstChild);
-        }
-
-        // Append @font-face rule for this variant (avoid duplicates)
-        const escapedFamilyName = familyName.replace(/'/g, "\\'");
-        const fontFaceRule = `@font-face { font-family: '${escapedFamilyName}'; src: url('${dataUrl}') format('${fontFormat}'); font-weight: ${fontWeight}; font-style: ${fontStyle}; font-display: block; }`;
-        if (!fontStyleEl.textContent?.includes(fontFaceRule)) {
-          fontStyleEl.textContent = `${fontStyleEl.textContent || ''}\n${fontFaceRule}`.trim();
-        }
-        console.log(`Successfully embedded font: ${familyName} (${fontWeight} ${fontStyle})`);
-
-        // Also load font into DOM to ensure it's available when SVG is rendered as image
-        try {
-          const fontFace = new FontFace(familyName, `url('${dataUrl}') format('${fontFormat}')`, {
-            weight: fontWeight,
-            style: fontStyle as 'normal' | 'italic',
-            display: 'block'
-          });
-          await fontFace.load();
-          document.fonts.add(fontFace);
-          console.log(`Font added to document.fonts: ${familyName} (${fontWeight} ${fontStyle})`);
-        } catch (e) {
-          console.warn(`Failed to add font to document.fonts: ${familyName}`, e);
-        }
-      } catch (e) {
-        console.warn(`Failed to embed font ${familyName} (${fontWeight} ${fontStyle}):`, e);
-      }
-    };
-
-    // Normalize font weight values
-    const normalizeFontWeight = (weight: string): string => {
-      const numWeight = parseInt(weight, 10);
-      if (isNaN(numWeight)) {
-        switch (weight.toLowerCase()) {
-          case 'normal': return '400';
-          case 'bold': return '700';
-          case 'lighter': return '300';
-          case 'bolder': return '700';
-          default: return '400';
-        }
-      }
-      return numWeight.toString();
-    };
-
-    // Embed all detected Google Fonts with their specific variants
-    const embedPromises: Promise<void>[] = [];
-
-    for (const [fontFamily, styles] of fontConfigs.entries()) {
-      const fontVariants = googleFontUrls[fontFamily];
-
-      console.log(`Processing font: ${fontFamily}, available variants:`, Object.keys(fontVariants || {}));
-
-      if (fontVariants) {
-        for (const style of styles) {
-          const normalizedWeight = normalizeFontWeight(style.weight);
-          const key = `${normalizedWeight}-${style.style}`;
-          const fontUrl = fontVariants[key];
-
-          console.log(`Looking for font variant: ${fontFamily} (${key})`);
-
-          if (fontUrl) {
-            console.log(`Found font URL for ${fontFamily} (${key}): ${fontUrl}`);
-            embedPromises.push(embedFont(fontFamily, fontUrl, normalizedWeight, style.style));
-          } else {
-            // Fallback to 400-normal if specific variant not found
-            const fallbackUrl = fontVariants['400-normal'];
-            if (fallbackUrl) {
-              console.warn(`Font variant ${fontFamily} (${key}) not found, using 400-normal`);
-              embedPromises.push(embedFont(fontFamily, fallbackUrl, normalizedWeight, style.style));
-            } else {
-              console.error(`No font variants found for: ${fontFamily}, available keys:`, Object.keys(fontVariants));
-            }
-          }
-        }
-      } else {
-        console.error(`No Google Fonts URLs found for: ${fontFamily}, available fonts:`, Object.keys(googleFontUrls));
-      }
-    }
-
-    await Promise.all(embedPromises);
-    
-    console.log('All fonts embedded, waiting for fonts to be fully loaded...');
-
-    // Force browser to load all embedded fonts by creating hidden text elements
-    // This ensures fonts are fully loaded before canvas rendering
-    const fontLoadPromises: Promise<void>[] = [];
-
-    for (const [fontFamily, styles] of fontConfigs.entries()) {
-      for (const style of styles) {
-        const normalizedWeight = normalizeFontWeight(style.weight);
-
-        // Create a promise that resolves when this specific font face is loaded
-        const fontLoadPromise = new Promise<void>((resolve) => {
-          // Create temporary element to trigger font loading
-          const tempText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-          tempText.setAttribute('font-family', fontFamily);
-          tempText.setAttribute('font-weight', normalizedWeight);
-          tempText.setAttribute('font-style', style.style);
-          tempText.setAttribute('opacity', '0');
-          tempText.textContent = 'Font Loading Test';
-          clonedSvg.appendChild(tempText);
-
-          // Use FontFace API to wait for font to be loaded
-          if (document.fonts && document.fonts.load) {
-            const fontSpec = `${style.style} ${normalizedWeight} 16px "${fontFamily}"`;
-            document.fonts.load(fontSpec).then(() => {
-              console.log(`Font loaded: ${fontFamily} (${normalizedWeight} ${style.style})`);
-              clonedSvg.removeChild(tempText);
-              resolve();
-            }).catch((err) => {
-              console.warn(`Font load error for ${fontFamily}:`, err);
-              clonedSvg.removeChild(tempText);
-              resolve(); // Resolve anyway to not block the conversion
-            });
-          } else {
-            // Fallback: wait 500ms if FontFace API not available
-            setTimeout(() => {
-              clonedSvg.removeChild(tempText);
-              resolve();
-            }, 500);
-          }
-        });
-
-        fontLoadPromises.push(fontLoadPromise);
-      }
-    }
-
-    // Wait for all embedded fonts to be fully loaded
-    await Promise.all(fontLoadPromises);
-
-    console.log('All fonts embedded successfully');
-
-    // Step 2: Wait for all fonts in the document to be ready
-    if (document.fonts && document.fonts.ready) {
-      console.log('Waiting for document fonts to be ready...');
-      await document.fonts.ready;
-      console.log('Document fonts ready');
-    }
-
-    // Step 3: Explicitly load each font variant we need
-    const fontLoadChecks: Promise<void>[] = [];
-    for (const [fontFamily, styles] of fontConfigs.entries()) {
-      for (const style of styles) {
-        const normalizedWeight = normalizeFontWeight(style.weight);
-        const fontSpec = `${style.style} ${normalizedWeight} 16px "${fontFamily}"`;
-
-        if (document.fonts && document.fonts.load) {
-          fontLoadChecks.push(
-            document.fonts.load(fontSpec).then(() => {
-              console.log(`✓ Font ready in document: ${fontFamily} (${normalizedWeight} ${style.style})`);
-            }).catch((err) => {
-              console.warn(`✗ Font load check failed: ${fontFamily}`, err);
-            })
-          );
-        }
-      }
-    }
-
-    await Promise.all(fontLoadChecks);
-    console.log('All fonts loaded and verified');
-    
-    // Final verification: Check that fonts are actually available
-    if (document.fonts && document.fonts.check) {
-      for (const [fontFamily, styles] of fontConfigs.entries()) {
-        for (const style of styles) {
-          const normalizedWeight = normalizeFontWeight(style.weight);
-          const fontSpec = `${style.style} ${normalizedWeight} 16px "${fontFamily}"`;
-          const isAvailable = document.fonts.check(fontSpec);
-          if (isAvailable) {
-            console.log(`✓ Font verified available: ${fontSpec}`);
-          } else {
-            console.error(`✗ Font NOT available: ${fontSpec}`);
-          }
-        }
-      }
-    }
-    
-    // Additional delay to ensure fonts are fully ready
-    await new Promise(resolve => setTimeout(resolve, 500));
-  } catch (e) {
-    // Non-fatal: if fonts cannot be embedded, proceed with conversion
-    console.warn('Font embedding skipped due to error:', e);
-  }
-
-  // Step 2: Wait for all external images to load
+  // Step 2: Inline all images
   if (onProgress) {
-    onProgress(20, 'Bilder werden geladen...');
+    onProgress(30, 'Bilder werden geladen...');
   }
 
-  await inlineAllImages(clonedSvg, onImageStatusUpdate);
+  await inlineAllImages(svgElement, onImageStatusUpdate);
 
   if (onProgress) {
-    onProgress(60, 'Alle Bilder geladen...');
+    onProgress(60, 'Bilder wurden geladen...');
   }
 
-  // Step 3: Convert to PNG
-  // Convert to PNG
-  const dataUrl = await svgToPngDataUrl(clonedSvg, options);
-
-  if (onProgress) {
-    onProgress(95, 'Bild erstellt...');
-  }
+  // Step 3: Convert to PNG using react-svg-to-image
+  const dataUrl = await svgToPngDataUrl(svgElement, options);
 
   // Step 4: Convert to blob
-  const response = await fetch(dataUrl);
-  const blob = await response.blob();
+  if (onProgress) {
+    onProgress(95, 'Datei wird erstellt...');
+  }
+
+  const arr = dataUrl.split(',');
+  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  const blob = new Blob([u8arr], { type: mime });
 
   // Get dimensions
-  let width = options.width || 1080;
-  let height = options.height || 1350;
-
-  if (!options.width || !options.height) {
-    if (clonedSvg.viewBox && clonedSvg.viewBox.baseVal) {
-      width = clonedSvg.viewBox.baseVal.width;
-      height = clonedSvg.viewBox.baseVal.height;
-    } else if (clonedSvg.getAttribute('width') && clonedSvg.getAttribute('height')) {
-      width = parseFloat(clonedSvg.getAttribute('width') || '1080');
-      height = parseFloat(clonedSvg.getAttribute('height') || '1350');
-    }
+  let width = 1080;
+  let height = 1350;
+  
+  if (svgElement.viewBox && svgElement.viewBox.baseVal) {
+    width = svgElement.viewBox.baseVal.width;
+    height = svgElement.viewBox.baseVal.height;
+  } else if (svgElement.getAttribute('width') && svgElement.getAttribute('height')) {
+    width = parseFloat(svgElement.getAttribute('width') || '1080');
+    height = parseFloat(svgElement.getAttribute('height') || '1350');
   }
 
   if (onProgress) {
     onProgress(100, 'Fertig!');
   }
 
-  // Optionally create blob URL for direct browser access
-  const blobUrl = URL.createObjectURL(blob);
-
-  // Cleanup hidden container
-  if (hiddenContainer.parentNode) {
-    hiddenContainer.parentNode.removeChild(hiddenContainer);
-  }
-
-  return { dataUrl, blob, width, height, blobUrl };
+  return {
+    dataUrl,
+    blob,
+    width,
+    height,
+  };
 };
 
 /**
- * Platform detection utilities
+ * Unified platform-specific download handler
  */
+interface ToastMessage {
+  title: string;
+  description: string;
+  variant?: 'default' | 'destructive';
+}
 
-/**
- * Detects if running on iOS using Capacitor's reliable platform detection
- * This works for both native apps AND web browsers on iOS
- */
-export const isIOSPlatform = (): boolean => {
-  // Check if Capacitor is available
-  if (typeof window !== 'undefined' && (window as any).Capacitor) {
-    const Capacitor = (window as any).Capacitor;
-    const platform = Capacitor.getPlatform();
-
-    // For native iOS app
-    if (platform === 'ios') {
-      console.log('iOS detected: Native iOS app');
-      return true;
-    }
-
-    // For web (including iOS browsers like Firefox, Safari, Chrome on iOS)
-    if (platform === 'web') {
-      // Use multiple detection methods for iOS browsers
-      const isIOSUserAgent = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const isIPadPro = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
-      const isIPad13Plus = navigator.userAgent.includes('Mac') && 'ontouchend' in document;
-
-      const result = isIOSUserAgent || isIPadPro || isIPad13Plus;
-
-      console.log('Platform Detection (Web):', {
-        capacitorPlatform: platform,
-        userAgent: navigator.userAgent,
-        platform: navigator.platform,
-        maxTouchPoints: navigator.maxTouchPoints,
-        isIOSUserAgent,
-        isIPadPro,
-        isIPad13Plus,
-        finalResult: result
-      });
-
-      return result;
-    }
-
-    console.log('Platform detected:', platform);
-    return false;
-  }
-
-  // Fallback if Capacitor is not available
-  return isIOS();
-};
-
-/**
- * Shared download handler options
- */
-export interface DownloadHandlerOptions {
+interface PlatformDownloadOptions {
   svgElement: SVGSVGElement;
   fileName: string;
   isMobile: boolean;
-  onProgressUpdate: (progress: number, message: string) => void;
-  onImageStatusUpdate: (statuses: ImageLoadProgress[]) => void;
-  onSuccess: (message: { title: string; description: string; duration?: number }) => void;
-  onError: (message: { title: string; description: string }) => void;
+  onProgressUpdate?: (progress: number, message: string) => void;
+  onImageStatusUpdate?: (statuses: ImageLoadProgress[]) => void;
+  onSuccess?: (message: ToastMessage) => void;
+  onError?: (message: ToastMessage) => void;
 }
 
-/**
- * Shared download handler with platform-specific behavior
- * Handles native platforms, mobile web, and desktop web downloads
- */
-export const handlePlatformDownload = async (options: DownloadHandlerOptions): Promise<void> => {
-  const {
-    svgElement,
-    fileName,
-    isMobile,
-    onProgressUpdate,
+export const handlePlatformDownload = async (options: PlatformDownloadOptions): Promise<void> => {
+  const { 
+    svgElement, 
+    fileName, 
+    isMobile, 
+    onProgressUpdate, 
     onImageStatusUpdate,
     onSuccess,
-    onError,
+    onError 
   } = options;
 
   try {
-    // Convert SVG to image with progress tracking
-    const { dataUrl, blob } = await convertSvgToImage(svgElement, {
+    const result = await convertSvgToImage(svgElement, {
       scale: 2,
       backgroundColor: 'white',
       onProgress: onProgressUpdate,
       onImageStatusUpdate,
     });
 
-    // Check if running on native platform (iOS/Android)
-    const isNative = typeof window !== 'undefined' &&
-                     (window as any).Capacitor?.isNativePlatform?.() === true;
-
-    if (isNative) {
-      // Native platforms: Use Capacitor Share API
-      onProgressUpdate(100, "Wird geteilt...");
-
-      try {
-        const Capacitor = (window as any).Capacitor;
-        const { Share } = await import('@capacitor/share');
-        const { Filesystem, Directory } = await import('@capacitor/filesystem');
-
-        const base64Data = await blobToBase64(blob);
-
-        // Save to filesystem
-        await Filesystem.writeFile({
-          path: fileName,
-          data: base64Data,
-          directory: Directory.Cache,
+    if (isMobile) {
+      if (isIOS()) {
+        showImageFullscreen(result.dataUrl, fileName, () => {
+          console.log('Image viewer closed');
         });
-
-        // Get file URI
-        const fileUri = await Filesystem.getUri({
-          directory: Directory.Cache,
-          path: fileName,
+        onSuccess?.({
+          title: 'Bild bereit',
+          description: 'Drücke lang auf das Bild um es zu speichern'
         });
-
-        // Share using Capacitor
-        await Share.share({
-          title: "Spielvorschau",
-          text: "Schau dir diese Spielvorschau an!",
-          url: fileUri.uri,
-          dialogTitle: "Bild teilen",
-        });
-
-        onSuccess({
-          title: "Erfolgreich!",
-          description: "Das Bild wurde geteilt.",
-        });
-      } catch (error) {
-        // User might have cancelled the share dialog
-        if ((error as Error).name === 'AbortError') {
-          onError({
-            title: "Abgebrochen",
-            description: "Der Share-Dialog wurde abgebrochen.",
-          });
-        } else {
-          throw error;
+      } else {
+        const success = openDataUrlInNewWindow(result.dataUrl, fileName);
+        if (!success) {
+          downloadDataUrl(result.dataUrl, fileName);
         }
+        onSuccess?.({
+          title: 'Erfolgreich',
+          description: 'Das Bild wurde in einem neuen Tab geöffnet'
+        });
       }
     } else {
-      // Web platforms: Platform-specific behavior
-      onProgressUpdate(100, "Download wird vorbereitet...");
-
-      const iosDevice = isIOSPlatform();
-      const Capacitor = typeof window !== 'undefined' ? (window as any).Capacitor : null;
-      const isAndroid = (Capacitor?.getPlatform?.() === 'android') || /Android/i.test(navigator.userAgent);
-      const isMobileDevice = isMobile || iosDevice || isAndroid;
-
-      console.log('Download Platform Detection:', {
-        isMobile,
-        isMobileDevice,
-        isIOS: iosDevice,
-        isAndroid,
-        userAgent: navigator.userAgent,
-        capacitorPlatform: Capacitor?.getPlatform?.()
+      downloadDataUrl(result.dataUrl, fileName);
+      onSuccess?.({
+        title: 'Download gestartet',
+        description: 'Das Bild wird heruntergeladen'
       });
-
-      // Mobile devices: Prefer Web Share API to share the PNG file; fallback to blob URL or fullscreen
-      if (isMobileDevice) {
-        const supportsShare = typeof (navigator as any).share === 'function';
-        const supportsCanShare = typeof (navigator as any).canShare === 'function';
-        const file = new File([blob], fileName, { type: 'image/png' });
-
-        if (supportsShare && (!supportsCanShare || (navigator as any).canShare({ files: [file] }))) {
-          try {
-            onProgressUpdate(100, "Teilen wird geöffnet...");
-            await (navigator as any).share({
-              title: "Spielvorschau",
-              text: "Schau dir diese Spielvorschau an!",
-              files: [file],
-            });
-
-            onSuccess({
-              title: "Erfolgreich",
-              description: "Das Bild wurde geteilt.",
-            });
-            return;
-          } catch (shareError: any) {
-            if (shareError && shareError.name === 'AbortError') {
-              onError({
-                title: "Abgebrochen",
-                description: "Der Teilen-Dialog wurde abgebrochen.",
-              });
-              return;
-            }
-            console.warn('Web Share API failed, falling back to blob URL:', shareError);
-          }
-        }
-
-        console.log('Using mobile blob URL approach - opening image in new tab');
-        onProgressUpdate(100, "Bild wird in neuem Tab geöffnet...");
-
-        // Create blob URL and open in new tab
-        const { blobUrl, cleanup, success } = createAndOpenBlobUrl(blob, fileName, 120000); // 2 minutes cleanup delay
-
-        if (!success) {
-          // Fallback: Use fullscreen viewer if blob URL opening failed
-          console.log('Blob URL opening failed, falling back to fullscreen viewer');
-          onProgressUpdate(100, "Bild bereit!");
-
-          showImageFullscreen(dataUrl, fileName, () => {
-            cleanup();
-            onSuccess({
-              title: "Bild geschlossen",
-              description: "Du kannst das Bild jederzeit erneut herunterladen.",
-            });
-          });
-
-          onSuccess({
-            title: "Bild bereit zum Speichern",
-            description: "Drücke lang auf das Bild, um es zu speichern.",
-            duration: 5000,
-          });
-          return;
-        }
-
-        // Store cleanup function for later (in case tab is closed manually)
-        (window as any).__kanvaBlobCleanup = cleanup;
-
-        onSuccess({
-          title: "Bild geöffnet",
-          description: "Das Bild wurde in einem neuen Tab geöffnet. Du kannst es dort speichern.",
-          duration: 5000,
-        });
-      }
-      // Desktop web: Use blob URL approach (opens image in new tab as local file)
-      else {
-        console.log('Using desktop blob URL approach - opening image in new tab');
-        onProgressUpdate(100, "Bild wird in neuem Tab geöffnet...");
-
-        // Create blob URL and open in new tab
-        const { blobUrl, cleanup, success } = createAndOpenBlobUrl(blob, fileName, 120000); // 2 minutes cleanup delay
-
-        if (!success) {
-          // Fallback: Try direct download if blob URL opening failed
-          console.log('Blob URL opening failed, falling back to direct download');
-          const downloadSuccess = downloadDataUrl(dataUrl, fileName);
-
-          onSuccess({
-            title: downloadSuccess ? "Download erfolgreich" : "Download vorbereitet",
-            description: downloadSuccess
-              ? "Das Bild wurde erfolgreich heruntergeladen."
-              : "Versuche, das Bild herunterzuladen.",
-            duration: 5000,
-          });
-          return;
-        }
-
-        // Store cleanup function for later (in case tab is closed manually)
-        (window as any).__kanvaBlobCleanup = cleanup;
-
-        onSuccess({
-          title: "Bild geöffnet",
-          description: "Das Bild wurde in einem neuen Tab geöffnet. Du kannst es dort speichern (Rechtsklick > 'Bild speichern unter...').",
-          duration: 5000,
-        });
-      }
     }
   } catch (error) {
-    console.error("Export failed:", error);
-    // Don't show error if user cancelled
-    if ((error as Error).name !== 'AbortError') {
-      onError({
-        title: "Fehler",
-        description: error instanceof Error ? error.message : "Bild konnte nicht erstellt werden.",
-      });
-    }
+    console.error('Export failed:', error);
+    onError?.({
+      title: 'Export fehlgeschlagen',
+      description: error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten'
+    });
   }
 };
