@@ -339,7 +339,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
       y: 200,
       content: 'Neuer Text',
       fontSize: 48,
-      fontFamily: 'Bebas Neue, sans-serif',
+      fontFamily: 'bebas-neue-pro, sans-serif',
       fill: '#ffffff',
       fontWeight: '900',
       fontStyle: 'normal',
@@ -361,7 +361,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
       content: `{${apiField}}`,
       apiField,
       fontSize: 48,
-      fontFamily: 'Bebas Neue, sans-serif',
+      fontFamily: 'bebas-neue-pro, sans-serif',
       fill: '#ffffff',
       fontWeight: '900',
       fontStyle: 'normal',
@@ -1351,7 +1351,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Bebas Neue, sans-serif">Bebas Neue</SelectItem>
+                        <SelectItem value="bebas-neue-pro, sans-serif">Bebas Neue Pro</SelectItem>
                         <SelectItem value="Roboto, sans-serif">Roboto</SelectItem>
                         <SelectItem value="Open Sans, sans-serif">Open Sans</SelectItem>
                         <SelectItem value="Lato, sans-serif">Lato</SelectItem>

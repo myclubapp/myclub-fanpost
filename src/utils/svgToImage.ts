@@ -4,7 +4,7 @@
  */
 
 /**
- * Dynamically loads Google Fonts into the document
+ * Dynamically loads fonts into the document
  * This ensures fonts are available when rendering to canvas
  */
 const loadGoogleFontsIntoDocument = (fontFamilies: Map<string, Set<{ weight: string; style: string }>>) => {
@@ -16,9 +16,17 @@ const loadGoogleFontsIntoDocument = (fontFamilies: Map<string, Set<{ weight: str
   const fontsToLoad: string[] = [];
 
   for (const [fontFamily, styles] of fontFamilies.entries()) {
-    // Build Google Fonts URL for this family
+    // Special handling for Adobe Typekit fonts
+    if (fontFamily === 'bebas-neue-pro') {
+      const typekitUrl = 'https://use.typekit.net/xiw8zet.css';
+      if (!existingFonts.has(typekitUrl)) {
+        fontsToLoad.push(typekitUrl);
+      }
+      continue;
+    }
+
+    // Build Google Fonts URL for other families
     const weights: string[] = [];
-    const hasItalic = Array.from(styles).some(s => s.style === 'italic');
 
     for (const style of styles) {
       const weight = parseInt(style.weight, 10) || 400;
@@ -681,45 +689,28 @@ export const convertSvgToImage = async (
             fontConfigs.set(cleanFamily, new Set());
           }
 
-          // For Bebas Neue: force to 400/normal since it only has one weight
+          // Normalize font names: map 'Bebas Neue' to 'bebas-neue-pro'
+          let finalFontFamily = cleanFamily;
+          if (cleanFamily === 'Bebas Neue') {
+            finalFontFamily = 'bebas-neue-pro';
+          }
+
           let normalizedWeight = fontWeight.toString();
           let normalizedStyle = fontStyle;
 
-          if (cleanFamily === 'Bebas Neue') {
-            // Bebas Neue only exists in one weight (Regular/400)
-            // Store what we need to embed (always 400-normal)
-            fontConfigs.get(cleanFamily)!.add({
-              weight: '400',
-              style: 'normal'
-            });
-
-            // Set attributes to 400/normal for proper rendering
-            element.setAttribute('font-family', cleanFamily);
-            element.setAttribute('font-weight', '400');
-            element.setAttribute('font-style', 'normal');
-
-            // Apply manual skew transform for italic simulation
-            if (fontStyle === 'italic' || fontStyle === 'oblique') {
-              const existingTransform = element.getAttribute('transform') || '';
-              // Add skewX to simulate italic (14 degrees is standard)
-              const skewTransform = 'skewX(-14)';
-              const newTransform = existingTransform
-                ? `${existingTransform} ${skewTransform}`
-                : skewTransform;
-              element.setAttribute('transform', newTransform);
-            }
-          } else {
-            // For other fonts, use the detected weight/style
-            fontConfigs.get(cleanFamily)!.add({
-              weight: normalizedWeight,
-              style: normalizedStyle
-            });
-
-            // Ensure explicit attributes are present on elements for serialization
-            if (!element.getAttribute('font-family')) element.setAttribute('font-family', cleanFamily);
-            if (!element.getAttribute('font-weight')) element.setAttribute('font-weight', normalizedWeight);
-            if (!element.getAttribute('font-style')) element.setAttribute('font-style', normalizedStyle);
+          // Store font config for embedding
+          if (!fontConfigs.has(finalFontFamily)) {
+            fontConfigs.set(finalFontFamily, new Set());
           }
+          fontConfigs.get(finalFontFamily)!.add({
+            weight: normalizedWeight,
+            style: normalizedStyle
+          });
+
+          // Ensure explicit attributes are present on elements for serialization
+          if (!element.getAttribute('font-family')) element.setAttribute('font-family', finalFontFamily);
+          if (!element.getAttribute('font-weight')) element.setAttribute('font-weight', normalizedWeight);
+          if (!element.getAttribute('font-style')) element.setAttribute('font-style', normalizedStyle);
         }
       }
     });
@@ -736,11 +727,29 @@ export const convertSvgToImage = async (
       await new Promise(resolve => setTimeout(resolve, 300));
     }
 
-    // Map of common Google Fonts to their woff2 URLs (with variants)
-    // Note: Bebas Neue only has one weight (Regular/400), no italic variant exists
+    // Map of font families to their font file URLs (with variants)
+    // bebas-neue-pro: Adobe Typekit font with full weight/italic support
     const googleFontUrls: Record<string, Record<string, string>> = {
-      'Bebas Neue': {
-        '400-normal': 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2',
+      'bebas-neue-pro': {
+        '100-normal': 'https://use.typekit.net/af/99669a/00000000000000007735c890/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n1&v=3',
+        '100-italic': 'https://use.typekit.net/af/9a6a29/00000000000000007735c897/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=i1&v=3',
+        '200-normal': 'https://use.typekit.net/af/d2d03c/00000000000000007735c89b/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n2&v=3',
+        '200-italic': 'https://use.typekit.net/af/f8852f/00000000000000007735c89e/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=i2&v=3',
+        '300-normal': 'https://use.typekit.net/af/61a494/00000000000000007735c8a4/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n3&v=3',
+        '300-italic': 'https://use.typekit.net/af/fafdcd/00000000000000007735c8aa/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=i3&v=3',
+        '400-normal': 'https://use.typekit.net/af/419abb/00000000000000007735c8b6/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3',
+        '400-italic': 'https://use.typekit.net/af/8efce3/00000000000000007735c8b3/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=i4&v=3',
+        '500-normal': 'https://use.typekit.net/af/cadcd4/00000000000000007735c8ad/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n5&v=3',
+        '500-italic': 'https://use.typekit.net/af/bdd557/00000000000000007735c8b0/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=i5&v=3',
+        '600-normal': 'https://use.typekit.net/af/5c1c2e/00000000000000007735c8b9/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n6&v=3',
+        '600-italic': 'https://use.typekit.net/af/cd2222/00000000000000007735c8bc/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=i6&v=3',
+        // Map common weights to nearest available
+        '700-normal': 'https://use.typekit.net/af/5c1c2e/00000000000000007735c8b9/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n6&v=3', // Use 600
+        '700-italic': 'https://use.typekit.net/af/cd2222/00000000000000007735c8bc/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=i6&v=3', // Use 600
+        '800-normal': 'https://use.typekit.net/af/5c1c2e/00000000000000007735c8b9/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n6&v=3', // Use 600
+        '800-italic': 'https://use.typekit.net/af/cd2222/00000000000000007735c8bc/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=i6&v=3', // Use 600
+        '900-normal': 'https://use.typekit.net/af/5c1c2e/00000000000000007735c8b9/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n6&v=3', // Use 600
+        '900-italic': 'https://use.typekit.net/af/cd2222/00000000000000007735c8bc/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=i6&v=3', // Use 600
       },
       'Roboto': {
         '400-normal': 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.woff2',
@@ -805,7 +814,6 @@ export const convertSvgToImage = async (
     const embedFont = async (
       familyName: string,
       fontUrl: string,
-      fontFormat: 'truetype' | 'woff' | 'woff2' = 'woff2',
       fontWeight: string = '400',
       fontStyle: string = 'normal'
     ) => {
@@ -815,6 +823,20 @@ export const convertSvgToImage = async (
         if (!resp.ok) throw new Error(`Font HTTP ${resp.status}`);
         const blob = await resp.blob();
         const base64 = await blobToBase64(blob);
+
+        // Detect format from URL or content-type
+        let fontFormat: 'woff2' | 'woff' | 'opentype' | 'truetype' = 'woff2';
+        const contentType = resp.headers.get('content-type') || '';
+        if (fontUrl.includes('.woff2') || contentType.includes('woff2')) {
+          fontFormat = 'woff2';
+        } else if (fontUrl.includes('.woff') || contentType.includes('woff')) {
+          fontFormat = 'woff';
+        } else if (fontUrl.includes('.otf') || contentType.includes('opentype')) {
+          fontFormat = 'opentype';
+        } else if (fontUrl.includes('.ttf') || contentType.includes('truetype')) {
+          fontFormat = 'truetype';
+        }
+
         const dataUrl = `data:font/${fontFormat};base64,${base64}`;
 
         const styleEl = document.createElementNS(clonedSvg.namespaceURI, 'style');
@@ -855,13 +877,13 @@ export const convertSvgToImage = async (
           const fontUrl = fontVariants[key];
 
           if (fontUrl) {
-            embedPromises.push(embedFont(fontFamily, fontUrl, 'woff2', normalizedWeight, style.style));
+            embedPromises.push(embedFont(fontFamily, fontUrl, normalizedWeight, style.style));
           } else {
             // Fallback to 400-normal if specific variant not found
             const fallbackUrl = fontVariants['400-normal'];
             if (fallbackUrl) {
               console.warn(`Font variant ${fontFamily} (${key}) not found, using 400-normal`);
-              embedPromises.push(embedFont(fontFamily, fallbackUrl, 'woff2', normalizedWeight, style.style));
+              embedPromises.push(embedFont(fontFamily, fallbackUrl, normalizedWeight, style.style));
             } else {
               console.warn(`No font variants found for: ${fontFamily}`);
             }

@@ -436,16 +436,16 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         viewBox={`0 0 ${canvasWidth} ${canvasHeight}`}
         className="max-w-full h-auto"
       >
-        {/* Embed Bebas Neue font for export */}
+        {/* Embed Bebas Neue Pro font for export */}
         <defs>
           <style type="text/css">
             {`
-              @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+              @import url('https://use.typekit.net/xiw8zet.css');
               @font-face {
-                font-family: 'Bebas Neue';
+                font-family: 'bebas-neue-pro';
                 font-style: normal;
                 font-weight: 400;
-                src: url(https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2) format('woff2');
+                src: url(https://use.typekit.net/af/419abb/00000000000000007735c8b6/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3) format('woff2');
               }
             `}
           </style>
