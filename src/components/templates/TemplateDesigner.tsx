@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ImageCropper } from '@/components/ImageCropper';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useQuery } from '@tanstack/react-query';
-import { AVAILABLE_FONTS, ensureTemplateFontsLoaded, getAvailableFontFamilies, getAvailableFontWeights, getAvailableFontStyles, normalizeFontFamilyName } from '@/config/fonts';
+import { AVAILABLE_FONTS, buildFontFaceCss, ensureTemplateFontsLoaded, getAvailableFontFamilies, getAvailableFontWeights, getAvailableFontStyles, normalizeFontFamilyName } from '@/config/fonts';
 
 interface Logo {
   id: string;
@@ -41,7 +41,7 @@ interface SVGElement {
   fontWeight?: string;
   fontStyle?: string;
   letterSpacing?: number;
-  textAnchor?: string;
+  textAnchor?: 'start' | 'middle' | 'end';
   href?: string;
   zIndex?: number;
   rx?: number; // border radius for rect
@@ -49,6 +49,14 @@ interface SVGElement {
   stroke?: string; // stroke color
   strokeWidth?: number; // stroke width
   pathData?: string; // SVG path data (d attribute)
+}
+
+interface TemplateConfig {
+  elements?: SVGElement[];
+  backgroundColor?: string;
+  backgroundImageUrl?: string;
+  useBackgroundPlaceholder?: boolean;
+  format?: '4:5' | '1:1' | '1100:800';
 }
 
 const DEFAULT_FONT_FAMILY = Object.values(AVAILABLE_FONTS)[0]?.cssFamily ?? 'Bebas Neue';
@@ -99,13 +107,13 @@ const getAPIFieldsForGame = (gameNumber: number) => {
 
 interface TemplateDesignerProps {
   supportedGames: number;
-  config: any;
-  onChange: (config: any) => void;
+  config: TemplateConfig;
+  onChange: (config: TemplateConfig) => void;
   onSupportedGamesChange: (games: number) => void;
   format: '4:5' | '1:1' | '1100:800';
   onFormatChange: (format: '4:5' | '1:1' | '1100:800') => void;
   previewMode: boolean;
-  previewData: any;
+  previewData: Record<string, unknown> | null;
   onTogglePreview: () => void;
 }
 
@@ -131,6 +139,11 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
     config.backgroundImageUrl ? 'image' : config.useBackgroundPlaceholder ? 'placeholder' : 'color'
   );
   const [showBackgroundGallery, setShowBackgroundGallery] = useState(false);
+  const [draggedElementIndex, setDraggedElementIndex] = useState<number | null>(null);
+  const [isElementsListOpen, setIsElementsListOpen] = useState(true);
+  const [isBackgroundOpen, setIsBackgroundOpen] = useState(true);
+  const [isPropertiesOpen, setIsPropertiesOpen] = useState(true);
+  const fontFaceCss = useMemo(() => buildFontFaceCss(), []);
 
   // Ensure all template fonts are loaded into the document
   useEffect(() => {
@@ -138,6 +151,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   }, []);
 
   // Sync incoming config from parent (e.g. after SVG import)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (Array.isArray(config?.elements) && config.elements !== elements) {
       setElements(normalizeElementsFontFamily(config.elements ?? []));
@@ -155,10 +169,6 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   const [logos, setLogos] = useState<Logo[]>([]);
   const [showLogoDialog, setShowLogoDialog] = useState(false);
   const [loadingLogos, setLoadingLogos] = useState(false);
-  const [draggedElementIndex, setDraggedElementIndex] = useState<number | null>(null);
-  const [isElementsListOpen, setIsElementsListOpen] = useState(true);
-  const [isBackgroundOpen, setIsBackgroundOpen] = useState(true);
-  const [isPropertiesOpen, setIsPropertiesOpen] = useState(true);
 
   // Auto-open properties panel when an element is selected
   useEffect(() => {
@@ -175,6 +185,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
     : { width: 1080, height: 1080 };
 
   // Load logos on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (user) {
       loadLogos();
@@ -194,7 +205,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
 
       if (error) throw error;
       setLogos(data || []);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error loading logos:', error);
     } finally {
       setLoadingLogos(false);
@@ -226,7 +237,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   };
 
   // Load background images for template backgrounds
-  const { data: templateBackgrounds = [], refetch: refetchBackgrounds } = useQuery({
+  const { data: templateBackgrounds = [], refetch: refetchBackgrounds } = useQuery<{ name: string; url: string }[]>({
     queryKey: ['template-backgrounds', user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -259,7 +270,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
             .from('game-backgrounds')
             .createSignedUrl(filePath, 3600);
 
-          if (signError) {
+          if (signError || !signed?.signedUrl) {
             console.error('Error creating signed URL:', signError);
             return null;
           }
@@ -267,17 +278,17 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
           return {
             name: file.name,
             url: signed.signedUrl,
-            path: filePath,
           };
         })
       );
 
-      return items.filter((item): item is { name: string; url: string; path: string } => item !== null);
+      return items.filter((item): item is { name: string; url: string } => item !== null);
     },
     enabled: !!user,
   });
 
   // Sync elements and format with config
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     onChange({ 
       ...config, 
@@ -512,10 +523,11 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
         title: "Bild hochgeladen",
         description: "Das Bild wurde erfolgreich zugeschnitten und hochgeladen.",
       });
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unbekannter Upload-Fehler';
       toast({
         title: "Upload-Fehler",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -527,16 +539,19 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   };
 
 
-  const getElementContent = (element: SVGElement) => {
+  const getElementContent = (element: SVGElement): string | undefined => {
     if (previewMode && (element.type === 'api-text' || element.type === 'api-image')) {
-      if (!previewData) return element.content || element.href;
-      
-      const fieldValue = previewData[element.apiField || ''];
-      return fieldValue || element.content || element.href;
+      if (!previewData) return element.content || element.href || undefined;
+      const fieldKey = element.apiField || '';
+      const rawValue = previewData[fieldKey];
+      if (typeof rawValue === 'string' || typeof rawValue === 'number') {
+        return String(rawValue);
+      }
+      return element.content || element.href || undefined;
     }
     
     return element.type === 'image' || element.type === 'api-image' 
-      ? element.href 
+      ? element.href ?? undefined
       : element.content;
   };
 
@@ -581,7 +596,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
     setDraggedElementIndex(index);
   };
 
-  const handleDragOver = (e: React.DragEvent, index: number) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     e.preventDefault();
     if (draggedElementIndex === null || draggedElementIndex === index) return;
     
@@ -919,6 +934,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
               >
+                <style type="text/css" data-embedded-fonts="true">{fontFaceCss}</style>
                 {/* Background */}
                 {backgroundMode === 'image' && backgroundImageUrl ? (
                   <image 
@@ -968,7 +984,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                 {elements.map((element, index) => {
                   const isSelected = selectedElement === element.id && !previewMode;
                   const isApiElement = element.type === 'api-text' || element.type === 'api-image';
-                  const displayContent = getElementContent(element);
+                  const displayContent = getElementContent(element) ?? '';
                   
                   if (element.type === 'text' || element.type === 'api-text') {
                     return (
@@ -1249,7 +1265,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                     <p className="text-sm text-muted-foreground mb-3">Ihre Template-Hintergrundbilder:</p>
                     <ScrollArea className="h-[200px]">
                       <div className="grid grid-cols-3 gap-2">
-                        {templateBackgrounds.map((bg: any) => (
+                        {templateBackgrounds.map((bg) => (
                           <div
                             key={bg.name}
                             className="relative cursor-pointer group aspect-video rounded-md overflow-hidden border-2 border-transparent hover:border-primary transition-all"
@@ -1504,12 +1520,12 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                   <div className="space-y-2">
                     <Label>Ausrichtung</Label>
                     <div className="grid grid-cols-3 gap-2">
-                      {['start', 'middle', 'end'].map(anchor => (
+                      {(['start', 'middle', 'end'] as const).map(anchor => (
                         <Button
                           key={anchor}
                           size="sm"
                           variant={selectedElementData.textAnchor === anchor ? 'default' : 'outline'}
-                          onClick={() => updateElement(selectedElementData.id, { textAnchor: anchor as any })}
+                          onClick={() => updateElement(selectedElementData.id, { textAnchor: anchor })}
                         >
                           {anchor === 'start' ? 'Links' : anchor === 'middle' ? 'Mitte' : 'Rechts'}
                         </Button>

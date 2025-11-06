@@ -225,6 +225,31 @@ export const getFontConfig = (cssFamily: string): FontConfig | undefined => {
   return Object.values(AVAILABLE_FONTS).find(f => f.cssFamily === cssFamily);
 };
 
+const detectFontFormat = (url: string): 'woff2' | 'woff' | 'opentype' | 'truetype' => {
+  if (url.includes('.woff2')) return 'woff2';
+  if (url.includes('.woff')) return 'woff';
+  if (url.includes('.otf') || url.toLowerCase().includes('opentype')) return 'opentype';
+  if (url.includes('.ttf') || url.toLowerCase().includes('truetype')) return 'truetype';
+  return 'woff2';
+};
+
+export const buildFontFaceCss = (families?: string[]): string => {
+  const fonts = families
+    ? Object.values(AVAILABLE_FONTS).filter(font => families.includes(font.cssFamily))
+    : Object.values(AVAILABLE_FONTS);
+
+  return fonts
+    .map((font) =>
+      font.variants
+        .map((variant) => {
+          const format = detectFontFormat(variant.url);
+          return `@font-face { font-family: '${font.cssFamily}'; src: url('${variant.url}') format('${format}'); font-weight: ${variant.weight}; font-style: ${variant.style}; font-display: swap; }`;
+        })
+        .join('\n')
+    )
+    .join('\n');
+};
+
 /**
  * Get all available font families for dropdown
  */

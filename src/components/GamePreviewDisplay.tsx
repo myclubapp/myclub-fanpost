@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
+import { useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Image as ImageIcon, Palette, Upload, X, Check, Loader2 } from "lucide-react";
@@ -22,7 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { handlePlatformDownload, type ImageLoadProgress } from "@/utils/svgToImage";
-import { AVAILABLE_FONTS, ensureTemplateFontsLoaded, normalizeFontFamilyName } from "@/config/fonts";
+import { AVAILABLE_FONTS, buildFontFaceCss, ensureTemplateFontsLoaded, normalizeFontFamilyName } from "@/config/fonts";
 
 type SportType = "unihockey" | "volleyball" | "handball";
 
@@ -98,6 +98,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
 
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [imageStatuses, setImageStatuses] = useState<ImageLoadProgress[]>([]);
+  const fontFaceCss = useMemo(() => buildFontFaceCss(), []);
 
   useEffect(() => {
     void ensureTemplateFontsLoaded();
@@ -450,7 +451,8 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         viewBox={`0 0 ${canvasWidth} ${canvasHeight}`}
         className="max-w-full h-auto"
       >
-         {/* Background */}
+        <style type="text/css" data-embedded-fonts="true">{fontFaceCss}</style>
+        {/* Background */}
         {config.useBackgroundPlaceholder && backgroundImage ? (
           <image
             href={backgroundImage}
