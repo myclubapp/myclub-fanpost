@@ -634,6 +634,32 @@ export const convertSvgToImage = async (
 
   const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
 
+  // Attach cloned SVG to a hidden container to ensure getComputedStyle resolves correctly
+  const hiddenContainer = document.createElement('div');
+  hiddenContainer.style.cssText = 'position:fixed; left:-99999px; top:-99999px; width:0; height:0; overflow:hidden; visibility:hidden;';
+  hiddenContainer.appendChild(clonedSvg);
+  document.body.appendChild(hiddenContainer);
+
+  // Helper: remove external @import rules and <link> tags inside the SVG to avoid ignored/tainting resources
+  const sanitizeSvgStyles = () => {
+    const styleNodes = clonedSvg.querySelectorAll('style');
+    styleNodes.forEach((styleEl) => {
+      const text = styleEl.textContent || '';
+      if (/@import\s+url\(/i.test(text)) {
+        // Strip @import lines
+        const cleaned = text
+          .split('\n')
+          .filter((line) => !/@import\s+url\(/i.test(line))
+          .join('\n');
+        styleEl.textContent = cleaned;
+      }
+    });
+    // Remove any nested link elements inside the SVG
+    const linkNodes = clonedSvg.querySelectorAll('link, LINK');
+    linkNodes.forEach((node) => node.parentNode?.removeChild(node));
+  };
+  sanitizeSvgStyles();
+
   // Step 1b: Load Google Fonts into the document AND embed into SVG
   // This two-pronged approach ensures fonts work in both browser and canvas
   try {
@@ -642,12 +668,10 @@ export const convertSvgToImage = async (
     const textElements = clonedSvg.querySelectorAll('text, tspan');
 
     textElements.forEach((element) => {
-      const fontFamily = element.getAttribute('font-family') ||
-                        window.getComputedStyle(element).fontFamily;
-      const fontWeight = element.getAttribute('font-weight') ||
-                        window.getComputedStyle(element).fontWeight || '400';
-      const fontStyle = element.getAttribute('font-style') ||
-                       window.getComputedStyle(element).fontStyle || 'normal';
+      const computed = window.getComputedStyle(element as unknown as Element);
+      const fontFamily = element.getAttribute('font-family') || computed.fontFamily;
+      const fontWeight = element.getAttribute('font-weight') || computed.fontWeight || '400';
+      const fontStyle = element.getAttribute('font-style') || computed.fontStyle || 'normal';
 
       if (fontFamily) {
         // Clean up font family string (remove quotes, fallbacks)
@@ -660,6 +684,10 @@ export const convertSvgToImage = async (
             weight: fontWeight.toString(),
             style: fontStyle
           });
+          // Ensure explicit attributes are present on elements for serialization
+          if (!element.getAttribute('font-family')) element.setAttribute('font-family', cleanFamily);
+          if (!element.getAttribute('font-weight')) element.setAttribute('font-weight', fontWeight.toString());
+          if (!element.getAttribute('font-style')) element.setAttribute('font-style', fontStyle);
         }
       }
     });
@@ -912,6 +940,7 @@ export const convertSvgToImage = async (
   }
 
   // Step 3: Convert to PNG
+  // Convert to PNG
   const dataUrl = await svgToPngDataUrl(clonedSvg, options);
 
   if (onProgress) {
@@ -942,6 +971,11 @@ export const convertSvgToImage = async (
 
   // Optionally create blob URL for direct browser access
   const blobUrl = URL.createObjectURL(blob);
+
+  // Cleanup hidden container
+  if (hiddenContainer.parentNode) {
+    hiddenContainer.parentNode.removeChild(hiddenContainer);
+  }
 
   return { dataUrl, blob, width, height, blobUrl };
 };
