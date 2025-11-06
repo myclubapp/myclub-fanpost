@@ -25,6 +25,8 @@ interface Template {
   svg_config: any;
   created_at: string;
   updated_at: string;
+  is_system?: boolean;
+  user_id?: string;
 }
 
 export const TemplateList = () => {
@@ -43,10 +45,12 @@ export const TemplateList = () => {
     if (!user) return;
 
     try {
+      // Fetch both system templates and user templates
       const { data, error } = await supabase
         .from('templates')
         .select('*')
-        .eq('user_id', user.id)
+        .or(`is_system.eq.true,user_id.eq.${user.id}`)
+        .order('is_system', { ascending: false })
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
@@ -64,6 +68,17 @@ export const TemplateList = () => {
 
   const handleDelete = async () => {
     if (!deleteId) return;
+
+    const template = templates.find(t => t.id === deleteId);
+    if (template?.is_system) {
+      toast({
+        title: "Aktion nicht erlaubt",
+        description: "System-Templates können nicht gelöscht werden.",
+        variant: "destructive",
+      });
+      setDeleteId(null);
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -166,7 +181,14 @@ export const TemplateList = () => {
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <CardTitle className="text-lg">{template.name}</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-lg">{template.name}</CardTitle>
+                    {template.is_system && (
+                      <Badge variant="secondary" className="text-xs">
+                        System
+                      </Badge>
+                    )}
+                  </div>
                   <CardDescription className="mt-2 space-y-1 text-xs">
                     <div>Erstellt: {formatDateTime(template.created_at)}</div>
                     <div>Geändert: {formatDateTime(template.updated_at)}</div>
@@ -180,32 +202,38 @@ export const TemplateList = () => {
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex gap-2">
+                {!template.is_system && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => navigate(`/templates/edit/${template.id}`)}
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Bearbeiten
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1"
-                  onClick={() => navigate(`/templates/edit/${template.id}`)}
-                >
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Bearbeiten
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
+                  className={template.is_system ? "flex-1" : ""}
                   onClick={() => handleCopy(template)}
                   title="Template kopieren"
                 >
-                  <Copy className="h-4 w-4" />
+                  <Copy className="h-4 w-4 mr-2" />
+                  {template.is_system ? "Als Vorlage nutzen" : "Kopieren"}
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setDeleteId(template.id)}
-                  className="hover:bg-destructive hover:text-destructive-foreground hover:border-destructive"
-                  title="Template löschen"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                {!template.is_system && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDeleteId(template.id)}
+                    className="hover:bg-destructive hover:text-destructive-foreground hover:border-destructive"
+                    title="Template löschen"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
