@@ -198,9 +198,17 @@ export const svgToPngDataUrl = async (
   const svgId = svgElement.id || `svg-export-${Date.now()}`;
   svgElement.id = svgId;
 
-  // Set explicit width and height for proper scaling
+  // Set explicit width, height and viewBox for proper scaling
   svgElement.setAttribute('width', String(width));
   svgElement.setAttribute('height', String(height));
+  
+  // Ensure viewBox is set correctly to capture the entire SVG
+  if (!svgElement.getAttribute('viewBox')) {
+    svgElement.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  }
+  
+  // Remove any transform that might offset the content
+  svgElement.style.transform = 'none';
 
   // Use react-svg-to-image to convert with proper CSS styling support
   const fileData = await toImg(`#${svgId}`, `export-${Date.now()}`, {
