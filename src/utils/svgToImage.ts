@@ -79,57 +79,75 @@ const extractImageElements = (svgElement: SVGSVGElement): HTMLImageElement[] => 
 const ensureTightViewBox = (
   svgElement: SVGSVGElement
 ): { x: number; y: number; width: number; height: number } => {
-  // Ensure nothing is clipped during bbox calculation
   const previousOverflow = svgElement.getAttribute('overflow');
   svgElement.setAttribute('overflow', 'visible');
 
   let bbox: { x: number; y: number; width: number; height: number } | null = null;
 
-  // Try direct getBBox on the live element
+  // Robust approach: clone offscreen, wrap children, and union all getBBox() values
+  const clone = svgElement.cloneNode(true) as SVGSVGElement;
+  const wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  while (clone.firstChild) wrapper.appendChild(clone.firstChild);
+  clone.appendChild(wrapper);
+  clone.style.position = 'absolute';
+  clone.style.left = '-100000px';
+  clone.style.top = '-100000px';
+  clone.style.opacity = '0';
+  clone.setAttribute('overflow', 'visible');
+  clone.removeAttribute('width');
+  clone.removeAttribute('height');
+  document.body.appendChild(clone);
+
   try {
-    const raw = (svgElement as any).getBBox?.();
-    if (raw && isFinite(raw.width) && isFinite(raw.height)) {
-      bbox = { x: raw.x, y: raw.y, width: raw.width, height: raw.height };
-    }
-  } catch (e) {
-    // Some browsers may throw; we'll use a clone fallback
-  }
+    let minX = Infinity,
+      minY = Infinity,
+      maxX = -Infinity,
+      maxY = -Infinity;
 
-  // Fallback: clone offscreen and measure
-  if (!bbox) {
-    const clone = svgElement.cloneNode(true) as SVGSVGElement;
-    clone.style.position = 'absolute';
-    clone.style.left = '-100000px';
-    clone.style.top = '-100000px';
-    clone.setAttribute('overflow', 'visible');
-    clone.removeAttribute('width');
-    clone.removeAttribute('height');
-    document.body.appendChild(clone);
-    try {
-      const raw = (clone as any).getBBox?.();
-      if (raw && isFinite(raw.width) && isFinite(raw.height)) {
-        bbox = { x: raw.x, y: raw.y, width: raw.width, height: raw.height };
+    const all: Element[] = [wrapper, ...Array.from(wrapper.querySelectorAll('*'))];
+    for (const el of all) {
+      const anyEl = el as unknown as { getBBox?: () => DOMRect };
+      if (typeof anyEl.getBBox === 'function') {
+        try {
+          const b = anyEl.getBBox();
+          if (!b || !isFinite(b.width) || !isFinite(b.height)) continue;
+          minX = Math.min(minX, b.x);
+          minY = Math.min(minY, b.y);
+          maxX = Math.max(maxX, b.x + b.width);
+          maxY = Math.max(maxY, b.y + b.height);
+        } catch {
+          // ignore elements that cannot provide a bbox
+        }
       }
-    } finally {
-      document.body.removeChild(clone);
     }
+
+    if (isFinite(minX) && isFinite(minY) && isFinite(maxX) && isFinite(maxY)) {
+      const w = Math.max(1, maxX - minX);
+      const h = Math.max(1, maxY - minY);
+      bbox = { x: minX, y: minY, width: w, height: h };
+    }
+  } finally {
+    document.body.removeChild(clone);
   }
 
-  // Final fallback: use existing viewBox or width/height
-  if (!bbox || bbox.width === 0 || bbox.height === 0) {
-    let x = 0, y = 0;
-    let w = parseFloat(svgElement.getAttribute('width') || '1080');
-    let h = parseFloat(svgElement.getAttribute('height') || '1350');
+  // Fallbacks
+  if (!bbox || bbox.width <= 0 || bbox.height <= 0) {
+    let x = 0,
+      y = 0,
+      w = parseFloat(svgElement.getAttribute('width') || '1080') || 1080,
+      h = parseFloat(svgElement.getAttribute('height') || '1350') || 1350;
     const vb = svgElement.getAttribute('viewBox');
     if (vb) {
       const parts = vb.split(/\s+|,/).map((v) => parseFloat(v));
       if (parts.length === 4 && parts.every((n) => Number.isFinite(n))) {
         x = parts[0];
         y = parts[1];
-        w = parts[2];
-        h = parts[3];
+        w = parts[2] || 1080;
+        h = parts[3] || 1350;
       }
     }
+    w = Math.max(1, w);
+    h = Math.max(1, h);
     svgElement.setAttribute('viewBox', `${x} ${y} ${w} ${h}`);
     if (previousOverflow) svgElement.setAttribute('overflow', previousOverflow);
     return { x, y, width: w, height: h };
@@ -295,6 +313,10 @@ export const svgToPngDataUrl = async (
   exportClone.setAttribute('height', String(height));
   exportClone.setAttribute('preserveAspectRatio', 'xMidYMid meet');
   exportClone.setAttribute('overflow', 'visible');
+  exportClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  exportClone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+  exportClone.style.width = `${width}px`;
+  exportClone.style.height = `${height}px`;
 
   // Mount offscreen so computed styles are available
   exportClone.style.position = 'absolute';
