@@ -864,59 +864,10 @@ export const convertSvgToImage = async (
       return numWeight.toString();
     };
 
-    // Extract @font-face rules from loaded stylesheets
-    const extractFontFaces = (fontFamily: string): string[] => {
-      const fontFaceRules: string[] = [];
-
-      try {
-        // Iterate through all stylesheets
-        for (const sheet of Array.from(document.styleSheets)) {
-          try {
-            // Check if stylesheet is from typekit
-            if (sheet.href && sheet.href.includes('typekit.net')) {
-              const rules = Array.from(sheet.cssRules || []);
-              for (const rule of rules) {
-                if (rule instanceof CSSFontFaceRule) {
-                  const family = rule.style.fontFamily.replace(/['"]/g, '');
-                  if (family === fontFamily) {
-                    fontFaceRules.push(rule.cssText);
-                  }
-                }
-              }
-            }
-          } catch (e) {
-            // CORS error - skip this stylesheet
-            console.warn('Could not access stylesheet:', sheet.href, e);
-          }
-        }
-      } catch (e) {
-        console.warn('Error extracting font faces:', e);
-      }
-
-      return fontFaceRules;
-    };
-
-    // Embed all detected fonts with their specific variants
+    // Embed all detected Google Fonts with their specific variants
     const embedPromises: Promise<void>[] = [];
 
     for (const [fontFamily, styles] of fontConfigs.entries()) {
-      // Special handling for Adobe Typekit fonts - extract font-faces from loaded CSS
-      if (fontFamily === 'bebas-neue-pro') {
-        console.log('Extracting bebas-neue-pro font-faces from document...');
-        const fontFaces = extractFontFaces(fontFamily);
-
-        if (fontFaces.length > 0) {
-          console.log(`Found ${fontFaces.length} @font-face rules for bebas-neue-pro`);
-          const styleEl = document.createElementNS(clonedSvg.namespaceURI, 'style');
-          styleEl.setAttribute('type', 'text/css');
-          styleEl.textContent = fontFaces.join('\n');
-          clonedSvg.insertBefore(styleEl, clonedSvg.firstChild);
-        } else {
-          console.warn('No @font-face rules found for bebas-neue-pro - font may not render correctly');
-        }
-        continue;
-      }
-
       const fontVariants = googleFontUrls[fontFamily];
 
       if (fontVariants) {
@@ -939,7 +890,7 @@ export const convertSvgToImage = async (
           }
         }
       } else {
-        console.warn(`No font URLs found for: ${fontFamily}`);
+        console.warn(`No Google Fonts URLs found for: ${fontFamily}`);
       }
     }
 
