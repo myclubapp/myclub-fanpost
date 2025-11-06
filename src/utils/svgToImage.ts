@@ -675,8 +675,15 @@ export const convertSvgToImage = async (
       const fontStyle = element.getAttribute('font-style') || computed.fontStyle || 'normal';
 
       if (fontFamily) {
-        // Clean up font family string (remove quotes, fallbacks)
-        const cleanFamily = fontFamily.split(',')[0].replace(/['"]/g, '').trim();
+        // Clean up font family string (remove quotes, fallbacks) and normalize aliases
+        const rawFamily = fontFamily.split(',')[0].replace(/['"]/g, '').trim();
+        const familyLower = rawFamily.toLowerCase();
+        const aliasMap: Record<string, string> = {
+          'bebas neue pro': 'Bebas Neue',
+          'bebas-neue-pro': 'Bebas Neue',
+          'bebasneuepro': 'Bebas Neue',
+        };
+        const cleanFamily = aliasMap[familyLower] || (familyLower.includes('bebas') ? 'Bebas Neue' : rawFamily);
         if (cleanFamily && cleanFamily !== 'sans-serif' && cleanFamily !== 'serif' && cleanFamily !== 'monospace') {
           if (!fontConfigs.has(cleanFamily)) {
             fontConfigs.set(cleanFamily, new Set());
@@ -685,16 +692,21 @@ export const convertSvgToImage = async (
           let normalizedWeight = fontWeight.toString();
           let normalizedStyle = fontStyle;
 
+          // Bebas Neue from Google Fonts only provides 400; clamp to 400 to avoid fallbacks
+          if (cleanFamily === 'Bebas Neue') {
+            normalizedWeight = '400';
+          }
+
           // Store font config for embedding
           fontConfigs.get(cleanFamily)!.add({
             weight: normalizedWeight,
             style: normalizedStyle
           });
 
-          // Ensure explicit attributes are present on elements for serialization
-          if (!element.getAttribute('font-family')) element.setAttribute('font-family', cleanFamily);
-          if (!element.getAttribute('font-weight')) element.setAttribute('font-weight', normalizedWeight);
-          if (!element.getAttribute('font-style')) element.setAttribute('font-style', normalizedStyle);
+          // Ensure explicit, normalized attributes are present on elements for serialization
+          element.setAttribute('font-family', cleanFamily);
+          element.setAttribute('font-weight', normalizedWeight);
+          element.setAttribute('font-style', normalizedStyle);
         }
       }
     });
