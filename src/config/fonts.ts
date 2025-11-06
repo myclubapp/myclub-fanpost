@@ -32,7 +32,11 @@ export const AVAILABLE_FONTS: Record<string, FontConfig> = {
         url: 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2'
       }
     ]
-  },
+  }
+};
+
+// REMOVED FONTS - Add back to AVAILABLE_FONTS if needed
+const REMOVED_FONTS = {
   'roboto': {
     displayName: 'Roboto',
     cssFamily: 'Roboto',
@@ -154,4 +158,39 @@ export const getAvailableFontFamilies = (): Array<{ value: string; label: string
     value: `${font.cssFamily}, sans-serif`,
     label: font.displayName
   }));
+};
+
+/**
+ * Get available font weights for a specific font family
+ */
+export const getAvailableFontWeights = (cssFamily: string): string[] => {
+  const fontConfig = getFontConfig(cssFamily);
+  if (!fontConfig) return ['400'];
+
+  const weights = [...new Set(fontConfig.variants.map(v => v.weight))];
+  return weights.sort((a, b) => parseInt(a) - parseInt(b));
+};
+
+/**
+ * Get available font styles for a specific font family and weight
+ */
+export const getAvailableFontStyles = (cssFamily: string, weight: string): Array<'normal' | 'italic'> => {
+  const fontConfig = getFontConfig(cssFamily);
+  if (!fontConfig) return ['normal'];
+
+  const styles = fontConfig.variants
+    .filter(v => v.weight === weight)
+    .map(v => v.style);
+
+  return [...new Set(styles)];
+};
+
+/**
+ * Check if a font variant exists
+ */
+export const fontVariantExists = (cssFamily: string, weight: string, style: 'normal' | 'italic'): boolean => {
+  const fontConfig = getFontConfig(cssFamily);
+  if (!fontConfig) return false;
+
+  return fontConfig.variants.some(v => v.weight === weight && v.style === style);
 };

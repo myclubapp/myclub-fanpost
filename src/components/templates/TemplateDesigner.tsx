@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ImageCropper } from '@/components/ImageCropper';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useQuery } from '@tanstack/react-query';
+import { getAvailableFontFamilies, getAvailableFontWeights, getAvailableFontStyles } from '@/config/fonts';
 
 interface Logo {
   id: string;
@@ -1351,17 +1352,11 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Bebas Neue, sans-serif">Bebas Neue</SelectItem>
-                        <SelectItem value="Roboto, sans-serif">Roboto</SelectItem>
-                        <SelectItem value="Open Sans, sans-serif">Open Sans</SelectItem>
-                        <SelectItem value="Lato, sans-serif">Lato</SelectItem>
-                        <SelectItem value="Montserrat, sans-serif">Montserrat</SelectItem>
-                        <SelectItem value="Oswald, sans-serif">Oswald</SelectItem>
-                        <SelectItem value="Raleway, sans-serif">Raleway</SelectItem>
-                        <SelectItem value="Poppins, sans-serif">Poppins</SelectItem>
-                        <SelectItem value="PT Sans, sans-serif">PT Sans</SelectItem>
-                        <SelectItem value="Merriweather, serif">Merriweather</SelectItem>
-                        <SelectItem value="Vollkorn, serif">Vollkorn</SelectItem>
+                        {getAvailableFontFamilies().map((font) => (
+                          <SelectItem key={font.value} value={font.value}>
+                            {font.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
