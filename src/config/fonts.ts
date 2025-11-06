@@ -151,7 +151,7 @@ export const getFontConfig = (cssFamily: string): FontConfig | undefined => {
  */
 export const getAvailableFontFamilies = (): Array<{ value: string; label: string }> => {
   return Object.values(AVAILABLE_FONTS).map(font => ({
-    value: `${font.cssFamily}, sans-serif`,
+    value: `${font.cssFamily}`,
     label: font.displayName
   }));
 };
