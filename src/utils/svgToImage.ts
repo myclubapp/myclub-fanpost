@@ -1,9 +1,9 @@
 /**
  * Utility for converting SVG elements to downloadable images
- * Uses html-to-image to preserve CSS styling and fonts
+ * Uses react-svg-to-image to preserve CSS styling and fonts
  */
 
-import { toPng } from 'html-to-image';
+import toImg from 'react-svg-to-image';
 import { normalizeFontFamilyName, AVAILABLE_FONTS } from '@/config/fonts';
 
 const DEFAULT_FONT_FAMILY = Object.values(AVAILABLE_FONTS)[0]?.cssFamily ?? 'Bebas Neue';
@@ -194,15 +194,19 @@ export const svgToPngDataUrl = async (
     onProgress(70, 'SVG wird in Bild konvertiert...');
   }
 
-  // Use html-to-image to convert with proper CSS styling support
-  const dataUrl = await toPng(svgElement as unknown as HTMLElement, {
+  // Ensure SVG has a unique ID for selection
+  const svgId = svgElement.id || `svg-export-${Date.now()}`;
+  svgElement.id = svgId;
+
+  // Use react-svg-to-image to convert with proper CSS styling support
+  const fileData = await toImg(`#${svgId}`, `export-${Date.now()}`, {
+    scale,
+    format: 'png',
     quality: 1,
-    width: width * scale,
-    height: height * scale,
-    backgroundColor,
-    cacheBust: true,
-    pixelRatio: 1,
+    download: false,
   });
+
+  const dataUrl = fileData as string;
 
   if (onProgress) {
     onProgress(90, 'Bild wird finalisiert...');
@@ -497,7 +501,7 @@ export const convertSvgToImage = async (
     onProgress(60, 'Bilder wurden geladen...');
   }
 
-  // Step 3: Convert to PNG using html-to-image
+  // Step 3: Convert to PNG using react-svg-to-image
   const dataUrl = await svgToPngDataUrl(svgElement, options);
 
   // Step 4: Convert to blob
