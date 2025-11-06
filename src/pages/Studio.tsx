@@ -38,15 +38,9 @@ const Index = () => {
   const searchParams = new URLSearchParams(location.search);
   const editSelection = searchParams.get('editSelection') === '1';
   const themeParam = searchParams.get('theme') || searchParams.get('template');
-  const tabParam = searchParams.get('tab') || 'preview';
-  const homeParam = searchParams.get('home') === 'true';
-  const detailParam = searchParams.get('detail') === 'true';
 
   const [selectedSport, setSelectedSport] = useState<SportType | "">(sport || "");
   const [selectedTheme, setSelectedTheme] = useState<string>(themeParam || "kanva");
-  const [activeTab, setActiveTab] = useState<string>(tabParam);
-  const [isHomeGame, setIsHomeGame] = useState<boolean>(homeParam);
-  const [showResultDetail, setShowResultDetail] = useState<boolean>(detailParam);
   const [selectedClubId, setSelectedClubId] = useState<string>(clubId || "");
   const [selectedClubName, setSelectedClubName] = useState<string>("");
   const [selectedTeamId, setSelectedTeamId] = useState<string>(teamId || "");
@@ -393,43 +387,22 @@ const Index = () => {
     setGamesData(games || []);
     const gameIdsParam = gameIds.join(',');
     const params = new URLSearchParams();
-    if (selectedTheme !== 'kanva') params.set('theme', selectedTheme);
-    if (activeTab !== 'preview') params.set('tab', activeTab);
-    if (isHomeGame) params.set('home', 'true');
-    if (showResultDetail) params.set('detail', 'true');
+    params.set('template', selectedTheme);
     const queryString = params.toString() ? `?${params.toString()}` : '';
     navigate(`/studio/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIdsParam}${queryString}`);
   };
 
-  const buildUrlWithParams = (overrides: Partial<{ theme: string; tab: string; home: boolean; detail: boolean }> = {}) => {
+  const buildUrlWithParams = (overrides: Partial<{ theme: string }> = {}) => {
     if (selectedGameIds.length === 0) return;
-    
+
     const gameIdsParam = selectedGameIds.join(',');
     const params = new URLSearchParams();
-    
+
     const finalTheme = overrides.theme ?? selectedTheme;
-    const finalTab = overrides.tab ?? activeTab;
-    const finalHome = overrides.home ?? isHomeGame;
-    const finalDetail = overrides.detail ?? showResultDetail;
-    
-    // Check if it's a custom template (not a standard myclub theme)
-    const isCustomTemplate = !['kanva','kanva-light', 'kanva-dark', 'kadetten-unihockey' ].includes(finalTheme);
-    
-    if (isCustomTemplate) {
-      // For custom templates, only set the template parameter
-      params.set('template', finalTheme);
-    } else {
-      // For standard themes
-      if (finalTheme !== 'kanva') params.set('theme', finalTheme);
-      if (finalTab !== 'preview') params.set('tab', finalTab);
-      
-      // Only add home parameter if preview tab is active
-      if (finalTab === 'preview' && finalHome) params.set('home', 'true');
-      
-      // Only add detail parameter if result tab is active
-      if (finalTab === 'result' && finalDetail) params.set('detail', 'true');
-    }
-    
+
+    // All templates are now from database, use 'template' param
+    params.set('template', finalTheme);
+
     const queryString = params.toString() ? `?${params.toString()}` : '';
     return `/studio/${selectedSport}/${selectedClubId}/${selectedTeamId}/${gameIdsParam}${queryString}`;
   };
@@ -437,24 +410,6 @@ const Index = () => {
   const handleThemeChange = (theme: string) => {
     setSelectedTheme(theme);
     const url = buildUrlWithParams({ theme });
-    if (url) navigate(url);
-  };
-
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
-    const url = buildUrlWithParams({ tab });
-    if (url) navigate(url);
-  };
-
-  const handleHomeGameChange = (value: boolean) => {
-    setIsHomeGame(value);
-    const url = buildUrlWithParams({ home: value });
-    if (url) navigate(url);
-  };
-
-  const handleResultDetailChange = (value: boolean) => {
-    setShowResultDetail(value);
-    const url = buildUrlWithParams({ detail: value });
     if (url) navigate(url);
   };
 
@@ -661,21 +616,12 @@ const Index = () => {
                 gamesData={gamesData}
                 studioUrl={(() => {
                   const params = new URLSearchParams();
-                  if (selectedTheme !== 'kanva') params.set('theme', selectedTheme);
-                  if (activeTab !== 'preview') params.set('tab', activeTab);
-                  if (isHomeGame) params.set('home', 'true');
-                  if (showResultDetail) params.set('detail', 'true');
+                  params.set('template', selectedTheme);
                   const queryString = params.toString() ? `?${params.toString()}` : '';
                   return `/studio/${selectedSport}/${selectedClubId}/${selectedTeamId}/${selectedGameIds.join(',')}${queryString}`;
                 })()}
                 selectedTheme={selectedTheme}
                 onThemeChange={handleThemeChange}
-                activeTab={activeTab}
-                onTabChange={handleTabChange}
-                isHomeGame={isHomeGame}
-                onHomeGameChange={handleHomeGameChange}
-                showResultDetail={showResultDetail}
-                onResultDetailChange={handleResultDetailChange}
                 ref={gamePreviewRef}
               />
             </div>

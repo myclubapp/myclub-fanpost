@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Image as ImageIcon, FileText, Palette, Upload, X, Check, Loader2 } from "lucide-react";
+import { Download, Image as ImageIcon, Palette, Upload, X, Check, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -18,7 +17,6 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { ImageCropper } from "./ImageCropper";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -37,32 +35,22 @@ export interface GamePreviewDisplayProps {
   studioUrl?: string;
   selectedTheme?: string;
   onThemeChange?: (theme: string) => void;
-  activeTab?: string;
-  onTabChange?: (tab: string) => void;
-  isHomeGame?: boolean;
-  onHomeGameChange?: (value: boolean) => void;
-  showResultDetail?: boolean;
-  onResultDetailChange?: (value: boolean) => void;
 }
 
 export interface GamePreviewDisplayRef {
   triggerDownload: () => void;
 }
 
-const STANDARD_THEMES = [
-  { value: "kanva", label: "KANVA" },
-  { value: "kanva-light", label: "KANVA Light" },
-  { value: "kanva-dark", label: "KANVA Dark" },
-  { value: "kadetten-unihockey", label: "Kadetten Unihockey" },
-];
+// Standard themes removed - all templates now come from database
 
-interface CustomTemplate {
+interface Template {
   id: string;
   name: string;
   value: string; // Will be template ID
   supported_games: number;
-  isCustom: true;
+  is_system?: boolean;
   config?: any;
+  template_category?: 'preview' | 'result';
 }
 
 interface GameData {
@@ -79,39 +67,23 @@ interface GameData {
   teamAwayLogo?: string;
 }
 
-// Declare the custom web components
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      'game-preview': any;
-      'game-result': any;
-    }
-  }
-}
+// Template types moved from web components to database templates
 
 export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewDisplayProps>(
-  ({ 
-    sportType, 
+  ({
+    sportType,
     clubId,
-    teamId, 
-    gameIds, 
+    teamId,
+    gameIds,
     gamesHaveResults = [],
     gamesData = [],
-    studioUrl, 
-    selectedTheme: initialTheme = "kanva", 
-    onThemeChange,
-    activeTab: initialActiveTab = "preview",
-    onTabChange,
-    isHomeGame: initialIsHomeGame = false,
-    onHomeGameChange,
-    showResultDetail: initialShowResultDetail = false,
-    onResultDetailChange
+    studioUrl,
+    selectedTheme: initialTheme = "kanva",
+    onThemeChange
   }, ref) => {
   const gameId = gameIds[0];
   const gameId2 = gameIds.length > 1 ? gameIds[1] : undefined;
   const gameId3 = gameIds.length > 2 ? gameIds[2] : undefined;
-  const previewRef = useRef<HTMLDivElement>(null);
-  const resultRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -162,39 +134,23 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   const { isPaidUser } = useUserRole();
   
   const [selectedTheme, setSelectedTheme] = useState(initialTheme);
-  const [activeTab, setActiveTab] = useState<string>(initialActiveTab);
-  
+
   // Update local theme when prop changes
   useEffect(() => {
     setSelectedTheme(initialTheme);
   }, [initialTheme]);
-  
-  // Update local tab when prop changes
-  useEffect(() => {
-    setActiveTab(initialActiveTab);
-  }, [initialActiveTab]);
   
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [uploadingBackground, setUploadingBackground] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
-  const [isHomeGame, setIsHomeGame] = useState(initialIsHomeGame);
-  const [showResultDetail, setShowResultDetail] = useState(initialShowResultDetail);
-  
-  // Update local states when props change
-  useEffect(() => {
-    setIsHomeGame(initialIsHomeGame);
-  }, [initialIsHomeGame]);
-  
-  useEffect(() => {
-    setShowResultDetail(initialShowResultDetail);
-  }, [initialShowResultDetail]);
   const [svgDimensions, setSvgDimensions] = useState({ width: "500", height: "625" });
-  const [customTemplates, setCustomTemplates] = useState<CustomTemplate[]>([]);
+  const [allTemplates, setAllTemplates] = useState<Template[]>([]);
   const [gameData, setGameData] = useState<GameData[]>([]);
   const [loadingGameData, setLoadingGameData] = useState(false);
-  const customTemplateRef = useRef<SVGSVGElement>(null);
+  const [loadingTemplates, setLoadingTemplates] = useState(true);
+  const templateRef = useRef<SVGSVGElement>(null);
   
   // Progress dialog state
   const [showProgressDialog, setShowProgressDialog] = useState(false);
@@ -208,52 +164,86 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   }));
   // Map sport type to API type
   const apiType = sportType === "unihockey" ? "swissunihockey" : sportType === "volleyball" ? "swissvolley" : sportType === "handball" ? "swisshandball" : sportType;
-  
-  // Check if selected theme is a myclub theme
-  const isMyClubTheme = STANDARD_THEMES.some(t => t.value === selectedTheme);
-  const selectedCustomTemplate = customTemplates.find(t => t.value === selectedTheme);
-  const isCustomTemplate = !!selectedCustomTemplate;
 
-  // Load custom templates for paid users
+  // Get current template based on selected theme
+  const selectedTemplate = allTemplates.find(t => t.value === selectedTheme);
+
+  // Load templates (system templates + user templates for paid users)
   useEffect(() => {
-    const loadCustomTemplates = async () => {
-      if (!user || !isPaidUser) {
-        setCustomTemplates([]);
-        return;
-      }
-
+    const loadTemplates = async () => {
+      setLoadingTemplates(true);
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from('templates')
-          .select('id, name, supported_games, svg_config')
-          .eq('user_id', user.id)
+          .select('id, name, supported_games, svg_config, is_system')
+          .order('is_system', { ascending: false })
           .order('created_at', { ascending: false });
+
+        // Load system templates + user templates (if paid user)
+        if (user && isPaidUser) {
+          query = query.or(`is_system.eq.true,user_id.eq.${user.id}`);
+        } else {
+          // Load only system templates for non-paid users
+          query = query.eq('is_system', true);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
 
         if (data) {
-          const templates: CustomTemplate[] = data.map(template => ({
-            id: template.id,
-            name: template.name,
-            value: template.id,
-            supported_games: template.supported_games,
-            config: template.svg_config,
-            isCustom: true as const,
-          }));
-          setCustomTemplates(templates);
+          console.log('Templates loaded:', data.length);
+          const templates: Template[] = data.map(template => {
+            // Determine template category based on name
+            const name = template.name.toLowerCase();
+            const isResult = name.includes('result');
+            const category = isResult ? 'result' : 'preview';
+
+            return {
+              id: template.id,
+              name: template.name,
+              value: template.id,
+              supported_games: template.supported_games,
+              config: template.svg_config,
+              is_system: template.is_system,
+              template_category: category,
+            };
+          });
+
+          setAllTemplates(templates);
+          console.log('Templates set:', templates);
+
+          // Auto-select first template if none selected or current not available
+          if (!selectedTheme || !templates.find(t => t.value === selectedTheme)) {
+            const firstTemplate = templates[0];
+            if (firstTemplate) {
+              console.log('Auto-selecting first template:', firstTemplate.name);
+              setSelectedTheme(firstTemplate.value);
+              onThemeChange?.(firstTemplate.value);
+            }
+          }
+        } else {
+          console.log('No data returned from templates query');
         }
       } catch (error) {
-        console.error('Error loading custom templates:', error);
+        console.error('Error loading templates:', error);
+        toast({
+          title: "Fehler",
+          description: "Templates konnten nicht geladen werden",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingTemplates(false);
       }
     };
 
-    loadCustomTemplates();
+    loadTemplates();
   }, [user, isPaidUser]);
 
-  // Load game data when needed (only for custom templates)
+  // Load game data when needed (for all templates)
   useEffect(() => {
     const fetchGameData = async () => {
-      if (!selectedCustomTemplate || !gameId) return;
+      if (!selectedTemplate || !gameId) return;
       
       setLoadingGameData(true);
       try {
@@ -339,17 +329,9 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     };
 
     fetchGameData();
-  }, [selectedCustomTemplate, gameId, gameId2, gameId3, apiType, toast, sportType, gamesData]);
+  }, [selectedTemplate, gameId, gameId2, gameId3, apiType, toast, sportType, gamesData]);
 
-  // Auto-switch to Result tab once when results become available
-  useEffect(() => {
-    const hasAnyResult = gamesHaveResults.some(hasResult => hasResult);
-    if (hasAnyResult && activeTab === 'preview') {
-      const newTab = "result";
-      setActiveTab(newTab);
-      onTabChange?.(newTab);
-    }
-  }, [gamesHaveResults]);
+  // Auto-switching removed - no more tabs
 
   // Update SVG dimensions based on screen size (for display only)
   useEffect(() => {
@@ -378,26 +360,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
-  useEffect(() => {
-    // Load the web component script with fixed version to avoid conflicts
-    const script = document.createElement('script');
-    script.type = 'module';
-    // Use fixed version from package.json instead of @latest
-    script.src = 'https://unpkg.com/kanva-web-components@latest/dist/kanva-web-components/kanva-web-components.esm.js';
-    
-    // Only add if not already loaded
-    const existingScript = document.querySelector(`script[src="${script.src}"]`);
-    if (!existingScript) {
-      document.head.appendChild(script);
-    }
-
-    return () => {
-      // Only remove if we added it
-      if (!existingScript && script.parentNode) {
-        document.head.removeChild(script);
-      }
-    };
-  }, []);
+  // Web components removed - using database templates now
 
 
   const handleBackgroundImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -442,11 +405,11 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     }
   };
 
-  // Render custom template SVG with API data
-  const renderCustomTemplateSVG = () => {
-    if (!selectedCustomTemplate || gameData.length === 0) return null;
-    
-    const config = selectedCustomTemplate.config;
+  // Render template SVG with API data
+  const renderTemplateSVG = () => {
+    if (!selectedTemplate || gameData.length === 0) return null;
+
+    const config = selectedTemplate.config;
     if (!config || !config.elements) return null;
 
     // Get dimensions based on template format
@@ -456,7 +419,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
 
     return (
       <svg
-        ref={customTemplateRef}
+        ref={templateRef}
         width={canvasWidth}
         height={canvasHeight}
         viewBox={`0 0 ${canvasWidth} ${canvasHeight}`}
@@ -570,36 +533,14 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   };
 
   /**
-   * Extracts the SVG element from either web component or custom template
+   * Extracts the SVG element from template
    */
   const extractSvgElement = (): SVGSVGElement | null => {
-    // Check if using custom template
-    if (selectedCustomTemplate) {
-      if (!customTemplateRef.current) {
-        console.error("Custom template ref not available");
-        return null;
-      }
-      return customTemplateRef.current;
-    }
-
-    // Using myclub web component
-    const targetRef = activeTab === "preview" ? previewRef : resultRef;
-    const componentSelector = activeTab === "preview" ? "game-preview" : "game-result";
-    const gameElement = targetRef.current?.querySelector(componentSelector);
-
-    if (!gameElement) {
-      console.error("Game element not found");
+    if (!templateRef.current) {
+      console.error("Template ref not available");
       return null;
     }
-
-    const shadowRoot = (gameElement as any).shadowRoot as ShadowRoot | null;
-    const svgElement = shadowRoot?.querySelector("svg") || null;
-
-    if (!svgElement) {
-      console.error("SVG element not found in shadow root");
-    }
-
-    return svgElement;
+    return templateRef.current;
   };
 
   const handleDownload = () => {
@@ -638,7 +579,8 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     }
 
     // Generate file name
-    const fileName = `kanva-${activeTab}-${gameId}-${Date.now()}.png`;
+    const templateCategory = selectedTemplate?.template_category || 'template';
+    const fileName = `kanva-${templateCategory}-${gameId}-${Date.now()}.png`;
 
     // Use the shared download handler
     await handlePlatformDownload({
@@ -756,7 +698,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
             }
           }}
           onCropComplete={handleCropComplete}
-          format={selectedCustomTemplate?.config?.format || '4:5'}
+          format={selectedTemplate?.config?.format || '4:5'}
         />
       )}
       <Card className="shadow-[var(--shadow-card)] border-border bg-card/50 backdrop-blur-sm mb-24">
@@ -779,29 +721,46 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-card border-border">
-                {STANDARD_THEMES.map((theme) => (
-                  <SelectItem key={theme.value} value={theme.value}>
-                    {theme.label}
-                  </SelectItem>
-                ))}
-                {isPaidUser && customTemplates.length > 0 && (
+                {loadingTemplates ? (
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">Lade Vorlagen...</div>
+                ) : allTemplates.length === 0 ? (
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">Keine Vorlagen verfügbar</div>
+                ) : (
                   <>
-                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                      Eigene Vorlagen
-                    </div>
-                    {customTemplates.map((template) => (
-                      <SelectItem key={template.value} value={template.value}>
-                        {template.name} ({template.supported_games} {template.supported_games === 1 ? 'Spiel' : 'Spiele'})
-                      </SelectItem>
-                    ))}
+                    {/* System templates */}
+                    {allTemplates.filter(t => t.is_system).length > 0 && (
+                      <>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                          System Vorlagen
+                        </div>
+                        {allTemplates.filter(t => t.is_system).map((template) => (
+                          <SelectItem key={template.value} value={template.value}>
+                            {template.name} ({template.supported_games} {template.supported_games === 1 ? 'Spiel' : 'Spiele'})
+                          </SelectItem>
+                        ))}
+                      </>
+                    )}
+                    {/* User templates (for paid users) */}
+                    {isPaidUser && allTemplates.filter(t => !t.is_system).length > 0 && (
+                      <>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                          Eigene Vorlagen
+                        </div>
+                        {allTemplates.filter(t => !t.is_system).map((template) => (
+                          <SelectItem key={template.value} value={template.value}>
+                            {template.name} ({template.supported_games} {template.supported_games === 1 ? 'Spiel' : 'Spiele'})
+                          </SelectItem>
+                        ))}
+                      </>
+                    )}
                   </>
                 )}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Background image upload - before checkboxes */}
-          {(isMyClubTheme || (isCustomTemplate && selectedCustomTemplate?.config?.useBackgroundPlaceholder)) && (
+          {/* Background image upload - show if template supports it */}
+          {selectedTemplate?.config?.useBackgroundPlaceholder && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Input
@@ -890,130 +849,27 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
             </div>
           )}
 
-          {/* Home game checkbox */}
-          {isMyClubTheme && activeTab === "preview" && (
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="home-game"
-                checked={isHomeGame}
-                onCheckedChange={(checked) => {
-                  const value = checked as boolean;
-                  setIsHomeGame(value);
-                  onHomeGameChange?.(value);
-                }}
-              />
-              <Label htmlFor="home-game" className="text-sm text-muted-foreground cursor-pointer">
-                Ist Heimspiel
-              </Label>
-            </div>
-          )}
+          {/* Checkboxes removed - template configuration is now in database */}
+        </div>
 
-          {/* Result detail checkbox */}
-          {isMyClubTheme && activeTab === "result" && (
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="result-detail"
-                checked={showResultDetail}
-                onCheckedChange={(checked) => {
-                  const value = checked as boolean;
-                  setShowResultDetail(value);
-                  onResultDetailChange?.(value);
-                }}
-              />
-              <Label htmlFor="result-detail" className="text-sm text-muted-foreground cursor-pointer">
-                Details anzeigen
-              </Label>
+        {/* Template Preview - no more tabs */}
+        <div className="w-full bg-muted/10 rounded-lg border border-border overflow-hidden">
+          {loadingGameData || loadingTemplates ? (
+            <div className="flex items-center justify-center py-24">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : !selectedTemplate ? (
+            <div className="flex items-center justify-center py-24">
+              <p className="text-muted-foreground">Keine Vorlage ausgewählt</p>
+            </div>
+          ) : (
+            <div className="w-full p-4 sm:p-8 flex justify-center">
+              <div className="w-full flex justify-center" style={{ maxWidth: `${svgDimensions.width}px` }}>
+                {renderTemplateSVG()}
+              </div>
             </div>
           )}
         </div>
-
-        {isMyClubTheme ? (
-          <Tabs value={activeTab} onValueChange={(value) => {
-            setActiveTab(value);
-            onTabChange?.(value);
-          }} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-muted/50">
-              <TabsTrigger value="preview" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <ImageIcon className="h-4 w-4" />
-                Spielvorschau
-              </TabsTrigger>
-              <TabsTrigger value="result" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <FileText className="h-4 w-4" />
-                Resultat
-              </TabsTrigger>
-            </TabsList>
-            
-          <TabsContent value="preview" className="mt-0">
-            <div
-              ref={previewRef}
-              className="w-full bg-muted/10 rounded-lg border border-border overflow-hidden"
-            >
-              <div className="w-full p-4 sm:p-8 flex justify-center">
-                <div className={`w-full flex justify-center`}>
-                  <game-preview
-                    key={`${gameId}-${gameId2 || 'single'}-${gameId3 || 'single'}`}
-                    type={apiType}
-                    game={gameId}
-                    {...(gameId2 && { "game-2": gameId2 })}
-                    {...(gameId3 && { "game-3": gameId3 })}
-                    {...((apiType === 'swissvolley' || apiType === 'swisshandball') && { team: teamId })}
-                    {...(apiType === 'swisshandball' && { club: clubId })}
-                    width={svgDimensions.width}
-                    height={svgDimensions.height}
-                    theme={selectedTheme}
-                    ishomegame={isHomeGame.toString()}
-                    backgroundimage={backgroundImage || ''}
-                    style={{ width: '100%', height: 'auto', display: 'block', maxWidth: `${svgDimensions.width}px` }}
-                  />
-                </div>
-              </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="result" className="mt-0">
-            <div
-              ref={resultRef}
-              className="w-full bg-muted/10 rounded-lg border border-border overflow-hidden"
-            >
-              <div className="w-full p-4 sm:p-8 flex justify-center">
-                <div className={`w-full flex justify-center`}>
-                  <game-result
-                    key={`${gameId}-${gameId2 || 'single'}-${gameId3 || 'single'}`}
-                    type={apiType}
-                    game={gameId}
-                    {...(gameId2 && { "game-2": gameId2 })}
-                    {...(gameId3 && { "game-3": gameId3 })}
-                    {...((apiType === 'swissvolley' || apiType === 'swisshandball') && { team: teamId })}
-                    {...(apiType === 'swisshandball' && { club: clubId })}
-                    width={svgDimensions.width}
-                    height={svgDimensions.height}
-                    theme={selectedTheme}
-                    ishomegame={isHomeGame.toString()}
-                    showresultdetail={showResultDetail.toString()}
-                    backgroundimage={backgroundImage || ''}
-                    style={{ width: '100%', height: 'auto', display: 'block', maxWidth: `${svgDimensions.width}px` }}
-                  />
-                </div>
-              </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        ) : (
-          /* Custom Template Display */
-          <div className="w-full bg-muted/10 rounded-lg border border-border overflow-hidden">
-            {loadingGameData ? (
-              <div className="flex items-center justify-center py-24">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              </div>
-            ) : (
-              <div className="w-full p-4 sm:p-8 flex justify-center">
-                <div className="w-full flex justify-center" style={{ maxWidth: `${svgDimensions.width}px` }}>
-                  {renderCustomTemplateSVG()}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </CardContent>
 
     </Card>

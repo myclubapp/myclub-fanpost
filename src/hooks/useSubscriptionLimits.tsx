@@ -20,10 +20,10 @@ export const useSubscriptionLimits = () => {
         .from('subscription_limits')
         .select('*')
         .eq('tier', tier)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      return data as SubscriptionLimits;
+      return data as SubscriptionLimits | null;
     },
     enabled: !!tier && !subscriptionLoading,
   });
