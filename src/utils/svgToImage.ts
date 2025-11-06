@@ -622,6 +622,11 @@ export const convertSvgToImage = async (
     const googleFontUrls: Record<string, Record<string, string>> = {
       'Bebas Neue': {
         '400-normal': 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2',
+        '700-normal': 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2',
+        '900-normal': 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2',
+        '400-italic': 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2',
+        '700-italic': 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2',
+        '900-italic': 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2',
       },
       'Roboto': {
         '400-normal': 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.woff2',
@@ -755,11 +760,59 @@ export const convertSvgToImage = async (
 
     await Promise.all(embedPromises);
 
-    // Wait for fonts to be loaded in the document
+    // Force browser to load all embedded fonts by creating hidden text elements
+    // This ensures fonts are fully loaded before canvas rendering
+    const fontLoadPromises: Promise<void>[] = [];
+
+    for (const [fontFamily, styles] of fontConfigs.entries()) {
+      for (const style of styles) {
+        const normalizedWeight = normalizeFontWeight(style.weight);
+
+        // Create a promise that resolves when this specific font face is loaded
+        const fontLoadPromise = new Promise<void>((resolve) => {
+          // Create temporary element to trigger font loading
+          const tempText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          tempText.setAttribute('font-family', fontFamily);
+          tempText.setAttribute('font-weight', normalizedWeight);
+          tempText.setAttribute('font-style', style.style);
+          tempText.setAttribute('opacity', '0');
+          tempText.textContent = 'Font Loading Test';
+          clonedSvg.appendChild(tempText);
+
+          // Use FontFace API to wait for font to be loaded
+          if (document.fonts && document.fonts.load) {
+            const fontSpec = `${style.style} ${normalizedWeight} 16px "${fontFamily}"`;
+            document.fonts.load(fontSpec).then(() => {
+              console.log(`Font loaded: ${fontFamily} (${normalizedWeight} ${style.style})`);
+              clonedSvg.removeChild(tempText);
+              resolve();
+            }).catch((err) => {
+              console.warn(`Font load error for ${fontFamily}:`, err);
+              clonedSvg.removeChild(tempText);
+              resolve(); // Resolve anyway to not block the conversion
+            });
+          } else {
+            // Fallback: wait 500ms if FontFace API not available
+            setTimeout(() => {
+              clonedSvg.removeChild(tempText);
+              resolve();
+            }, 500);
+          }
+        });
+
+        fontLoadPromises.push(fontLoadPromise);
+      }
+    }
+
+    // Wait for all fonts to be fully loaded
+    await Promise.all(fontLoadPromises);
+
+    // Additional safety: wait for document.fonts.ready
     if (document.fonts && document.fonts.ready) {
       await document.fonts.ready;
-      console.log('All fonts loaded and ready');
     }
+
+    console.log('All fonts embedded and loaded successfully');
   } catch (e) {
     // Non-fatal: if fonts cannot be embedded, proceed with conversion
     console.warn('Font embedding skipped due to error:', e);
