@@ -456,20 +456,21 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
             if (element.type === 'api-text' && element.apiField) {
               // Determine which game data to use (default to first game)
               let gameIndex = 0;
+              let apiFieldName = element.apiField;
               
               // Check if the apiField includes a game identifier (game-2 or game-3)
-              if (element.apiField.startsWith('game-2.')) {
+              if (apiFieldName.startsWith('game-2.')) {
                 gameIndex = 1;
-                element.apiField = element.apiField.replace('game-2.', '');
-              } else if (element.apiField.startsWith('game-3.')) {
+                apiFieldName = apiFieldName.replace('game-2.', '');
+              } else if (apiFieldName.startsWith('game-3.')) {
                 gameIndex = 2;
-                element.apiField = element.apiField.replace('game-3.', '');
-              } else if (element.apiField.startsWith('game.')) {
-                element.apiField = element.apiField.replace('game.', '');
+                apiFieldName = apiFieldName.replace('game-3.', '');
+              } else if (apiFieldName.startsWith('game.')) {
+                apiFieldName = apiFieldName.replace('game.', '');
               }
               
               const targetGame = gameData[gameIndex];
-              const fieldValue = targetGame ? (targetGame as any)[element.apiField] : null;
+              const fieldValue = targetGame ? (targetGame as any)[apiFieldName] : null;
               content = fieldValue || element.content;
             }
             
@@ -496,21 +497,21 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
             if (element.type === 'api-image' && element.apiField) {
               // Determine which game data to use (default to first game)
               let gameIndex = 0;
-              let fieldName = element.apiField;
+              let apiFieldName = element.apiField;
               
               // Check if the apiField includes a game identifier (game-2 or game-3)
-              if (element.apiField.startsWith('game-2.')) {
+              if (apiFieldName.startsWith('game-2.')) {
                 gameIndex = 1;
-                fieldName = element.apiField.replace('game-2.', '');
-              } else if (element.apiField.startsWith('game-3.')) {
+                apiFieldName = apiFieldName.replace('game-2.', '');
+              } else if (apiFieldName.startsWith('game-3.')) {
                 gameIndex = 2;
-                fieldName = element.apiField.replace('game-3.', '');
-              } else if (element.apiField.startsWith('game.')) {
-                fieldName = element.apiField.replace('game.', '');
+                apiFieldName = apiFieldName.replace('game-3.', '');
+              } else if (apiFieldName.startsWith('game.')) {
+                apiFieldName = apiFieldName.replace('game.', '');
               }
               
               const targetGame = gameData[gameIndex];
-              const fieldValue = targetGame ? (targetGame as any)[fieldName] : null;
+              const fieldValue = targetGame ? (targetGame as any)[apiFieldName] : null;
               href = fieldValue || element.href;
             }
             
