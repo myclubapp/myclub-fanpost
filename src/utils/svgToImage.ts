@@ -385,6 +385,7 @@ export const svgToPngDataUrl = async (
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Convert SVG to string (use the clone that's in DOM)
+    console.log('[SVG Export]', svgClone.outerHTML);
     const svgString = new XMLSerializer().serializeToString(svgClone);
     const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(svgBlob);
