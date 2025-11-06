@@ -33,7 +33,7 @@ VALUES (
         "content": "HOME GAME",
         "fontSize": 216,
         "fontStyle": "normal",
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "900",
         "textAnchor": "middle",
         "letterSpacing": 1
@@ -48,7 +48,7 @@ VALUES (
         "content": "{date} {time} {location}",
         "apiField": "date,time,location",
         "fontSize": 49,
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "700",
         "textAnchor": "middle"
       },
@@ -81,7 +81,7 @@ VALUES (
         "zIndex": 5,
         "content": "@getkanva.io",
         "fontSize": 40,
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "textAnchor": "end",
         "opacity": 0.7
       }
@@ -112,7 +112,7 @@ VALUES (
         "content": "GAME DAY",
         "fontSize": 216,
         "fontStyle": "normal",
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "900",
         "textAnchor": "middle",
         "letterSpacing": 1
@@ -127,7 +127,7 @@ VALUES (
         "content": "{date} {time} {location}",
         "apiField": "date,time,location",
         "fontSize": 49,
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "700",
         "textAnchor": "middle"
       },
@@ -160,7 +160,7 @@ VALUES (
         "zIndex": 5,
         "content": "@getkanva.io",
         "fontSize": 40,
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "textAnchor": "end",
         "opacity": 0.7
       }
@@ -191,7 +191,7 @@ VALUES (
         "content": "HOME GAME",
         "fontSize": 216,
         "fontStyle": "normal",
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "900",
         "textAnchor": "middle",
         "letterSpacing": 1
@@ -206,7 +206,7 @@ VALUES (
         "content": "{date} {time} {location}",
         "apiField": "date,time,location",
         "fontSize": 49,
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "700",
         "textAnchor": "middle"
       },
@@ -263,7 +263,7 @@ VALUES (
         "zIndex": 7,
         "content": "@getkanva.io",
         "fontSize": 40,
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "textAnchor": "end",
         "opacity": 0.7
       }
@@ -294,7 +294,7 @@ VALUES (
         "content": "GAME DAY",
         "fontSize": 216,
         "fontStyle": "normal",
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "900",
         "textAnchor": "middle",
         "letterSpacing": 1
@@ -309,7 +309,7 @@ VALUES (
         "content": "{date} {time} {location}",
         "apiField": "date,time,location",
         "fontSize": 49,
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "700",
         "textAnchor": "middle"
       },
@@ -366,7 +366,7 @@ VALUES (
         "zIndex": 7,
         "content": "@getkanva.io",
         "fontSize": 40,
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "textAnchor": "end",
         "opacity": 0.7
       }
@@ -397,7 +397,7 @@ VALUES (
         "content": "HOME GAME",
         "fontSize": 216,
         "fontStyle": "normal",
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "900",
         "textAnchor": "middle",
         "letterSpacing": 1
@@ -412,7 +412,7 @@ VALUES (
         "content": "{date} {time} {location}",
         "apiField": "date,time,location",
         "fontSize": 49,
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "700",
         "textAnchor": "middle"
       },
@@ -491,7 +491,7 @@ VALUES (
         "zIndex": 9,
         "content": "@getkanva.io",
         "fontSize": 40,
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "textAnchor": "end",
         "opacity": 0.7
       }
@@ -522,7 +522,7 @@ VALUES (
         "content": "GAME DAY",
         "fontSize": 216,
         "fontStyle": "normal",
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "900",
         "textAnchor": "middle",
         "letterSpacing": 1
@@ -537,7 +537,7 @@ VALUES (
         "content": "{date} {time} {location}",
         "apiField": "date,time,location",
         "fontSize": 49,
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "700",
         "textAnchor": "middle"
       },
@@ -616,7 +616,7 @@ VALUES (
         "zIndex": 9,
         "content": "@getkanva.io",
         "fontSize": 40,
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "textAnchor": "end",
         "opacity": 0.7
       }
@@ -649,7 +649,7 @@ VALUES (
         "apiField": "result",
         "fontSize": 405,
         "fontStyle": "italic",
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "900",
         "textAnchor": "start",
         "letterSpacing": 0,
@@ -668,7 +668,7 @@ VALUES (
         "apiField": "resultDetail",
         "fontSize": 81,
         "fontStyle": "italic",
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "400",
         "textAnchor": "start",
         "letterSpacing": 0,
@@ -705,7 +705,7 @@ VALUES (
         "zIndex": 5,
         "content": "@getkanva.io",
         "fontSize": 40,
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "textAnchor": "end",
         "opacity": 0.7
       }
@@ -759,7 +759,7 @@ VALUES (
         "apiField": "result",
         "fontSize": 216,
         "fontStyle": "italic",
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "900",
         "textAnchor": "middle",
         "letterSpacing": 0,
@@ -779,7 +779,7 @@ VALUES (
         "apiField": "resultDetail",
         "fontSize": 81,
         "fontStyle": "italic",
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "400",
         "textAnchor": "start",
         "letterSpacing": 0,
@@ -832,7 +832,7 @@ VALUES (
         "apiField": "result2",
         "fontSize": 216,
         "fontStyle": "italic",
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "900",
         "textAnchor": "middle",
         "letterSpacing": 0,
@@ -852,7 +852,7 @@ VALUES (
         "apiField": "resultDetail2",
         "fontSize": 81,
         "fontStyle": "italic",
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "400",
         "textAnchor": "start",
         "letterSpacing": 0,
@@ -870,7 +870,7 @@ VALUES (
         "zIndex": 10,
         "content": "@getkanva.io",
         "fontSize": 40,
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "textAnchor": "end",
         "opacity": 0.7
       }
@@ -924,7 +924,7 @@ VALUES (
         "apiField": "result",
         "fontSize": 216,
         "fontStyle": "italic",
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "900",
         "textAnchor": "middle",
         "letterSpacing": 0,
@@ -944,7 +944,7 @@ VALUES (
         "apiField": "resultDetail",
         "fontSize": 81,
         "fontStyle": "italic",
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "400",
         "textAnchor": "start",
         "letterSpacing": 0,
@@ -997,7 +997,7 @@ VALUES (
         "apiField": "result2",
         "fontSize": 216,
         "fontStyle": "italic",
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "900",
         "textAnchor": "middle",
         "letterSpacing": 0,
@@ -1017,7 +1017,7 @@ VALUES (
         "apiField": "resultDetail2",
         "fontSize": 81,
         "fontStyle": "italic",
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "400",
         "textAnchor": "start",
         "letterSpacing": 0,
@@ -1059,7 +1059,7 @@ VALUES (
         "apiField": "result3",
         "fontSize": 216,
         "fontStyle": "italic",
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "900",
         "textAnchor": "middle",
         "letterSpacing": 0,
@@ -1079,7 +1079,7 @@ VALUES (
         "apiField": "resultDetail3",
         "fontSize": 81,
         "fontStyle": "italic",
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "fontWeight": "400",
         "textAnchor": "start",
         "letterSpacing": 0,
@@ -1108,7 +1108,7 @@ VALUES (
         "zIndex": 15,
         "content": "@getkanva.io",
         "fontSize": 40,
-        "fontFamily": "Bebas Neue, sans-serif",
+        "fontFamily": "Bebas Neue",
         "textAnchor": "end",
         "opacity": 0.7
       }
