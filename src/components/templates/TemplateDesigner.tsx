@@ -1352,13 +1352,16 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Bebas Neue, sans-serif">Bebas Neue</SelectItem>
-                        <SelectItem value="Arial, sans-serif">Arial</SelectItem>
-                        <SelectItem value="Helvetica, sans-serif">Helvetica</SelectItem>
-                        <SelectItem value="Times New Roman, serif">Times New Roman</SelectItem>
-                        <SelectItem value="Georgia, serif">Georgia</SelectItem>
-                        <SelectItem value="Courier New, monospace">Courier New</SelectItem>
-                        <SelectItem value="Verdana, sans-serif">Verdana</SelectItem>
-                        <SelectItem value="Impact, sans-serif">Impact</SelectItem>
+                        <SelectItem value="Roboto, sans-serif">Roboto</SelectItem>
+                        <SelectItem value="Open Sans, sans-serif">Open Sans</SelectItem>
+                        <SelectItem value="Lato, sans-serif">Lato</SelectItem>
+                        <SelectItem value="Montserrat, sans-serif">Montserrat</SelectItem>
+                        <SelectItem value="Oswald, sans-serif">Oswald</SelectItem>
+                        <SelectItem value="Raleway, sans-serif">Raleway</SelectItem>
+                        <SelectItem value="Poppins, sans-serif">Poppins</SelectItem>
+                        <SelectItem value="PT Sans, sans-serif">PT Sans</SelectItem>
+                        <SelectItem value="Merriweather, serif">Merriweather</SelectItem>
+                        <SelectItem value="Vollkorn, serif">Vollkorn</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
