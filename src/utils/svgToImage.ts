@@ -204,6 +204,11 @@ export const svgToPngDataUrl = async (
     onProgress(70, 'SVG wird in Bild konvertiert...');
   }
 
+  // Ensure all fonts are fully loaded before rendering
+  if (document.fonts && document.fonts.ready) {
+    await document.fonts.ready;
+  }
+
   // Create a canvas element
   const canvas = document.createElement('canvas');
   canvas.width = width * scale;
@@ -231,6 +236,9 @@ export const svgToPngDataUrl = async (
       img.onerror = () => reject(new Error('Failed to load SVG as image'));
       img.src = url;
     });
+
+    // Small delay to ensure fonts are applied in the image
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     // Draw image on canvas
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -579,44 +587,107 @@ export const convertSvgToImage = async (
   // Step 1b: Embed required web fonts into the cloned SVG
   // This ensures text renders with the correct font when drawn onto a canvas
   try {
-    // Extract all unique font families used in the SVG
-    const fontFamilies = new Set<string>();
+    // Extract all unique font families and their styles used in the SVG
+    const fontConfigs = new Map<string, Set<{ weight: string; style: string }>>();
     const textElements = clonedSvg.querySelectorAll('text, tspan');
-    
+
     textElements.forEach((element) => {
-      const fontFamily = element.getAttribute('font-family') || 
+      const fontFamily = element.getAttribute('font-family') ||
                         window.getComputedStyle(element).fontFamily;
+      const fontWeight = element.getAttribute('font-weight') ||
+                        window.getComputedStyle(element).fontWeight || '400';
+      const fontStyle = element.getAttribute('font-style') ||
+                       window.getComputedStyle(element).fontStyle || 'normal';
+
       if (fontFamily) {
         // Clean up font family string (remove quotes, fallbacks)
         const cleanFamily = fontFamily.split(',')[0].replace(/['"]/g, '').trim();
-        if (cleanFamily && cleanFamily !== 'sans-serif' && cleanFamily !== 'serif') {
-          fontFamilies.add(cleanFamily);
+        if (cleanFamily && cleanFamily !== 'sans-serif' && cleanFamily !== 'serif' && cleanFamily !== 'monospace') {
+          if (!fontConfigs.has(cleanFamily)) {
+            fontConfigs.set(cleanFamily, new Set());
+          }
+          fontConfigs.get(cleanFamily)!.add({
+            weight: fontWeight.toString(),
+            style: fontStyle
+          });
         }
       }
     });
 
-    console.log('Detected font families in SVG:', Array.from(fontFamilies));
+    console.log('Detected fonts in SVG:', Array.from(fontConfigs.entries()).map(([name, styles]) =>
+      `${name}: ${Array.from(styles).map(s => `${s.weight} ${s.style}`).join(', ')}`
+    ));
 
-    // Map of common Google Fonts to their woff2 URLs
-    const googleFontUrls: Record<string, string> = {
-      'Bebas Neue': 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2',
-      'Roboto': 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.woff2',
-      'Open Sans': 'https://fonts.gstatic.com/s/opensans/v35/memSYaGs126MiZpBA-UvWbX2vVnXBbObj2OVZyOOSr4dVJWUgsjZ0B4gaVI.woff2',
-      'Lato': 'https://fonts.gstatic.com/s/lato/v24/S6uyw4BMUTPHjx4wXiWtFCc.woff2',
-      'Montserrat': 'https://fonts.gstatic.com/s/montserrat/v25/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2',
-      'Oswald': 'https://fonts.gstatic.com/s/oswald/v53/TK3_WkUHHAIjg75cFRf3bXL8LICs1_FvsUtiZTaR.woff2',
-      'Raleway': 'https://fonts.gstatic.com/s/raleway/v29/1Ptxg8zYS_SKggPN4iEgvnHyvveLxVvaorCIPrCFRjldz1SsbqN7PtM.woff2',
-      'Poppins': 'https://fonts.gstatic.com/s/poppins/v20/pxiEyp8kv8JHgFVrJJfecg.woff2',
-      'PT Sans': 'https://fonts.gstatic.com/s/ptsans/v17/jizaRExUiTo99u79D0KExcOPIDU.woff2',
-      'Merriweather': 'https://fonts.gstatic.com/s/merriweather/v30/u-440qyriQwlOrhSvowK_l5OeyxNV-bnrw.woff2',
-      'Vollkorn': 'https://fonts.gstatic.com/s/vollkorn/v22/0ybgGDoxxrvAnPhYGzMlQLzuMasz6Df2MHGeHmmS.woff2',
+    // Map of common Google Fonts to their woff2 URLs (with variants)
+    const googleFontUrls: Record<string, Record<string, string>> = {
+      'Bebas Neue': {
+        '400-normal': 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2',
+      },
+      'Roboto': {
+        '400-normal': 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.woff2',
+        '700-normal': 'https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmWUlfBBc4.woff2',
+        '400-italic': 'https://fonts.gstatic.com/s/roboto/v30/KFOkCnqEu92Fr1Mu51xIIzI.woff2',
+        '700-italic': 'https://fonts.gstatic.com/s/roboto/v30/KFOjCnqEu92Fr1Mu51TzBic6CsQ.woff2',
+      },
+      'Open Sans': {
+        '400-normal': 'https://fonts.gstatic.com/s/opensans/v35/memSYaGs126MiZpBA-UvWbX2vVnXBbObj2OVZyOOSr4dVJWUgsjZ0B4gaVI.woff2',
+        '700-normal': 'https://fonts.gstatic.com/s/opensans/v35/memSYaGs126MiZpBA-UvWbX2vVnXBbObj2OVZyOOSr4dVJWUgsgH1x4gaVI.woff2',
+        '400-italic': 'https://fonts.gstatic.com/s/opensans/v35/memQYaGs126MiZpBA-UFUIcVXSCEkx2cmqvXlWq8tWZ0Pw86hd0Rk8ZkWVAexQ.woff2',
+        '700-italic': 'https://fonts.gstatic.com/s/opensans/v35/memQYaGs126MiZpBA-UFUIcVXSCEkx2cmqvXlWq8tWZ0Pw86hd0RkxhjWVAexQ.woff2',
+      },
+      'Lato': {
+        '400-normal': 'https://fonts.gstatic.com/s/lato/v24/S6uyw4BMUTPHjx4wXiWtFCc.woff2',
+        '700-normal': 'https://fonts.gstatic.com/s/lato/v24/S6u9w4BMUTPHh6UVSwiPGQ3q5d0.woff2',
+        '400-italic': 'https://fonts.gstatic.com/s/lato/v24/S6u8w4BMUTPHjxsAXC-qNiXg7Q.woff2',
+        '700-italic': 'https://fonts.gstatic.com/s/lato/v24/S6u_w4BMUTPHjxsI5wq_FQftx9897sxZ.woff2',
+      },
+      'Montserrat': {
+        '400-normal': 'https://fonts.gstatic.com/s/montserrat/v25/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2',
+        '700-normal': 'https://fonts.gstatic.com/s/montserrat/v25/JTUSjIg1_i6t8kCHKm459WRhyzbi.woff2',
+        '400-italic': 'https://fonts.gstatic.com/s/montserrat/v25/JTUQjIg1_i6t8kCHKm459WxRyS7m.woff2',
+        '700-italic': 'https://fonts.gstatic.com/s/montserrat/v25/JTUQjIg1_i6t8kCHKm459WxRySjmDd3x.woff2',
+      },
+      'Oswald': {
+        '400-normal': 'https://fonts.gstatic.com/s/oswald/v53/TK3_WkUHHAIjg75cFRf3bXL8LICs1_FvsUtiZTaR.woff2',
+        '700-normal': 'https://fonts.gstatic.com/s/oswald/v53/TK3_WkUHHAIjg75cFRf3bXL8LICs169vsUtiZTaR.woff2',
+      },
+      'Raleway': {
+        '400-normal': 'https://fonts.gstatic.com/s/raleway/v29/1Ptxg8zYS_SKggPN4iEgvnHyvveLxVvaorCIPrCFRjldz1SsbqN7PtM.woff2',
+        '700-normal': 'https://fonts.gstatic.com/s/raleway/v29/1Ptxg8zYS_SKggPN4iEgvnHyvveLxVvaorCIPrE1Rjldz1SsbqN7PtM.woff2',
+        '400-italic': 'https://fonts.gstatic.com/s/raleway/v29/1Pt_g8zYS_SKggPNyCgSQamb1W0lwk4S4WjMDrMfIg.woff2',
+        '700-italic': 'https://fonts.gstatic.com/s/raleway/v29/1Pt_g8zYS_SKggPNyCgSQamb1W0lwk4S4ejNDrMfIg.woff2',
+      },
+      'Poppins': {
+        '400-normal': 'https://fonts.gstatic.com/s/poppins/v20/pxiEyp8kv8JHgFVrJJfecg.woff2',
+        '700-normal': 'https://fonts.gstatic.com/s/poppins/v20/pxiByp8kv8JHgFVrLCz7Z1xlFQ.woff2',
+        '400-italic': 'https://fonts.gstatic.com/s/poppins/v20/pxiGyp8kv8JHgFVrJJLucHtA.woff2',
+        '700-italic': 'https://fonts.gstatic.com/s/poppins/v20/pxiDyp8kv8JHgFVrJJLmy15VF9eO.woff2',
+      },
+      'PT Sans': {
+        '400-normal': 'https://fonts.gstatic.com/s/ptsans/v17/jizaRExUiTo99u79D0KExcOPIDU.woff2',
+        '700-normal': 'https://fonts.gstatic.com/s/ptsans/v17/jizfRExUiTo99u79B_mh0O6tLR8a8zILig.woff2',
+        '400-italic': 'https://fonts.gstatic.com/s/ptsans/v17/jizYRExUiTo99u79D0e0ysmIEDQ.woff2',
+        '700-italic': 'https://fonts.gstatic.com/s/ptsans/v17/jizdRExUiTo99u79D0e8fOydLxUVLCw.woff2',
+      },
+      'Merriweather': {
+        '400-normal': 'https://fonts.gstatic.com/s/merriweather/v30/u-440qyriQwlOrhSvowK_l5OeyxNV-bnrw.woff2',
+        '700-normal': 'https://fonts.gstatic.com/s/merriweather/v30/u-4n0qyriQwlOrhSvowK_l52xwNZVcf6lvg.woff2',
+        '400-italic': 'https://fonts.gstatic.com/s/merriweather/v30/u-4m0qyriQwlOrhSvowK_l5-eR7lXcf_.woff2',
+        '700-italic': 'https://fonts.gstatic.com/s/merriweather/v30/u-4l0qyriQwlOrhSvowK_l5-eSZKdeT3rw_b.woff2',
+      },
+      'Vollkorn': {
+        '400-normal': 'https://fonts.gstatic.com/s/vollkorn/v22/0ybgGDoxxrvAnPhYGzMlQLzuMasz6Df2MHGeHmmS.woff2',
+        '700-normal': 'https://fonts.gstatic.com/s/vollkorn/v22/0ybgGDoxxrvAnPhYGzMlQLzuMasz6DfGNXGeHmmS.woff2',
+        '400-italic': 'https://fonts.gstatic.com/s/vollkorn/v22/0ybuGDoxxrvAnPhYGxksckM2WMCpRjDj-DJGWmmSh9I.woff2',
+        '700-italic': 'https://fonts.gstatic.com/s/vollkorn/v22/0ybuGDoxxrvAnPhYGxksckM2WMCpRjDj-DJ1X2mSh9I.woff2',
+      },
     };
 
     const embedFont = async (
       familyName: string,
       fontUrl: string,
       fontFormat: 'truetype' | 'woff' | 'woff2' = 'woff2',
-      fontWeight: string = 'normal',
+      fontWeight: string = '400',
       fontStyle: string = 'normal'
     ) => {
       try {
@@ -629,29 +700,65 @@ export const convertSvgToImage = async (
 
         const styleEl = document.createElementNS(clonedSvg.namespaceURI, 'style');
         styleEl.setAttribute('type', 'text/css');
-        styleEl.textContent = `@font-face { font-family: '${familyName}'; src: url('${dataUrl}') format('${fontFormat}'); font-weight: ${fontWeight}; font-style: ${fontStyle}; font-display: swap; }`;
+        styleEl.textContent = `@font-face { font-family: '${familyName}'; src: url('${dataUrl}') format('${fontFormat}'); font-weight: ${fontWeight}; font-style: ${fontStyle}; font-display: block; }`;
         clonedSvg.insertBefore(styleEl, clonedSvg.firstChild);
-        console.log(`Successfully embedded font: ${familyName}`);
+        console.log(`Successfully embedded font: ${familyName} (${fontWeight} ${fontStyle})`);
       } catch (e) {
-        console.warn(`Failed to embed font ${familyName}:`, e);
+        console.warn(`Failed to embed font ${familyName} (${fontWeight} ${fontStyle}):`, e);
       }
     };
 
-    // Embed all detected Google Fonts
-    const embedPromises = Array.from(fontFamilies).map(async (fontFamily) => {
-      const fontUrl = googleFontUrls[fontFamily];
-      if (fontUrl) {
-        await embedFont(fontFamily, fontUrl, 'woff2');
-      } else {
-        console.warn(`No Google Fonts URL found for: ${fontFamily}`);
+    // Normalize font weight values
+    const normalizeFontWeight = (weight: string): string => {
+      const numWeight = parseInt(weight, 10);
+      if (isNaN(numWeight)) {
+        switch (weight.toLowerCase()) {
+          case 'normal': return '400';
+          case 'bold': return '700';
+          case 'lighter': return '300';
+          case 'bolder': return '700';
+          default: return '400';
+        }
       }
-    });
+      return numWeight.toString();
+    };
+
+    // Embed all detected Google Fonts with their specific variants
+    const embedPromises: Promise<void>[] = [];
+
+    for (const [fontFamily, styles] of fontConfigs.entries()) {
+      const fontVariants = googleFontUrls[fontFamily];
+
+      if (fontVariants) {
+        for (const style of styles) {
+          const normalizedWeight = normalizeFontWeight(style.weight);
+          const key = `${normalizedWeight}-${style.style}`;
+          const fontUrl = fontVariants[key];
+
+          if (fontUrl) {
+            embedPromises.push(embedFont(fontFamily, fontUrl, 'woff2', normalizedWeight, style.style));
+          } else {
+            // Fallback to 400-normal if specific variant not found
+            const fallbackUrl = fontVariants['400-normal'];
+            if (fallbackUrl) {
+              console.warn(`Font variant ${fontFamily} (${key}) not found, using 400-normal`);
+              embedPromises.push(embedFont(fontFamily, fallbackUrl, 'woff2', normalizedWeight, style.style));
+            } else {
+              console.warn(`No font variants found for: ${fontFamily}`);
+            }
+          }
+        }
+      } else {
+        console.warn(`No Google Fonts URLs found for: ${fontFamily}`);
+      }
+    }
 
     await Promise.all(embedPromises);
-    
+
     // Wait for fonts to be loaded in the document
     if (document.fonts && document.fonts.ready) {
       await document.fonts.ready;
+      console.log('All fonts loaded and ready');
     }
   } catch (e) {
     // Non-fatal: if fonts cannot be embedded, proceed with conversion
