@@ -74,6 +74,85 @@ const extractImageElements = (svgElement: SVGSVGElement): HTMLImageElement[] => 
   return Array.from(images) as unknown as HTMLImageElement[];
 };
 
+// Compute a tight viewBox that covers the full drawn content
+const ensureTightViewBox = (
+  svgElement: SVGSVGElement
+): { x: number; y: number; width: number; height: number } => {
+  // Ensure nothing is clipped during bbox calculation
+  const previousOverflow = svgElement.getAttribute('overflow');
+  svgElement.setAttribute('overflow', 'visible');
+
+  let bbox: { x: number; y: number; width: number; height: number } | null = null;
+
+  // Try direct getBBox on the live element
+  try {
+    const raw = (svgElement as any).getBBox?.();
+    if (raw && isFinite(raw.width) && isFinite(raw.height)) {
+      bbox = { x: raw.x, y: raw.y, width: raw.width, height: raw.height };
+    }
+  } catch (e) {
+    // Some browsers may throw; we'll use a clone fallback
+  }
+
+  // Fallback: clone offscreen and measure
+  if (!bbox) {
+    const clone = svgElement.cloneNode(true) as SVGSVGElement;
+    clone.style.position = 'absolute';
+    clone.style.left = '-100000px';
+    clone.style.top = '-100000px';
+    clone.setAttribute('overflow', 'visible');
+    clone.removeAttribute('width');
+    clone.removeAttribute('height');
+    document.body.appendChild(clone);
+    try {
+      const raw = (clone as any).getBBox?.();
+      if (raw && isFinite(raw.width) && isFinite(raw.height)) {
+        bbox = { x: raw.x, y: raw.y, width: raw.width, height: raw.height };
+      }
+    } finally {
+      document.body.removeChild(clone);
+    }
+  }
+
+  // Final fallback: use existing viewBox or width/height
+  if (!bbox || bbox.width === 0 || bbox.height === 0) {
+    let x = 0, y = 0;
+    let w = parseFloat(svgElement.getAttribute('width') || '1080');
+    let h = parseFloat(svgElement.getAttribute('height') || '1350');
+    const vb = svgElement.getAttribute('viewBox');
+    if (vb) {
+      const parts = vb.split(/\s+|,/).map((v) => parseFloat(v));
+      if (parts.length === 4 && parts.every((n) => Number.isFinite(n))) {
+        x = parts[0];
+        y = parts[1];
+        w = parts[2];
+        h = parts[3];
+      }
+    }
+    svgElement.setAttribute('viewBox', `${x} ${y} ${w} ${h}`);
+    if (previousOverflow) svgElement.setAttribute('overflow', previousOverflow);
+    return { x, y, width: w, height: h };
+  }
+
+  svgElement.setAttribute('viewBox', `${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}`);
+  if (previousOverflow) svgElement.setAttribute('overflow', previousOverflow);
+  return bbox;
+};
+
+// Compute export size while keeping aspect ratio when only one side is provided
+const computeTargetSize = (
+  bboxW: number,
+  bboxH: number,
+  targetW?: number,
+  targetH?: number
+): { width: number; height: number } => {
+  if (targetW && targetH) return { width: targetW, height: targetH };
+  const ratio = bboxW / bboxH || 1;
+  if (targetW) return { width: targetW, height: Math.round(targetW / ratio) };
+  if (targetH) return { width: Math.round(targetH * ratio), height: targetH };
+  return { width: bboxW, height: bboxH };
+};
+
 /**
  * Waits for all images in the SVG to load and inlines them as data URLs
  */
@@ -198,17 +277,19 @@ export const svgToPngDataUrl = async (
   const svgId = svgElement.id || `svg-export-${Date.now()}`;
   svgElement.id = svgId;
 
-  // Set explicit width, height and viewBox for proper scaling
+  // Make sure nothing gets clipped
+  svgElement.setAttribute('overflow', 'visible');
+
+  // Compute tight viewBox from actual drawn content (handles negative x/y and transforms)
+  const bbox = ensureTightViewBox(svgElement);
+  const size = computeTargetSize(bbox.width, bbox.height, targetWidth, targetHeight);
+  width = size.width;
+  height = size.height;
+
+  // Set explicit width/height for proper scaling and preserve aspect ratio
   svgElement.setAttribute('width', String(width));
   svgElement.setAttribute('height', String(height));
-  
-  // Ensure viewBox is set correctly to capture the entire SVG
-  if (!svgElement.getAttribute('viewBox')) {
-    svgElement.setAttribute('viewBox', `0 0 ${width} ${height}`);
-  }
-  
-  // Remove any transform that might offset the content
-  svgElement.style.transform = 'none';
+  svgElement.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
   // Use react-svg-to-image to convert with proper CSS styling support
   const fileData = await toImg(`#${svgId}`, `export-${Date.now()}`, {
