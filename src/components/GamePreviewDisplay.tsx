@@ -458,7 +458,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
               let gameIndex = 0;
               let apiFieldName = element.apiField;
               
-              // Check if the apiField includes a game identifier (game-2 or game-3)
+              // Support prefix system: game-2.teamHome, game-3.teamAway
               if (apiFieldName.startsWith('game-2.')) {
                 gameIndex = 1;
                 apiFieldName = apiFieldName.replace('game-2.', '');
@@ -468,10 +468,24 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
               } else if (apiFieldName.startsWith('game.')) {
                 apiFieldName = apiFieldName.replace('game.', '');
               }
+              // Support suffix system: teamHome2, teamHome3 (for backward compatibility)
+              else if (apiFieldName.match(/\d$/)) {
+                const suffix = apiFieldName.slice(-1);
+                gameIndex = parseInt(suffix) - 1;
+                apiFieldName = apiFieldName.slice(0, -1);
+              }
               
-              const targetGame = gameData[gameIndex];
-              const fieldValue = targetGame ? (targetGame as any)[apiFieldName] : null;
-              content = fieldValue || element.content;
+              // Handle comma-separated multiple fields (e.g., "date,time,location")
+              if (apiFieldName.includes(',')) {
+                const fields = apiFieldName.split(',');
+                const targetGame = gameData[gameIndex];
+                const values = fields.map(field => targetGame ? (targetGame as any)[field.trim()] : null).filter(Boolean);
+                content = values.join(' ') || element.content;
+              } else {
+                const targetGame = gameData[gameIndex];
+                const fieldValue = targetGame ? (targetGame as any)[apiFieldName] : null;
+                content = fieldValue || element.content;
+              }
             }
             
             return (
@@ -499,7 +513,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
               let gameIndex = 0;
               let apiFieldName = element.apiField;
               
-              // Check if the apiField includes a game identifier (game-2 or game-3)
+              // Support prefix system: game-2.teamHomeLogo, game-3.teamAwayLogo
               if (apiFieldName.startsWith('game-2.')) {
                 gameIndex = 1;
                 apiFieldName = apiFieldName.replace('game-2.', '');
@@ -508,6 +522,12 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
                 apiFieldName = apiFieldName.replace('game-3.', '');
               } else if (apiFieldName.startsWith('game.')) {
                 apiFieldName = apiFieldName.replace('game.', '');
+              }
+              // Support suffix system: teamHomeLogo2, teamHomeLogo3 (for backward compatibility)
+              else if (apiFieldName.match(/\d$/)) {
+                const suffix = apiFieldName.slice(-1);
+                gameIndex = parseInt(suffix) - 1;
+                apiFieldName = apiFieldName.slice(0, -1);
               }
               
               const targetGame = gameData[gameIndex];
