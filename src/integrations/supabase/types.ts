@@ -90,29 +90,32 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_system: boolean | null
           name: string
           supported_games: number
           svg_config: Json
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
+          is_system?: boolean | null
           name: string
           supported_games?: number
           svg_config: Json
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
+          is_system?: boolean | null
           name?: string
           supported_games?: number
           svg_config?: Json
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -244,10 +247,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_add_team_slot: {
-        Args: { p_user_id: string }
-        Returns: boolean
-      }
+      can_add_team_slot: { Args: { p_user_id: string }; Returns: boolean }
       can_change_team_slot: {
         Args: { p_team_id: string; p_user_id: string }
         Returns: boolean
