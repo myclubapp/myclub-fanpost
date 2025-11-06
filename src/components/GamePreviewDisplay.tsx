@@ -22,8 +22,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { handlePlatformDownload, type ImageLoadProgress } from "@/utils/svgToImage";
+import { AVAILABLE_FONTS, ensureTemplateFontsLoaded, normalizeFontFamilyName } from "@/config/fonts";
 
 type SportType = "unihockey" | "volleyball" | "handball";
+
+const DEFAULT_FONT_FAMILY = Object.values(AVAILABLE_FONTS)[0]?.cssFamily ?? "Bebas Neue";
+
+const resolveFontFamily = (fontFamily?: string | null): string => {
+  return normalizeFontFamilyName(fontFamily) || DEFAULT_FONT_FAMILY;
+};
 
 export interface GamePreviewDisplayProps {
   sportType: SportType;
@@ -88,6 +95,13 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   const { toast } = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile();
+
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [imageStatuses, setImageStatuses] = useState<ImageLoadProgress[]>([]);
+
+  useEffect(() => {
+    void ensureTemplateFontsLoaded();
+  }, []);
 
   // Load user's existing background images
   const { data: userBackgrounds = [], refetch: refetchBackgrounds } = useQuery({
@@ -436,15 +450,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
         viewBox={`0 0 ${canvasWidth} ${canvasHeight}`}
         className="max-w-full h-auto"
       >
-        {/* Embed fonts for export */}
-        <defs>
-          <style type="text/css">
-            {`
-              @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
-            `}
-          </style>
-        </defs>
-        {/* Background */}
+         {/* Background */}
         {config.useBackgroundPlaceholder && backgroundImage ? (
           <image
             href={backgroundImage}
@@ -501,21 +507,26 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
               }
             }
             
+            const resolvedFontFamily = resolveFontFamily(element.fontFamily);
+            const resolvedFontWeight = element.fontWeight || '400';
+            const resolvedFontStyle = element.fontStyle || 'normal';
+            const resolvedLetterSpacing = element.letterSpacing ?? 0;
+
             return (
               <text
                 key={element.id}
                 x={element.x}
                 y={element.y}
                 fontSize={element.fontSize}
-                fontFamily={element.fontFamily}
+                fontFamily={resolvedFontFamily}
                 fill={element.fill}
-                fontWeight={element.fontWeight}
-                fontStyle={element.fontStyle}
+                fontWeight={resolvedFontWeight}
+                fontStyle={resolvedFontStyle}
                 textAnchor={element.textAnchor}
                 stroke={element.stroke}
                 strokeWidth={element.strokeWidth}
                 paintOrder={element.paintOrder}
-                letterSpacing={element.letterSpacing}
+                letterSpacing={resolvedLetterSpacing}
                 opacity={element.opacity}
               >
                 {content}

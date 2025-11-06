@@ -3,7 +3,9 @@
  * Handles all image inlining and conversion in a unified way
  */
 
-import { AVAILABLE_FONTS, getFontConfig } from '@/config/fonts';
+import { AVAILABLE_FONTS, getFontConfig, normalizeFontFamilyName } from '@/config/fonts';
+
+const DEFAULT_FONT_FAMILY = Object.values(AVAILABLE_FONTS)[0]?.cssFamily ?? 'Bebas Neue';
 
 /**
  * Dynamically loads fonts into the document
@@ -267,10 +269,9 @@ export const svgToPngDataUrl = async (
   textElements.forEach((element) => {
     const fontFamily = element.getAttribute('font-family');
     if (fontFamily) {
-      // Clean up font family string (remove quotes, fallbacks)
-      const cleanFamily = fontFamily.split(',')[0].replace(/['"]/g, '').trim();
-      if (cleanFamily && cleanFamily !== 'sans-serif' && cleanFamily !== 'serif' && cleanFamily !== 'monospace') {
-        fontFamilies.add(cleanFamily);
+      const normalizedFamily = normalizeFontFamilyName(fontFamily) || DEFAULT_FONT_FAMILY;
+      if (normalizedFamily) {
+        fontFamilies.add(normalizedFamily);
       }
     }
   });
@@ -791,54 +792,30 @@ export const convertSvgToImage = async (
       const fontWeight = element.getAttribute('font-weight') || computed.fontWeight || '400';
       const fontStyle = element.getAttribute('font-style') || computed.fontStyle || 'normal';
 
-      if (fontFamily) {
-        // Clean up font family string (remove quotes, fallbacks) and normalize aliases
-        const rawFamily = fontFamily.split(',')[0].replace(/['"]/g, '').trim();
-        const familyLower = rawFamily.toLowerCase();
-        const aliasMap: Record<string, string> = {
-          'bebas neue pro': 'Bebas Neue',
-          'bebas-neue-pro': 'Bebas Neue',
-          'bebasneuepro': 'Bebas Neue',
-        };
-        const cleanFamily = aliasMap[familyLower] || (familyLower.includes('bebas') ? 'Bebas Neue' : rawFamily);
-        if (cleanFamily && cleanFamily !== 'sans-serif' && cleanFamily !== 'serif' && cleanFamily !== 'monospace') {
-          if (!fontConfigs.has(cleanFamily)) {
-            fontConfigs.set(cleanFamily, new Set());
-          }
-
-          // Normalize font weight first
-          let normalizedWeight = fontWeight.toString();
-          const numWeight = parseInt(normalizedWeight, 10);
-          if (!isNaN(numWeight)) {
-            normalizedWeight = numWeight.toString();
-          } else {
-            switch (normalizedWeight.toLowerCase()) {
-              case 'normal': normalizedWeight = '400'; break;
-              case 'bold': normalizedWeight = '700'; break;
-              case 'lighter': normalizedWeight = '300'; break;
-              case 'bolder': normalizedWeight = '700'; break;
-              default: normalizedWeight = '400';
-            }
-          }
-
-          const normalizedStyle = fontStyle;
-
-          // Bebas Neue from Google Fonts only provides 400; clamp to 400 to avoid fallbacks
-          if (cleanFamily === 'Bebas Neue') {
-            normalizedWeight = '400';
-          }
-
-          // Store font config for embedding (use normalized weight)
-          fontConfigs.get(cleanFamily)!.add({
-            weight: normalizedWeight,
-            style: normalizedStyle
-          });
-
-          // Ensure explicit, normalized attributes are present on elements for serialization
-          element.setAttribute('font-family', cleanFamily);
-          element.setAttribute('font-weight', normalizedWeight);
-          element.setAttribute('font-style', normalizedStyle);
+      const cleanFamily = normalizeFontFamilyName(fontFamily) || DEFAULT_FONT_FAMILY;
+      if (cleanFamily) {
+        if (!fontConfigs.has(cleanFamily)) {
+          fontConfigs.set(cleanFamily, new Set());
         }
+
+        let normalizedWeight = fontWeight.toString();
+        const normalizedStyle = fontStyle;
+
+        // Bebas Neue from Google Fonts only provides 400; clamp to 400 to avoid fallbacks
+        if (cleanFamily === 'Bebas Neue') {
+          normalizedWeight = '400';
+        }
+
+        // Store font config for embedding
+        fontConfigs.get(cleanFamily)!.add({
+          weight: normalizedWeight,
+          style: normalizedStyle
+        });
+
+        // Ensure explicit, normalized attributes are present on elements for serialization
+        element.setAttribute('font-family', cleanFamily);
+        element.setAttribute('font-weight', normalizedWeight);
+        element.setAttribute('font-style', normalizedStyle);
       }
     });
 
@@ -903,26 +880,23 @@ export const convertSvgToImage = async (
 
         const dataUrl = `data:font/${fontFormat};base64,${base64}`;
 
-        // Ensure defs element exists
-        let defsEl = clonedSvg.querySelector('defs') as SVGDefsElement | null;
-        if (!defsEl) {
-          defsEl = document.createElementNS(clonedSvg.namespaceURI, 'defs') as SVGDefsElement;
-          clonedSvg.insertBefore(defsEl, clonedSvg.firstChild);
+        // Ensure we have a dedicated style element at the SVG root for embedded fonts
+        let fontStyleEl = clonedSvg.querySelector('style[data-embedded-fonts]') as SVGStyleElement | null;
+        if (!fontStyleEl) {
+          fontStyleEl = document.createElementNS(clonedSvg.namespaceURI, 'style') as SVGStyleElement;
+          fontStyleEl.setAttribute('type', 'text/css');
+          fontStyleEl.setAttribute('data-embedded-fonts', 'true');
+          clonedSvg.insertBefore(fontStyleEl, clonedSvg.firstChild);
         }
 
-        // Create style element for font-face
-        // IMPORTANT: Use exact font family name with quotes to ensure it matches SVG attributes
-        const styleEl = document.createElementNS(clonedSvg.namespaceURI, 'style');
-        styleEl.setAttribute('type', 'text/css');
-        // Use quoted font-family name to ensure it matches exactly with SVG font-family attributes
-        // Escape single quotes in font name if present
+        // Append @font-face rule for this variant (avoid duplicates)
         const escapedFamilyName = familyName.replace(/'/g, "\\'");
-        styleEl.textContent = `@font-face { font-family: '${escapedFamilyName}'; src: url('${dataUrl}') format('${fontFormat}'); font-weight: ${fontWeight}; font-style: ${fontStyle}; font-display: block; }`;
-        
-        // Insert style into defs to ensure proper SVG structure
-        defsEl.appendChild(styleEl);
+        const fontFaceRule = `@font-face { font-family: '${escapedFamilyName}'; src: url('${dataUrl}') format('${fontFormat}'); font-weight: ${fontWeight}; font-style: ${fontStyle}; font-display: block; }`;
+        if (!fontStyleEl.textContent?.includes(fontFaceRule)) {
+          fontStyleEl.textContent = `${fontStyleEl.textContent || ''}\n${fontFaceRule}`.trim();
+        }
         console.log(`Successfully embedded font: ${familyName} (${fontWeight} ${fontStyle})`);
-        
+
         // Also load font into DOM to ensure it's available when SVG is rendered as image
         try {
           const fontFace = new FontFace(familyName, `url('${dataUrl}') format('${fontFormat}')`, {

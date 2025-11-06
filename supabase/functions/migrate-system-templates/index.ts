@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
       let modified = false
       const changes: string[] = []
 
-      // Update elements with suffix-based apiFields to prefix-based AND fix Bebas Neue font-weight
+      // Update elements with suffix-based apiFields to prefix-based, fix Bebas Neue font-weight and remove font fallbacks
       const updatedElements = svgConfig.elements.map((element: any) => {
         let elementModified = false
         const updatedElement = { ...element }
@@ -76,6 +76,25 @@ Deno.serve(async (req) => {
             
             console.log(`[${template.name}] Fixing fontWeight for element "${updatedElement.id}": ${oldWeight} -> 400`)
             changes.push(`fontWeight (${updatedElement.id}): ${oldWeight} -> 400`)
+            elementModified = true
+          }
+        }
+
+        // 3. Strip font-family fallbacks (keep only primary font)
+        if (updatedElement.fontFamily) {
+          const primaryFont = updatedElement.fontFamily.split(',')[0].trim().replace(/^['"]|['"]$/g, '')
+          const genericFamilies = ['sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'system-ui']
+          const normalizedFont = genericFamilies.includes(primaryFont.toLowerCase()) ? null : primaryFont
+
+          if (normalizedFont && normalizedFont !== updatedElement.fontFamily) {
+            console.log(`[${template.name}] Cleaning fontFamily for element "${updatedElement.id}": ${updatedElement.fontFamily} -> ${normalizedFont}`)
+            changes.push(`fontFamily (${updatedElement.id}): ${updatedElement.fontFamily} -> ${normalizedFont}`)
+            updatedElement.fontFamily = normalizedFont
+            elementModified = true
+          } else if (!normalizedFont) {
+            console.log(`[${template.name}] Removing generic fontFamily for element "${updatedElement.id}": ${updatedElement.fontFamily}`)
+            changes.push(`fontFamily (${updatedElement.id}): ${updatedElement.fontFamily} -> removed`)
+            delete updatedElement.fontFamily
             elementModified = true
           }
         }

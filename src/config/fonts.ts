@@ -139,6 +139,85 @@ export const getGoogleFontsUrl = (): string => {
   return `https://fonts.googleapis.com/css2?${fontQueries.join('&')}&display=block`;
 };
 
+const GENERIC_FONT_FAMILIES = new Set(['sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'system-ui']);
+
+const normalizeCandidate = (value: string): string => value.toLowerCase().replace(/[-_\s]/g, '');
+
+export const normalizeFontFamilyName = (fontFamily?: string | null): string | undefined => {
+  if (!fontFamily) {
+    return undefined;
+  }
+
+  const primary = fontFamily.split(',')[0].trim().replace(/^['"]|['"]$/g, '');
+  if (!primary) {
+    return undefined;
+  }
+
+  if (GENERIC_FONT_FAMILIES.has(primary.toLowerCase())) {
+    return undefined;
+  }
+
+  const normalizedPrimary = normalizeCandidate(primary);
+
+  const match = Object.values(AVAILABLE_FONTS).find((font) => {
+    const cssFamilyNormalized = normalizeCandidate(font.cssFamily);
+    const displayNameNormalized = normalizeCandidate(font.displayName);
+    return (
+      font.cssFamily.toLowerCase() === primary.toLowerCase() ||
+      cssFamilyNormalized === normalizedPrimary ||
+      displayNameNormalized === normalizedPrimary
+    );
+  });
+
+  return match?.cssFamily;
+};
+
+let fontsLoadedPromise: Promise<void> | null = null;
+
+export const ensureTemplateFontsLoaded = (): Promise<void> => {
+  if (typeof document === 'undefined') {
+    return Promise.resolve();
+  }
+
+  if (!fontsLoadedPromise) {
+    fontsLoadedPromise = new Promise<void>((resolve) => {
+      const fontUrl = getGoogleFontsUrl();
+      if (!fontUrl) {
+        resolve();
+        return;
+      }
+
+      let linkEl = document.querySelector('link[data-template-fonts="true"]') as HTMLLinkElement | null;
+      if (!linkEl) {
+        linkEl = document.createElement('link');
+        linkEl.rel = 'stylesheet';
+        linkEl.setAttribute('data-template-fonts', 'true');
+        document.head.appendChild(linkEl);
+      }
+
+      if (linkEl.href !== fontUrl) {
+        linkEl.href = fontUrl;
+      }
+
+      if (document.fonts && document.fonts.load) {
+        const loadPromises: Promise<unknown>[] = [];
+        for (const fontConfig of Object.values(AVAILABLE_FONTS)) {
+          for (const variant of fontConfig.variants) {
+            const fontSpec = `${variant.style} ${variant.weight} 16px "${fontConfig.cssFamily}"`;
+            loadPromises.push(document.fonts.load(fontSpec));
+          }
+        }
+
+        Promise.allSettled(loadPromises).then(() => resolve()).catch(() => resolve());
+      } else {
+        resolve();
+      }
+    });
+  }
+
+  return fontsLoadedPromise;
+};
+
 /**
  * Get font config by CSS family name
  */

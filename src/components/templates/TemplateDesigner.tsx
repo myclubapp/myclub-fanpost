@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ImageCropper } from '@/components/ImageCropper';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useQuery } from '@tanstack/react-query';
-import { getAvailableFontFamilies, getAvailableFontWeights, getAvailableFontStyles } from '@/config/fonts';
+import { AVAILABLE_FONTS, ensureTemplateFontsLoaded, getAvailableFontFamilies, getAvailableFontWeights, getAvailableFontStyles, normalizeFontFamilyName } from '@/config/fonts';
 
 interface Logo {
   id: string;
@@ -50,6 +50,31 @@ interface SVGElement {
   strokeWidth?: number; // stroke width
   pathData?: string; // SVG path data (d attribute)
 }
+
+const DEFAULT_FONT_FAMILY = Object.values(AVAILABLE_FONTS)[0]?.cssFamily ?? 'Bebas Neue';
+
+const normalizeElementsFontFamily = (elements: SVGElement[]): SVGElement[] => {
+  return elements.map((element) => {
+    if (!element.fontFamily) {
+      return element;
+    }
+
+    const normalized = normalizeFontFamilyName(element.fontFamily);
+    if (normalized) {
+      if (normalized === element.fontFamily) {
+        return element;
+      }
+      return { ...element, fontFamily: normalized };
+    }
+
+    if (element.type === 'text' || element.type === 'api-text') {
+      return { ...element, fontFamily: DEFAULT_FONT_FAMILY };
+    }
+
+    const { fontFamily, ...rest } = element;
+    return rest;
+  });
+};
 
 // API Fields per game
 const getAPIFieldsForGame = (gameNumber: number) => {
@@ -89,7 +114,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
-  const [elements, setElements] = useState<SVGElement[]>(config.elements || []);
+  const [elements, setElements] = useState<SVGElement[]>(normalizeElementsFontFamily(config.elements ?? []));
   const [selectedElement, setSelectedElement] = useState<string | null>(null);
   const [draggingElement, setDraggingElement] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -107,10 +132,15 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
   );
   const [showBackgroundGallery, setShowBackgroundGallery] = useState(false);
 
+  // Ensure all template fonts are loaded into the document
+  useEffect(() => {
+    void ensureTemplateFontsLoaded();
+  }, []);
+
   // Sync incoming config from parent (e.g. after SVG import)
   useEffect(() => {
     if (Array.isArray(config?.elements) && config.elements !== elements) {
-      setElements(config.elements);
+      setElements(normalizeElementsFontFamily(config.elements ?? []));
     }
     if (typeof config?.backgroundColor === 'string' && config.backgroundColor !== backgroundColor) {
       setBackgroundColor(config.backgroundColor);
@@ -306,6 +336,17 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
     setElements(prev => prev.map(el => {
       if (el.id === id) {
         const updated = { ...el, ...updates };
+
+        if (updates.fontFamily !== undefined) {
+          const sanitizedFont = normalizeFontFamilyName(updates.fontFamily);
+          if (sanitizedFont) {
+            updated.fontFamily = sanitizedFont;
+          } else if (el.type === 'text' || el.type === 'api-text') {
+            updated.fontFamily = DEFAULT_FONT_FAMILY;
+          } else {
+            delete updated.fontFamily;
+          }
+        }
         
         // If updating width/height of image and lockAspectRatio is true
         if ((el.type === 'image' || el.type === 'api-image') && lockAspectRatio && el.width && el.height) {
@@ -340,7 +381,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
       y: 200,
       content: 'Neuer Text',
       fontSize: 48,
-      fontFamily: 'Bebas Neue',
+      fontFamily: DEFAULT_FONT_FAMILY,
       fill: '#ffffff',
       fontWeight: '400',
       fontStyle: 'normal',
@@ -362,7 +403,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
       content: `{${apiField}}`,
       apiField,
       fontSize: 48,
-      fontFamily: 'Bebas Neue',
+      fontFamily: DEFAULT_FONT_FAMILY,
       fill: '#ffffff',
       fontWeight: '400',
       fontStyle: 'normal',
@@ -752,388 +793,388 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
       </Dialog>
 
       <div className="grid lg:grid-cols-[1fr_350px] gap-6">
-      {/* Canvas */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Template Canvas</CardTitle>
-          <CardDescription>
-            Klicke und ziehe Elemente, um sie zu verschieben
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2 mb-4">
-            <Button onClick={addTextElement} size="sm" variant="outline" className="gap-2" disabled={previewMode}>
-              <Type className="h-4 w-4" />
-              Statischer Text
-            </Button>
-            <Button
-              onClick={() => setShowLogoDialog(true)}
-              size="sm"
-              variant="outline"
-              className="gap-2"
-              disabled={previewMode}
-            >
-              <ImageIcon className="h-4 w-4" />
-              Logo/Bild auswählen
-            </Button>
-            <Button
-              onClick={() => fileInputRef.current?.click()}
-              size="sm"
-              variant="outline"
-              className="gap-2"
-              disabled={uploading || previewMode}
-            >
-              <Upload className="h-4 w-4" />
-              {uploading ? 'Lädt hoch...' : 'Bild hochladen'}
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-          </div>
+        {/* Canvas */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Template Canvas</CardTitle>
+            <CardDescription>
+              Klicke und ziehe Elemente, um sie zu verschieben
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2 mb-4">
+              <Button onClick={addTextElement} size="sm" variant="outline" className="gap-2" disabled={previewMode}>
+                <Type className="h-4 w-4" />
+                Statischer Text
+              </Button>
+              <Button
+                onClick={() => setShowLogoDialog(true)}
+                size="sm"
+                variant="outline"
+                className="gap-2"
+                disabled={previewMode}
+              >
+                <ImageIcon className="h-4 w-4" />
+                Logo/Bild auswählen
+              </Button>
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                size="sm"
+                variant="outline"
+                className="gap-2"
+                disabled={uploading || previewMode}
+              >
+                <Upload className="h-4 w-4" />
+                {uploading ? 'Lädt hoch...' : 'Bild hochladen'}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+            </div>
 
-          {/* Drag & Drop API Fields per Game */}
-          <div className="mb-4 space-y-2">
-            {Array.from({ length: supportedGames }, (_, i) => i + 1).map(gameNumber => {
-              const apiFields = getAPIFieldsForGame(gameNumber);
-              const isExpanded = expandedGame === gameNumber;
-              
-              return (
-                <Card key={gameNumber} className="overflow-hidden">
-                  <div 
-                    className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50"
-                    onClick={() => setExpandedGame(isExpanded ? null : gameNumber)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Database className="h-4 w-4 text-primary" />
-                      <span className="font-medium">Spiel {gameNumber}</span>
-                    </div>
-                    {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                  </div>
-                  
-                  {isExpanded && (
-                    <div className="p-3 pt-0 space-y-3 border-t">
-                      <div>
-                        <Label className="text-xs text-muted-foreground mb-2 block">Text-Felder</Label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {apiFields.text.map(field => {
-                            const isUsed = isApiFieldUsed(field.value);
-                            return (
-                              <Button
-                                key={field.value}
-                                variant={isUsed ? "default" : "outline"}
-                                size="sm"
-                                className="justify-start text-xs h-8"
-                                onClick={() => !isUsed && addApiTextField(field.value)}
-                                disabled={isUsed || previewMode}
-                              >
-                                <Type className="h-3 w-3 mr-1.5" />
-                                {field.label}
-                              </Button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <Label className="text-xs text-muted-foreground mb-2 block">Bild-Felder</Label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {apiFields.image.map(field => {
-                            const isUsed = isApiFieldUsed(field.value);
-                            return (
-                              <Button
-                                key={field.value}
-                                variant={isUsed ? "default" : "outline"}
-                                size="sm"
-                                className="justify-start text-xs h-8"
-                                onClick={() => !isUsed && addApiImageField(field.value)}
-                                disabled={isUsed || previewMode}
-                              >
-                                <ImageIcon className="h-3 w-3 mr-1.5" />
-                                {field.label}
-                              </Button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </Card>
-              );
-            })}
-          </div>
-
-
-          <div className="border rounded-none overflow-auto bg-muted/10">
-            <svg
-              ref={svgRef}
-              width={canvasDimensions.width}
-              height={canvasDimensions.height}
-              viewBox={`0 0 ${canvasDimensions.width} ${canvasDimensions.height}`}
-              className="max-w-full h-auto"
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-            >
-              {/* Background */}
-              {backgroundMode === 'image' && backgroundImageUrl ? (
-                <image 
-                  href={backgroundImageUrl} 
-                  width={canvasDimensions.width} 
-                  height={canvasDimensions.height}
-                  preserveAspectRatio="xMidYMid slice"
-                />
-              ) : (
-                <rect width={canvasDimensions.width} height={canvasDimensions.height} fill={backgroundMode === 'placeholder' ? '#333333' : backgroundColor} />
-              )}
-              
-              {backgroundMode === 'placeholder' && (
-                <>
-                  <text
-                    x={canvasDimensions.width / 2}
-                    y={canvasDimensions.height / 2 - 20}
-                    fontSize={32}
-                    fontFamily="sans-serif"
-                    fill="#888888"
-                    textAnchor="middle"
-                  >
-                    Hintergrundbild-Platzhalter
-                  </text>
-                  <text
-                    x={canvasDimensions.width / 2}
-                    y={canvasDimensions.height / 2 + 20}
-                    fontSize={16}
-                    fontFamily="sans-serif"
-                    fill="#666666"
-                    textAnchor="middle"
-                  >
-                    Hier wird im Studio das hochgeladene Bild angezeigt
-                  </text>
-                </>
-              )}
-              
-              {/* Grid for reference */}
-              <defs>
-                <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
-                  <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#ffffff" strokeWidth="0.5" opacity="0.1" />
-                </pattern>
-              </defs>
-              <rect width={canvasDimensions.width} height={canvasDimensions.height} fill="url(#grid)" />
-
-              {/* Render elements */}
-              {elements.map((element, index) => {
-                const isSelected = selectedElement === element.id && !previewMode;
-                const isApiElement = element.type === 'api-text' || element.type === 'api-image';
-                const displayContent = getElementContent(element);
+            {/* Drag & Drop API Fields per Game */}
+            <div className="mb-4 space-y-2">
+              {Array.from({ length: supportedGames }, (_, i) => i + 1).map(gameNumber => {
+                const apiFields = getAPIFieldsForGame(gameNumber);
+                const isExpanded = expandedGame === gameNumber;
                 
-                if (element.type === 'text' || element.type === 'api-text') {
-                  return (
-                    <g key={element.id}>
-                      {isSelected && (
-                        <rect
-                          x={element.x - (element.textAnchor === 'middle' ? 100 : 0)}
-                          y={element.y - (element.fontSize || 24)}
-                          width={element.textAnchor === 'middle' ? 200 : 300}
-                          height={(element.fontSize || 24) + 10}
-                          fill="none"
-                          stroke={isApiElement ? "#10b981" : "#3b82f6"}
-                          strokeWidth="2"
-                          strokeDasharray="5,5"
-                        />
-                      )}
-                      <text
-                        x={element.x}
-                        y={element.y}
-                        fontSize={element.fontSize}
-                        fontFamily={element.fontFamily}
-                        fill={element.fill}
-                        fontWeight={element.fontWeight}
-                        fontStyle={element.fontStyle}
-                        letterSpacing={element.letterSpacing}
-                        textAnchor={element.textAnchor}
-                        style={{ cursor: previewMode ? 'default' : 'move', userSelect: 'none' }}
-                        onMouseDown={previewMode ? undefined : (e) => handleMouseDown(e, element.id)}
-                      >
-                        {displayContent}
-                      </text>
-                      {isApiElement && !previewMode && (
+                return (
+                  <Card key={gameNumber} className="overflow-hidden">
+                    <div 
+                      className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50"
+                      onClick={() => setExpandedGame(isExpanded ? null : gameNumber)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Database className="h-4 w-4 text-primary" />
+                        <span className="font-medium">Spiel {gameNumber}</span>
+                      </div>
+                      {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </div>
+                    
+                    {isExpanded && (
+                      <div className="p-3 pt-0 space-y-3 border-t">
+                        <div>
+                          <Label className="text-xs text-muted-foreground mb-2 block">Text-Felder</Label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {apiFields.text.map(field => {
+                              const isUsed = isApiFieldUsed(field.value);
+                              return (
+                                <Button
+                                  key={field.value}
+                                  variant={isUsed ? "default" : "outline"}
+                                  size="sm"
+                                  className="justify-start text-xs h-8"
+                                  onClick={() => !isUsed && addApiTextField(field.value)}
+                                  disabled={isUsed || previewMode}
+                                >
+                                  <Type className="h-3 w-3 mr-1.5" />
+                                  {field.label}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <Label className="text-xs text-muted-foreground mb-2 block">Bild-Felder</Label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {apiFields.image.map(field => {
+                              const isUsed = isApiFieldUsed(field.value);
+                              return (
+                                <Button
+                                  key={field.value}
+                                  variant={isUsed ? "default" : "outline"}
+                                  size="sm"
+                                  className="justify-start text-xs h-8"
+                                  onClick={() => !isUsed && addApiImageField(field.value)}
+                                  disabled={isUsed || previewMode}
+                                >
+                                  <ImageIcon className="h-3 w-3 mr-1.5" />
+                                  {field.label}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </Card>
+                );
+              })}
+            </div>
+
+
+            <div className="border rounded-none overflow-auto bg-muted/10">
+              <svg
+                ref={svgRef}
+                width={canvasDimensions.width}
+                height={canvasDimensions.height}
+                viewBox={`0 0 ${canvasDimensions.width} ${canvasDimensions.height}`}
+                className="max-w-full h-auto"
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+              >
+                {/* Background */}
+                {backgroundMode === 'image' && backgroundImageUrl ? (
+                  <image 
+                    href={backgroundImageUrl} 
+                    width={canvasDimensions.width} 
+                    height={canvasDimensions.height}
+                    preserveAspectRatio="xMidYMid slice"
+                  />
+                ) : (
+                  <rect width={canvasDimensions.width} height={canvasDimensions.height} fill={backgroundMode === 'placeholder' ? '#333333' : backgroundColor} />
+                )}
+                
+                {backgroundMode === 'placeholder' && (
+                  <>
+                    <text
+                      x={canvasDimensions.width / 2}
+                      y={canvasDimensions.height / 2 - 20}
+                      fontSize={32}
+                      fontFamily={DEFAULT_FONT_FAMILY}
+                      fill="#888888"
+                      textAnchor="middle"
+                    >
+                      Hintergrundbild-Platzhalter
+                    </text>
+                    <text
+                      x={canvasDimensions.width / 2}
+                      y={canvasDimensions.height / 2 + 20}
+                      fontSize={16}
+                      fontFamily={DEFAULT_FONT_FAMILY}
+                      fill="#666666"
+                      textAnchor="middle"
+                    >
+                      Hier wird im Studio das hochgeladene Bild angezeigt
+                    </text>
+                  </>
+                )}
+                
+                {/* Grid for reference */}
+                <defs>
+                  <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+                    <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#ffffff" strokeWidth="0.5" opacity="0.1" />
+                  </pattern>
+                </defs>
+                <rect width={canvasDimensions.width} height={canvasDimensions.height} fill="url(#grid)" />
+
+                {/* Render elements */}
+                {elements.map((element, index) => {
+                  const isSelected = selectedElement === element.id && !previewMode;
+                  const isApiElement = element.type === 'api-text' || element.type === 'api-image';
+                  const displayContent = getElementContent(element);
+                  
+                  if (element.type === 'text' || element.type === 'api-text') {
+                    return (
+                      <g key={element.id}>
+                        {isSelected && (
+                          <rect
+                            x={element.x - (element.textAnchor === 'middle' ? 100 : 0)}
+                            y={element.y - (element.fontSize || 24)}
+                            width={element.textAnchor === 'middle' ? 200 : 300}
+                            height={(element.fontSize || 24) + 10}
+                            fill="none"
+                            stroke={isApiElement ? "#10b981" : "#3b82f6"}
+                            strokeWidth="2"
+                            strokeDasharray="5,5"
+                          />
+                        )}
                         <text
                           x={element.x}
-                          y={element.y - (element.fontSize || 24) - 5}
-                          fontSize={12}
-                          fill="#10b981"
-                          textAnchor={element.textAnchor}
-                          style={{ pointerEvents: 'none' }}
-                        >
-                          API: {element.apiField}
-                        </text>
-                      )}
-                    </g>
-                  );
-                }
-                
-                if (element.type === 'image' || element.type === 'api-image') {
-                  return (
-                    <g key={element.id}>
-                      {isSelected && (
-                        <rect
-                          x={element.x - 2}
-                          y={element.y - 2}
-                          width={(element.width || 100) + 4}
-                          height={(element.height || 100) + 4}
-                          fill="none"
-                          stroke={isApiElement ? "#10b981" : "#3b82f6"}
-                          strokeWidth="2"
-                          strokeDasharray="5,5"
-                        />
-                      )}
-                      {isApiElement && !previewMode && (
-                        <defs>
-                          <pattern id={`hatch-${element.id}`} patternUnits="userSpaceOnUse" width="8" height="8">
-                            <path d="M-2,2 l4,-4 M0,8 l8,-8 M6,10 l4,-4" 
-                              stroke="#10b981" 
-                              strokeWidth="1" 
-                              opacity="0.3" />
-                          </pattern>
-                        </defs>
-                      )}
-                      <rect
-                        x={element.x}
-                        y={element.y}
-                        width={element.width}
-                        height={element.height}
-                        fill={isApiElement && !previewMode ? `url(#hatch-${element.id})` : "none"}
-                        stroke={isApiElement && !previewMode ? "#10b981" : "none"}
-                        strokeWidth="1"
-                        style={{ cursor: previewMode ? 'default' : 'move' }}
-                        onMouseDown={previewMode ? undefined : (e) => handleMouseDown(e, element.id)}
-                      />
-                      {(element.type === 'image' || previewMode) && (
-                        <image
-                          x={element.x}
                           y={element.y}
-                          width={element.width}
-                          height={element.height}
-                          href={displayContent}
-                          style={{ cursor: previewMode ? 'default' : 'move' }}
+                          fontSize={element.fontSize}
+                          fontFamily={element.fontFamily}
+                          fill={element.fill}
+                          fontWeight={element.fontWeight}
+                          fontStyle={element.fontStyle}
+                          letterSpacing={element.letterSpacing}
+                          textAnchor={element.textAnchor}
+                          style={{ cursor: previewMode ? 'default' : 'move', userSelect: 'none' }}
                           onMouseDown={previewMode ? undefined : (e) => handleMouseDown(e, element.id)}
-                        />
-                      )}
-                      {isApiElement && !previewMode && (
-                        <>
-                          <rect
-                            x={element.x}
-                            y={element.y - 20}
-                            width={element.width || 100}
-                            height={18}
-                            fill="#10b981"
-                            opacity={0.9}
-                          />
+                        >
+                          {displayContent}
+                        </text>
+                        {isApiElement && !previewMode && (
                           <text
-                            x={element.x + (element.width || 100) / 2}
-                            y={element.y - 6}
+                            x={element.x}
+                            y={element.y - (element.fontSize || 24) - 5}
                             fontSize={12}
-                            fill="#ffffff"
-                            textAnchor="middle"
+                            fill="#10b981"
+                            textAnchor={element.textAnchor}
                             style={{ pointerEvents: 'none' }}
                           >
                             API: {element.apiField}
                           </text>
-                        </>
-                      )}
-                    </g>
-                  );
-                }
-
-                if (element.type === 'rect') {
-                  return (
-                    <g key={element.id}>
-                      {isSelected && (
+                        )}
+                      </g>
+                    );
+                  }
+                  
+                  if (element.type === 'image' || element.type === 'api-image') {
+                    return (
+                      <g key={element.id}>
+                        {isSelected && (
+                          <rect
+                            x={element.x - 2}
+                            y={element.y - 2}
+                            width={(element.width || 100) + 4}
+                            height={(element.height || 100) + 4}
+                            fill="none"
+                            stroke={isApiElement ? "#10b981" : "#3b82f6"}
+                            strokeWidth="2"
+                            strokeDasharray="5,5"
+                          />
+                        )}
+                        {isApiElement && !previewMode && (
+                          <defs>
+                            <pattern id={`hatch-${element.id}`} patternUnits="userSpaceOnUse" width="8" height="8">
+                              <path d="M-2,2 l4,-4 M0,8 l8,-8 M6,10 l4,-4" 
+                                stroke="#10b981" 
+                                strokeWidth="1" 
+                                opacity="0.3" />
+                            </pattern>
+                          </defs>
+                        )}
                         <rect
-                          x={element.x - 2}
-                          y={element.y - 2}
-                          width={(element.width || 100) + 4}
-                          height={(element.height || 100) + 4}
-                          fill="none"
-                          stroke="#3b82f6"
-                          strokeWidth="2"
-                          strokeDasharray="5,5"
-                        />
-                      )}
-                      <rect
-                        x={element.x}
-                        y={element.y}
-                        width={element.width || 100}
-                        height={element.height || 100}
-                        fill={element.fill || '#cccccc'}
-                        stroke={element.stroke}
-                        strokeWidth={element.strokeWidth}
-                        rx={element.rx}
-                        ry={element.ry}
-                        style={{ cursor: previewMode ? 'default' : 'move' }}
-                        onMouseDown={previewMode ? undefined : (e) => handleMouseDown(e, element.id)}
-                      />
-                    </g>
-                  );
-                }
-
-                if (element.type === 'path') {
-                  return (
-                    <g key={element.id}>
-                      {isSelected && element.pathData && (
-                        <path
-                          d={element.pathData}
-                          fill="none"
-                          stroke="#3b82f6"
-                          strokeWidth="2"
-                          strokeDasharray="5,5"
-                        />
-                      )}
-                      {element.pathData && (
-                        <path
-                          d={element.pathData}
-                          fill={element.fill || '#000000'}
-                          stroke={element.stroke}
-                          strokeWidth={element.strokeWidth}
+                          x={element.x}
+                          y={element.y}
+                          width={element.width}
+                          height={element.height}
+                          fill={isApiElement && !previewMode ? `url(#hatch-${element.id})` : "none"}
+                          stroke={isApiElement && !previewMode ? "#10b981" : "none"}
+                          strokeWidth="1"
                           style={{ cursor: previewMode ? 'default' : 'move' }}
                           onMouseDown={previewMode ? undefined : (e) => handleMouseDown(e, element.id)}
                         />
-                      )}
-                    </g>
-                  );
-                }
-                
-                return null;
-              })}
-            </svg>
-          </div>
-        </CardContent>
-      </Card>
+                        {(element.type === 'image' || previewMode) && (
+                          <image
+                            x={element.x}
+                            y={element.y}
+                            width={element.width}
+                            height={element.height}
+                            href={displayContent}
+                            style={{ cursor: previewMode ? 'default' : 'move' }}
+                            onMouseDown={previewMode ? undefined : (e) => handleMouseDown(e, element.id)}
+                          />
+                        )}
+                        {isApiElement && !previewMode && (
+                          <>
+                            <rect
+                              x={element.x}
+                              y={element.y - 20}
+                              width={element.width || 100}
+                              height={18}
+                              fill="#10b981"
+                              opacity={0.9}
+                            />
+                            <text
+                              x={element.x + (element.width || 100) / 2}
+                              y={element.y - 6}
+                              fontSize={12}
+                              fill="#ffffff"
+                              textAnchor="middle"
+                              style={{ pointerEvents: 'none' }}
+                            >
+                              API: {element.apiField}
+                            </text>
+                          </>
+                        )}
+                      </g>
+                    );
+                  }
 
-      {/* Properties Panel */}
-      <div className="space-y-6">
-        <Card>
-          <Collapsible open={isBackgroundOpen} onOpenChange={setIsBackgroundOpen}>
-            <CardHeader className="pb-3">
-              <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
-                <div className="text-left">
-                  <CardTitle>Hintergrund</CardTitle>
-                  <CardDescription>
-                    Wähle einen Platzhalter, eine Farbe oder ein Bild aus deiner Sammlung
-                  </CardDescription>
-                </div>
-                {isBackgroundOpen ? (
-                  <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0 ml-2" />
-                ) : (
-                  <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0 ml-2" />
-                )}
-              </CollapsibleTrigger>
-            </CardHeader>
-            <CollapsibleContent>
-              <CardContent className="space-y-4">
+                  if (element.type === 'rect') {
+                    return (
+                      <g key={element.id}>
+                        {isSelected && (
+                          <rect
+                            x={element.x - 2}
+                            y={element.y - 2}
+                            width={(element.width || 100) + 4}
+                            height={(element.height || 100) + 4}
+                            fill="none"
+                            stroke="#3b82f6"
+                            strokeWidth="2"
+                            strokeDasharray="5,5"
+                          />
+                        )}
+                        <rect
+                          x={element.x}
+                          y={element.y}
+                          width={element.width || 100}
+                          height={element.height || 100}
+                          fill={element.fill || '#cccccc'}
+                          stroke={element.stroke}
+                          strokeWidth={element.strokeWidth}
+                          rx={element.rx}
+                          ry={element.ry}
+                          style={{ cursor: previewMode ? 'default' : 'move' }}
+                          onMouseDown={previewMode ? undefined : (e) => handleMouseDown(e, element.id)}
+                        />
+                      </g>
+                    );
+                  }
+
+                  if (element.type === 'path') {
+                    return (
+                      <g key={element.id}>
+                        {isSelected && element.pathData && (
+                          <path
+                            d={element.pathData}
+                            fill="none"
+                            stroke="#3b82f6"
+                            strokeWidth="2"
+                            strokeDasharray="5,5"
+                          />
+                        )}
+                        {element.pathData && (
+                          <path
+                            d={element.pathData}
+                            fill={element.fill || '#000000'}
+                            stroke={element.stroke}
+                            strokeWidth={element.strokeWidth}
+                            style={{ cursor: previewMode ? 'default' : 'move' }}
+                            onMouseDown={previewMode ? undefined : (e) => handleMouseDown(e, element.id)}
+                          />
+                        )}
+                      </g>
+                    );
+                  }
+                  
+                  return null;
+                })}
+              </svg>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Properties Panel */}
+        <div className="space-y-6">
+          <Card>
+            <Collapsible open={isBackgroundOpen} onOpenChange={setIsBackgroundOpen}>
+              <CardHeader className="pb-3">
+                <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
+                  <div className="text-left">
+                    <CardTitle>Hintergrund</CardTitle>
+                    <CardDescription>
+                      Wähle einen Platzhalter, eine Farbe oder ein Bild aus deiner Sammlung
+                    </CardDescription>
+                  </div>
+                  {isBackgroundOpen ? (
+                    <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0 ml-2" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0 ml-2" />
+                  )}
+                </CollapsibleTrigger>
+              </CardHeader>
+              <CollapsibleContent>
+                <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Hintergrund-Typ</Label>
               <Select value={backgroundMode} onValueChange={(value: 'placeholder' | 'color' | 'image') => setBackgroundMode(value)}>
@@ -1381,7 +1422,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                       </SelectTrigger>
                       <SelectContent>
                         {(() => {
-                          const cleanFamily = selectedElementData.fontFamily?.split(',')[0].trim();
+                          const cleanFamily = normalizeFontFamilyName(selectedElementData.fontFamily) || DEFAULT_FONT_FAMILY;
                           const availableWeights = cleanFamily ? getAvailableFontWeights(cleanFamily) : ['400'];
                           const weightLabels: Record<string, string> = {
                             '100': 'Thin (100)',
@@ -1415,7 +1456,7 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                       </SelectTrigger>
                       <SelectContent>
                         {(() => {
-                          const cleanFamily = selectedElementData.fontFamily?.split(',')[0].trim();
+                          const cleanFamily = normalizeFontFamilyName(selectedElementData.fontFamily) || DEFAULT_FONT_FAMILY;
                           const currentWeight = selectedElementData.fontWeight || '400';
                           const availableStyles = cleanFamily ? getAvailableFontStyles(cleanFamily, currentWeight) : ['normal'];
                           const styleLabels: Record<string, string> = {
@@ -1611,29 +1652,29 @@ export const TemplateDesigner = ({ supportedGames, config, onChange, onSupported
                          }
                          ${draggedElementIndex === index ? 'opacity-50' : ''}
                        `}
-                     >
-                       <span className="text-sm">{getElementIcon(element.type)}</span>
-                       <span className="flex-1 text-sm truncate">
-                         {getElementLabel(element)}
-                       </span>
-                       <span className="text-xs text-muted-foreground">
-                         {index + 1}
-                       </span>
-                     </div>
-                   ))}
-                   {elements.length === 0 && (
-                     <p className="text-sm text-muted-foreground text-center py-8">
-                       Keine Elemente vorhanden
-                     </p>
-                   )}
-                 </div>
-               </ScrollArea>
-             </CardContent>
-           </CollapsibleContent>
-         </Collapsible>
-       </Card>
-       </div>
-    </div>
+                      >
+                        <span className="text-sm">{getElementIcon(element.type)}</span>
+                        <span className="flex-1 text-sm truncate">
+                          {getElementLabel(element)}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {index + 1}
+                        </span>
+                      </div>
+                    ))}
+                    {elements.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-8">
+                        Keine Elemente vorhanden
+                      </p>
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
+        </div>
+      </div>
     </>
   );
 };

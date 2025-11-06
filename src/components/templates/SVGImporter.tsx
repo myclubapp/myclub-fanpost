@@ -4,6 +4,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Upload, FileUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
+import { AVAILABLE_FONTS, normalizeFontFamilyName } from '@/config/fonts';
+
+const DEFAULT_FONT_FAMILY = Object.values(AVAILABLE_FONTS)[0]?.cssFamily ?? 'Bebas Neue';
 
 interface SVGElement {
   id: string;
@@ -112,9 +115,10 @@ export const SVGImporter = ({ open, onOpenChange, onImport, format }: SVGImporte
         const fontSize = parseFloat(textEl.getAttribute('font-size') || 
                                    computedStyle.fontSize || 
                                    '16');
-        const fontFamily = textEl.getAttribute('font-family') || 
+        const rawFontFamily = textEl.getAttribute('font-family') || 
                           computedStyle.fontFamily || 
                           'Arial';
+        const normalizedFontFamily = normalizeFontFamilyName(rawFontFamily) || DEFAULT_FONT_FAMILY;
         const fill = textEl.getAttribute('fill') || 
                     computedStyle.fill || 
                     '#ffffff';
@@ -138,7 +142,7 @@ export const SVGImporter = ({ open, onOpenChange, onImport, format }: SVGImporte
           y,
           content,
           fontSize,
-          fontFamily: fontFamily.replace(/['"]/g, ''),
+          fontFamily: normalizedFontFamily,
           fill,
           fontWeight,
           fontStyle,
@@ -302,10 +306,11 @@ export const SVGImporter = ({ open, onOpenChange, onImport, format }: SVGImporte
       });
       
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler beim SVG-Import';
       toast({
         title: 'Import fehlgeschlagen',
-        description: error.message,
+        description: message,
         variant: 'destructive',
       });
     }
