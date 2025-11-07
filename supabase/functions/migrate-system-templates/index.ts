@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
       let modified = false
       const changes: string[] = []
 
-      // Update elements with suffix-based apiFields to prefix-based, fix Bebas Neue font-weight and remove font fallbacks
+      // Update elements: fix letter-spacing, apiFields, Bebas Neue font-weight and remove font fallbacks
       const updatedElements = svgConfig.elements.map((element: any) => {
         let elementModified = false
         const updatedElement = { ...element }
@@ -62,7 +62,21 @@ Deno.serve(async (req) => {
           }
         }
 
-        // 2. Fix Bebas Neue font-weight (must be 400, not 700 or 900)
+        // 2. Fix letter-spacing: change from 1 to 0
+        if (updatedElement.letterSpacing !== undefined) {
+          const currentSpacing = Number(updatedElement.letterSpacing)
+          
+          if (currentSpacing === 1) {
+            const oldSpacing = updatedElement.letterSpacing
+            updatedElement.letterSpacing = 0
+            
+            console.log(`[${template.name}] Fixing letterSpacing for element "${updatedElement.id}": ${oldSpacing} -> 0`)
+            changes.push(`letterSpacing (${updatedElement.id}): ${oldSpacing} -> 0`)
+            elementModified = true
+          }
+        }
+
+        // 3. Fix Bebas Neue font-weight (must be 400, not 700 or 900)
         if (updatedElement.fontFamily && 
             updatedElement.fontFamily.toLowerCase().includes('bebas neue') &&
             updatedElement.fontWeight) {
@@ -80,7 +94,7 @@ Deno.serve(async (req) => {
           }
         }
 
-        // 3. Strip font-family fallbacks (keep only primary font)
+        // 4. Strip font-family fallbacks (keep only primary font)
         if (updatedElement.fontFamily) {
           const primaryFont = updatedElement.fontFamily.split(',')[0].trim().replace(/^['"]|['"]$/g, '')
           const genericFamilies = ['sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'system-ui']
