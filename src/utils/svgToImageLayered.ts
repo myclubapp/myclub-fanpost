@@ -978,6 +978,8 @@ export const convertLayeredSvgToPng = async (
       // Set font
       textCtx.font = `${fontStyle} ${fontWeight} ${fontSize}px "${finalFontFamily}", sans-serif`;
       textCtx.textAlign = textAnchor === 'middle' ? 'center' : textAnchor === 'end' ? 'right' : 'left';
+      // SVG and Canvas both use 'alphabetic' baseline by default
+      // SVG y attribute represents the baseline position
       textCtx.textBaseline = 'alphabetic';
       textCtx.fillStyle = fill;
       textCtx.globalAlpha = opacity;
@@ -988,34 +990,43 @@ export const convertLayeredSvgToPng = async (
       }
 
       // Handle letter spacing
-      if (letterSpacing !== 0) {
-        // Manual letter spacing rendering
+      // Note: Canvas doesn't support letter-spacing natively, so we need to render each character
+      if (letterSpacing !== 0 && Math.abs(letterSpacing) > 0.1) {
+        // Manual letter spacing rendering - render each character individually
+        // First, calculate total width for text-anchor alignment
+        let totalWidth = 0;
+        for (let i = 0; i < text.length; i++) {
+          const charWidth = textCtx.measureText(text[i]).width;
+          totalWidth += charWidth;
+          if (i < text.length - 1) {
+            totalWidth += letterSpacing;
+          }
+        }
+        
+        // Calculate starting X position based on text-anchor
         let currentX = x;
         if (textAnchor === 'middle') {
-          // Calculate total width
-          let totalWidth = 0;
-          for (let i = 0; i < text.length; i++) {
-            totalWidth += textCtx.measureText(text[i]).width + (i < text.length - 1 ? letterSpacing : 0);
-          }
           currentX = x - totalWidth / 2;
         } else if (textAnchor === 'end') {
-          let totalWidth = 0;
-          for (let i = 0; i < text.length; i++) {
-            totalWidth += textCtx.measureText(text[i]).width + (i < text.length - 1 ? letterSpacing : 0);
-          }
           currentX = x - totalWidth;
         }
 
+        // Render each character with letter spacing
         for (let i = 0; i < text.length; i++) {
           const char = text[i];
+          const charWidth = textCtx.measureText(char).width;
+          
           if (stroke && strokeWidth > 0) {
             textCtx.strokeText(char, currentX, y);
           }
           textCtx.fillText(char, currentX, y);
-          currentX += textCtx.measureText(char).width + letterSpacing;
+          
+          // Move to next character position (character width + letter spacing)
+          currentX += charWidth + letterSpacing;
         }
       } else {
-        // Normal rendering without letter spacing
+        // Normal rendering without letter spacing - render entire text at once
+        // This is more accurate and faster
         if (stroke && strokeWidth > 0) {
           textCtx.strokeText(text, x, y);
         }
