@@ -459,23 +459,47 @@ export const svgToPngDataUrl = async (
 
   if (onProgress) onProgress(70, 'SVG wird in Bild konvertiert...');
 
-  // Ensure a tight viewBox and compute target export size
+  // Determine if we should use tight viewBox or preserve original dimensions
+  const useOriginalDimensions = targetWidth && targetHeight;
+
   svgElement.setAttribute('overflow', 'visible');
-  const bbox = ensureTightViewBox(svgElement);
-  const size = computeTargetSize(bbox.width, bbox.height, targetWidth, targetHeight);
-  width = size.width;
-  height = size.height;
 
-  // Create an offscreen clone and translate the drawn content to start at (0,0)
-  const exportClone = svgElement.cloneNode(true) as SVGSVGElement;
-  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-  while (exportClone.firstChild) {
-    g.appendChild(exportClone.firstChild);
+  let viewBoxX = 0, viewBoxY = 0, viewBoxWidth = width, viewBoxHeight = height;
+
+  if (useOriginalDimensions) {
+    // Preserve original dimensions and viewBox for template export
+    width = targetWidth;
+    height = targetHeight;
+    viewBoxWidth = targetWidth;
+    viewBoxHeight = targetHeight;
+  } else {
+    // Use tight viewBox for dynamic content cropping
+    const bbox = ensureTightViewBox(svgElement);
+    const size = computeTargetSize(bbox.width, bbox.height, targetWidth, targetHeight);
+    width = size.width;
+    height = size.height;
+    viewBoxX = bbox.x;
+    viewBoxY = bbox.y;
+    viewBoxWidth = bbox.width;
+    viewBoxHeight = bbox.height;
   }
-  exportClone.appendChild(g);
-  g.setAttribute('transform', `translate(${-bbox.x}, ${-bbox.y})`);
 
-  exportClone.setAttribute('viewBox', `0 0 ${bbox.width} ${bbox.height}`);
+  // Create an offscreen clone
+  const exportClone = svgElement.cloneNode(true) as SVGSVGElement;
+
+  if (!useOriginalDimensions) {
+    // Only apply transform when using tight viewBox
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    while (exportClone.firstChild) {
+      g.appendChild(exportClone.firstChild);
+    }
+    exportClone.appendChild(g);
+    g.setAttribute('transform', `translate(${-viewBoxX}, ${-viewBoxY})`);
+    viewBoxX = 0;
+    viewBoxY = 0;
+  }
+
+  exportClone.setAttribute('viewBox', `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`);
   exportClone.setAttribute('width', String(width));
   exportClone.setAttribute('height', String(height));
   exportClone.setAttribute('preserveAspectRatio', 'xMidYMid meet');
@@ -822,14 +846,14 @@ interface PlatformDownloadOptions {
 }
 
 export const handlePlatformDownload = async (options: PlatformDownloadOptions): Promise<void> => {
-  const { 
-    svgElement, 
-    fileName, 
-    isMobile, 
-    onProgressUpdate, 
+  const {
+    svgElement,
+    fileName,
+    isMobile,
+    onProgressUpdate,
     onImageStatusUpdate,
     onSuccess,
-    onError 
+    onError
   } = options;
 
   try {
@@ -838,7 +862,13 @@ export const handlePlatformDownload = async (options: PlatformDownloadOptions): 
       lower.endsWith('.jpg') || lower.endsWith('.jpeg') ? 'jpeg' :
       lower.endsWith('.webp') ? 'webp' : 'png';
 
+    // Extract original dimensions from SVG to preserve template aspect ratio
+    const originalWidth = parseFloat(svgElement.getAttribute('width') || '1080');
+    const originalHeight = parseFloat(svgElement.getAttribute('height') || '1350');
+
     const result = await convertSvgToImage(svgElement, {
+      width: originalWidth,
+      height: originalHeight,
       scale: 2,
       format: fmt,
       backgroundColor: 'white',
