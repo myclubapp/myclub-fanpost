@@ -76,6 +76,29 @@ const extractImageElements = (svgElement: SVGSVGElement): HTMLImageElement[] => 
   return Array.from(images) as unknown as HTMLImageElement[];
 };
 
+/**
+ * Extracts all elements with CSS background-image
+ */
+const extractBackgroundImages = (svgElement: SVGSVGElement): Array<{ element: Element; url: string }> => {
+  const allElements = svgElement.querySelectorAll('*');
+  const backgroundImages: Array<{ element: Element; url: string }> = [];
+  
+  allElements.forEach((element) => {
+    const computedStyle = window.getComputedStyle(element);
+    const bgImage = computedStyle.backgroundImage;
+    
+    if (bgImage && bgImage !== 'none') {
+      // Extract URL from background-image: url("...")
+      const urlMatch = bgImage.match(/url\(['"]?([^'"]+)['"]?\)/);
+      if (urlMatch && urlMatch[1] && /^https?:\/\//i.test(urlMatch[1])) {
+        backgroundImages.push({ element, url: urlMatch[1] });
+      }
+    }
+  });
+  
+  return backgroundImages;
+};
+
 // Compute a tight viewBox that covers the full drawn content
 const ensureTightViewBox = (
   svgElement: SVGSVGElement
@@ -181,36 +204,46 @@ export const inlineAllImages = async (
   onImageStatusUpdate?: (statuses: ImageLoadProgress[]) => void
 ): Promise<void> => {
   const images = extractImageElements(svgElement);
+  const backgroundImages = extractBackgroundImages(svgElement);
 
   // Initialize status tracking
-  const imageStatuses: ImageLoadProgress[] = images.map((img) => {
-    const href = img.getAttribute('href') || img.getAttribute('xlink:href') || '';
-    const isDataUrl = href.startsWith('data:');
+  const imageStatuses: ImageLoadProgress[] = [
+    ...images.map((img): ImageLoadProgress => {
+      const href = img.getAttribute('href') || img.getAttribute('xlink:href') || '';
+      const isDataUrl = href.startsWith('data:');
 
-    let urlPreview: string;
-    let size: string | undefined;
+      let urlPreview: string;
+      let size: string | undefined;
 
-    if (isDataUrl) {
-      size = `${(href.length / 1024).toFixed(1)} KB`;
-      urlPreview = `data-url (${size})`;
-    } else {
-      urlPreview = href.substring(0, 50) + (href.length > 50 ? '...' : '');
-    }
+      if (isDataUrl) {
+        size = `${(href.length / 1024).toFixed(1)} KB`;
+        urlPreview = `data-url (${size})`;
+      } else {
+        urlPreview = href.substring(0, 50) + (href.length > 50 ? '...' : '');
+      }
 
-    return {
-      url: urlPreview,
-      status: (href && !isDataUrl) ? 'pending' : 'loaded',
-      size,
-    };
-  });
+      return {
+        url: urlPreview,
+        status: (href && !isDataUrl) ? 'pending' as const : 'loaded' as const,
+        size,
+      };
+    }),
+    ...backgroundImages.map(({ url }): ImageLoadProgress => {
+      const urlPreview = url.substring(0, 50) + (url.length > 50 ? '...' : '');
+      return {
+        url: urlPreview,
+        status: 'pending' as const,
+      };
+    })
+  ];
 
   // Report initial status
   if (onImageStatusUpdate) {
     onImageStatusUpdate([...imageStatuses]);
   }
 
-  // Process each image
-  const promises = images.map(async (img, index) => {
+  // Process each image element
+  const imagePromises = images.map(async (img, index) => {
     const href = img.getAttribute('href') || img.getAttribute('xlink:href');
 
     // Skip if no href or already a data URL
@@ -257,7 +290,45 @@ export const inlineAllImages = async (
     }
   });
 
-  await Promise.all(promises);
+  // Process each background image
+  const bgImagePromises = backgroundImages.map(async ({ element, url }, index) => {
+    const statusIndex = images.length + index;
+    
+    try {
+      // Update status to loading
+      imageStatuses[statusIndex].status = 'loading';
+      if (onImageStatusUpdate) {
+        onImageStatusUpdate([...imageStatuses]);
+      }
+
+      // Fetch and convert image
+      const dataUrl = await fetchImageAsDataUrl(url);
+
+      // Update the element's style to use the data URL
+      const currentStyle = element.getAttribute('style') || '';
+      const newStyle = currentStyle.replace(
+        /background-image:\s*url\(['"]?[^'"]+['"]?\)/gi,
+        `background-image: url('${dataUrl}')`
+      );
+      element.setAttribute('style', newStyle);
+
+      // Update status to loaded
+      imageStatuses[statusIndex].status = 'loaded';
+      imageStatuses[statusIndex].size = `${(dataUrl.length / 1024).toFixed(1)} KB`;
+      if (onImageStatusUpdate) {
+        onImageStatusUpdate([...imageStatuses]);
+      }
+    } catch (error) {
+      console.error(`Failed to inline background image:`, error);
+      imageStatuses[statusIndex].status = 'error';
+      imageStatuses[statusIndex].error = error instanceof Error ? error.message : 'Unknown error';
+      if (onImageStatusUpdate) {
+        onImageStatusUpdate([...imageStatuses]);
+      }
+    }
+  });
+
+  await Promise.all([...imagePromises, ...bgImagePromises]);
 };
 
 /**
