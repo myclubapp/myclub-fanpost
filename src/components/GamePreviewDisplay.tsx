@@ -99,27 +99,6 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [imageStatuses, setImageStatuses] = useState<ImageLoadProgress[]>([]);
 
-  // Calculate used fonts dynamically from template config
-  const usedFonts = useMemo(() => {
-    if (!selectedTemplate?.config?.elements) return [];
-
-    const fonts = new Set<string>();
-    selectedTemplate.config.elements.forEach((element: any) => {
-      if ((element.type === 'text' || element.type === 'api-text') && element.fontFamily) {
-        const normalized = resolveFontFamily(element.fontFamily);
-        fonts.add(normalized);
-      }
-    });
-
-    return Array.from(fonts);
-  }, [selectedTemplate]);
-
-  // Only build font CSS for fonts actually used in the template
-  const fontFaceCss = useMemo(() => {
-    if (usedFonts.length === 0) return buildFontFaceCss([DEFAULT_FONT_FAMILY]);
-    return buildFontFaceCss(usedFonts);
-  }, [usedFonts]);
-
   useEffect(() => {
     void ensureTemplateFontsLoaded();
   }, []);
@@ -202,6 +181,27 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
 
   // Get current template based on selected theme
   const selectedTemplate = allTemplates.find(t => t.value === selectedTheme);
+
+  // Calculate used fonts dynamically from template config
+  const usedFonts = useMemo(() => {
+    if (!selectedTemplate?.config?.elements) return [];
+
+    const fonts = new Set<string>();
+    selectedTemplate.config.elements.forEach((element: any) => {
+      if ((element.type === 'text' || element.type === 'api-text') && element.fontFamily) {
+        const normalized = resolveFontFamily(element.fontFamily);
+        fonts.add(normalized);
+      }
+    });
+
+    return Array.from(fonts);
+  }, [selectedTemplate]);
+
+  // Only build font CSS for fonts actually used in the template
+  const fontFaceCss = useMemo(() => {
+    if (usedFonts.length === 0) return buildFontFaceCss([DEFAULT_FONT_FAMILY]);
+    return buildFontFaceCss(usedFonts);
+  }, [usedFonts]);
 
   // Load templates (system templates + user templates for paid users)
   useEffect(() => {
@@ -611,8 +611,11 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   };
 
   const handleDownload = () => {
-    // Check if user is logged in
-    if (!user) {
+    // Allow download in dev mode (localhost) without login
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+    // Check if user is logged in (skip check for localhost)
+    if (!user && !isLocalhost) {
       toast({
         title: "Anmeldung erforderlich",
         description: "Bitte melde dich an, um Posts zu erstellen",
