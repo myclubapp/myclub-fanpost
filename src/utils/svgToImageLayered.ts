@@ -936,11 +936,29 @@ export const convertLayeredSvgToPng = async (
         for (const family of usedFontsArray) {
           const fontConfig = getFontConfig(family);
           if (fontConfig && document.fonts.check) {
-            const isLoaded = document.fonts.check(`16px "${fontConfig.cssFamily}"`);
-            console.log(`🔍 Font "${fontConfig.cssFamily}" loaded: ${isLoaded}`);
+            // Check with multiple font sizes to ensure it's really loaded
+            const testSizes = [16, 24, 48, 72];
+            let isLoaded = false;
+            for (const testSize of testSizes) {
+              const fontSpec = `normal 400 ${testSize}px "${fontConfig.cssFamily}"`;
+              if (document.fonts.check(fontSpec)) {
+                isLoaded = true;
+                console.log(`🔍 Font "${fontConfig.cssFamily}" (${testSize}px) loaded: true`);
+                break;
+              }
+            }
             if (!isLoaded) {
               console.warn(`⚠️ Font "${fontConfig.cssFamily}" not loaded, waiting longer...`);
-              await new Promise(r => setTimeout(r, 500));
+              // Try to load it explicitly with a common size
+              try {
+                const fontSpec = `normal 400 16px "${fontConfig.cssFamily}"`;
+                await document.fonts.load(fontSpec);
+                await new Promise(r => setTimeout(r, 300));
+                const isLoadedAfter = document.fonts.check(fontSpec);
+                console.log(`🔍 Font "${fontConfig.cssFamily}" loaded after explicit load: ${isLoadedAfter}`);
+              } catch (loadError) {
+                console.warn(`⚠️ Failed to explicitly load font "${fontConfig.cssFamily}":`, loadError);
+              }
             }
           }
         }
@@ -991,42 +1009,71 @@ export const convertLayeredSvgToPng = async (
 
       // Handle letter spacing
       // Note: Canvas doesn't support letter-spacing natively, so we need to render each character
-      if (letterSpacing !== 0 && Math.abs(letterSpacing) > 0.1) {
+      // But first check if letter spacing is actually set and significant
+      const hasLetterSpacing = letterSpacing !== 0 && Math.abs(letterSpacing) > 0.1;
+      
+      if (hasLetterSpacing) {
         // Manual letter spacing rendering - render each character individually
-        // First, calculate total width for text-anchor alignment
-        let totalWidth = 0;
+        // First, measure the normal text width (without letter spacing) as reference
+        const normalTextWidth = textCtx.measureText(text).width;
+        
+        // Measure the actual positions of each character in the normal text
+        // This gives us the most accurate character positions
+        const charPositions: number[] = [0]; // First character starts at 0
+        const charWidths: number[] = [];
+        
+        // Measure cumulative widths to get character positions
         for (let i = 0; i < text.length; i++) {
-          const charWidth = textCtx.measureText(text[i]).width;
-          totalWidth += charWidth;
-          if (i < text.length - 1) {
-            totalWidth += letterSpacing;
+          const textUpToChar = text.substring(0, i + 1);
+          const textBeforeChar = text.substring(0, i);
+          
+          const widthUpToChar = textCtx.measureText(textUpToChar).width;
+          const widthBeforeChar = textBeforeChar ? textCtx.measureText(textBeforeChar).width : 0;
+          
+          // Position is the start of this character (end of previous text)
+          if (i > 0) {
+            charPositions.push(widthBeforeChar);
           }
+          // Width is the difference
+          charWidths.push(widthUpToChar - widthBeforeChar);
         }
         
+        // Calculate total width: normal text width + letter spacing between characters
+        // Letter spacing is added between characters, not before first or after last
+        // Also account for the offset on the first character
+        const totalWidth = normalTextWidth + (letterSpacing * (text.length - 1)) + (letterSpacing * 0.5);
+        
         // Calculate starting X position based on text-anchor
-        let currentX = x;
+        // For 'start' (default), use x directly (first character starts at x)
+        // For 'middle', center the total width around x
+        // For 'end', align the end of the text at x
+        let startX = x;
         if (textAnchor === 'middle') {
-          currentX = x - totalWidth / 2;
+          startX = x - totalWidth / 2;
         } else if (textAnchor === 'end') {
-          currentX = x - totalWidth;
+          startX = x - totalWidth;
         }
 
         // Render each character with letter spacing
+        // Use the relative positions from the normal text and add letter spacing
         for (let i = 0; i < text.length; i++) {
           const char = text[i];
-          const charWidth = textCtx.measureText(char).width;
+          const charPos = charPositions[i];
+          
+          // Calculate absolute position: start position + relative character position + accumulated letter spacing
+          // Letter spacing accumulates: first char gets 0, second gets 1*letterSpacing, third gets 2*letterSpacing, etc.
+          // Add a small offset for the first character to account for letter spacing positioning
+          const letterSpacingOffset = i === 0 ? letterSpacing * 0.5 : letterSpacing * i;
+          const absoluteX = startX + charPos + letterSpacingOffset;
           
           if (stroke && strokeWidth > 0) {
-            textCtx.strokeText(char, currentX, y);
+            textCtx.strokeText(char, absoluteX, y);
           }
-          textCtx.fillText(char, currentX, y);
-          
-          // Move to next character position (character width + letter spacing)
-          currentX += charWidth + letterSpacing;
+          textCtx.fillText(char, absoluteX, y);
         }
       } else {
         // Normal rendering without letter spacing - render entire text at once
-        // This is more accurate and faster
+        // This is more accurate and faster, and preserves proper character spacing
         if (stroke && strokeWidth > 0) {
           textCtx.strokeText(text, x, y);
         }
