@@ -343,9 +343,12 @@ const Index = () => {
   };
 
   const handleExportClick = () => {
+    // Skip team slot check in dev mode (localhost)
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
     // Check if team is in a slot
-    if (isTeamInSlot(selectedTeamId)) {
-      // Team is already saved, proceed with export
+    if (isTeamInSlot(selectedTeamId) || isLocalhost) {
+      // Team is already saved or localhost, proceed with export
       gamePreviewRef.current?.triggerDownload();
     } else {
       // Team not in slot, show dialog
