@@ -1,9 +1,10 @@
 /**
  * Optimized SVG to Image conversion for Instagram sharing
- * Uses html2canvas with proper font and image handling
+ * Uses html2canvas for reliable rendering of text and images
  */
 
 import { normalizeFontFamilyName, AVAILABLE_FONTS, getFontConfig } from '@/config/fonts';
+import * as fontkit from 'fontkit';
 import html2canvas from 'html2canvas';
 
 const DEFAULT_FONT_FAMILY = Object.values(AVAILABLE_FONTS)[0]?.cssFamily ?? 'Bebas Neue';
@@ -44,6 +45,75 @@ const fontUrlToDataUrl = async (url: string): Promise<string> => {
     console.error(`Failed to convert font URL to data URL: ${url}`, error);
     throw error;
   }
+};
+
+/**
+ * Builds font-face CSS with data URLs (doesn't modify SVG)
+ */
+const buildFontFaceCssWithDataUrls = async (fontFamilies: string[]): Promise<string> => {
+  if (fontFamilies.length === 0) return '';
+
+  const fontFaceRules: string[] = [];
+
+  for (const family of fontFamilies) {
+    const fontConfig = getFontConfig(family);
+    if (!fontConfig) continue;
+
+    for (const variant of fontConfig.variants) {
+      const format = variant.url.includes('.woff2') ? 'woff2' : 'woff';
+
+      try {
+        const fontDataUrl = await fontUrlToDataUrl(variant.url);
+        const fontFaceRule = `@font-face {
+          font-family: '${fontConfig.cssFamily}';
+          src: url('${fontDataUrl}') format('${format}');
+          font-weight: ${variant.weight};
+          font-style: ${variant.style};
+          font-display: swap;
+        }`;
+        fontFaceRules.push(fontFaceRule);
+        console.log(`✅ Font converted to data URL: ${fontConfig.cssFamily} ${variant.weight} ${variant.style}`);
+      } catch (error) {
+        console.warn(`Failed to convert font to data URL: ${fontConfig.cssFamily}`, error);
+        const fontFaceRule = `@font-face {
+          font-family: '${fontConfig.cssFamily}';
+          src: url('${variant.url}') format('${format}');
+          font-weight: ${variant.weight};
+          font-style: ${variant.style};
+          font-display: swap;
+        }`;
+        fontFaceRules.push(fontFaceRule);
+      }
+    }
+  }
+  return fontFaceRules.join('\n\n');
+};
+
+/**
+ * Embeds fonts directly in SVG as @font-face rules with data URLs
+ */
+const embedFontsInSvg = async (svgElement: SVGSVGElement, fontFamilies: string[]): Promise<string> => {
+  if (fontFamilies.length === 0) return '';
+
+  const fontFaceCss = await buildFontFaceCssWithDataUrls(fontFamilies);
+  if (!fontFaceCss) return '';
+
+  let styleElement = svgElement.querySelector('style') as Element | null;
+  if (!styleElement) {
+    styleElement = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+    svgElement.insertBefore(styleElement, svgElement.firstChild);
+  }
+
+  let existingStyle = (styleElement as { textContent: string | null }).textContent || '';
+  if (existingStyle) {
+    existingStyle = existingStyle.replace(/@font-face\s*\{[^}]*\}/g, '');
+    existingStyle = existingStyle.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
+    console.log('🧹 Removed existing @font-face rules from SVG');
+  }
+
+  (styleElement as { textContent: string }).textContent = existingStyle + (existingStyle ? '\n\n' : '') + fontFaceCss;
+  console.log(`✅ Embedded ${fontFaceCss.split('@font-face').length - 1} font-face rules in SVG`);
+  return fontFaceCss;
 };
 
 /**
@@ -127,83 +197,173 @@ const extractUsedFontFamilies = (svgElement: SVGSVGElement): Set<string> => {
 };
 
 /**
- * Builds font-face CSS with data URLs (doesn't modify SVG)
+ * Font cache to avoid re-loading the same font
  */
-const buildFontFaceCssWithDataUrls = async (fontFamilies: string[]): Promise<string> => {
-  if (fontFamilies.length === 0) return '';
+const fontCache = new Map<string, fontkit.Font>();
 
-  const fontFaceRules: string[] = [];
-
-  for (const family of fontFamilies) {
-    const fontConfig = getFontConfig(family);
-    if (!fontConfig) continue;
-
-    for (const variant of fontConfig.variants) {
-      const format = variant.url.includes('.woff2') ? 'woff2' : 'woff';
-
-      try {
-        // Convert font URL to data URL
-        const fontDataUrl = await fontUrlToDataUrl(variant.url);
-        
-        const fontFaceRule = `@font-face {
-  font-family: '${fontConfig.cssFamily}';
-  src: url('${fontDataUrl}') format('${format}');
-  font-weight: ${variant.weight};
-  font-style: ${variant.style};
-  font-display: swap;
-}`;
-
-        fontFaceRules.push(fontFaceRule);
-        console.log(`✅ Font converted to data URL: ${fontConfig.cssFamily} ${variant.weight} ${variant.style}`);
-      } catch (error) {
-        console.warn(`Failed to convert font to data URL: ${fontConfig.cssFamily}`, error);
-        // Fallback: use external URL (may not work when SVG is loaded as image)
-        const fontFaceRule = `@font-face {
-  font-family: '${fontConfig.cssFamily}';
-  src: url('${variant.url}') format('${format}');
-  font-weight: ${variant.weight};
-  font-style: ${variant.style};
-  font-display: swap;
-}`;
-
-        fontFaceRules.push(fontFaceRule);
-      }
-    }
+/**
+ * Load a font using fontkit
+ */
+const loadFont = async (url: string): Promise<fontkit.Font> => {
+  // Check cache first
+  if (fontCache.has(url)) {
+    return fontCache.get(url)!;
   }
 
-  return fontFaceRules.join('\n\n');
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Failed to fetch font: ${response.status}`);
+
+    const arrayBuffer = await response.arrayBuffer();
+    // fontkit.create accepts ArrayBuffer directly in the browser
+    const font = fontkit.create(arrayBuffer as ArrayBuffer);
+
+    fontCache.set(url, font);
+    console.log(`✅ Loaded font: ${url}`);
+
+    return font;
+  } catch (error) {
+    console.error(`Failed to load font: ${url}`, error);
+    throw error;
+  }
 };
 
 /**
- * Embeds fonts directly in SVG as @font-face rules with data URLs
+ * Convert text element to SVG path
+ * Returns a group element containing all glyph paths
  */
-const embedFontsInSvg = async (svgElement: SVGSVGElement, fontFamilies: string[]): Promise<string> => {
-  if (fontFamilies.length === 0) return '';
+const convertTextToPath = async (
+  textElement: SVGTextElement,
+  font: fontkit.Font
+): Promise<SVGGElement | null> => {
+  try {
+    const text = textElement.textContent || '';
+    if (!text) return null;
 
-  const fontFaceCss = await buildFontFaceCssWithDataUrls(fontFamilies);
-  if (!fontFaceCss) return '';
+    // Get text properties
+    const x = parseFloat(textElement.getAttribute('x') || '0');
+    const y = parseFloat(textElement.getAttribute('y') || '0');
+    const fontSize = parseFloat(textElement.getAttribute('font-size') || '16');
+    const fill = textElement.getAttribute('fill') || '#000000';
 
-  // Find or create style element in SVG
-  let styleElement = svgElement.querySelector('style') as Element | null;
-  if (!styleElement) {
-    styleElement = document.createElementNS('http://www.w3.org/2000/svg', 'style');
-    svgElement.insertBefore(styleElement, svgElement.firstChild);
+    // Get font scale based on fontSize
+    const scale = fontSize / font.unitsPerEm;
+
+    // Create a glyph run
+    const glyphRun = font.layout(text);
+
+    // Create a group element to hold all paths
+    const groupElement = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    groupElement.setAttribute('fill', fill);
+
+    // Copy any additional attributes
+    const opacity = textElement.getAttribute('opacity');
+    if (opacity) groupElement.setAttribute('opacity', opacity);
+
+    const existingTransform = textElement.getAttribute('transform');
+    if (existingTransform) {
+      groupElement.setAttribute('transform', existingTransform);
+    }
+
+    let currentX = 0; // Start at 0, will be offset by group transform
+
+    // Convert each glyph to a path
+    for (const position of glyphRun.glyphs) {
+      const glyph = position.glyph;
+
+      if (glyph.path) {
+        // Get the SVG path data from the glyph
+        const glyphPathData = glyph.path.toSVG();
+
+        if (glyphPathData) {
+          // Create individual path for this glyph
+          const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          pathElement.setAttribute('d', glyphPathData);
+
+          // Transform for this specific glyph: translate to position and scale
+          // Y is flipped because font coordinates are top-down
+          const glyphX = x + currentX;
+          const glyphTransform = `translate(${glyphX}, ${y}) scale(${scale}, ${-scale})`;
+          pathElement.setAttribute('transform', glyphTransform);
+
+          groupElement.appendChild(pathElement);
+        }
+      }
+
+      // Move to next glyph position
+      currentX += position.xAdvance * scale;
+    }
+
+    if (groupElement.children.length === 0) return null;
+
+    return groupElement;
+  } catch (error) {
+    console.error('Failed to convert text to path:', error);
+    return null;
+  }
+};
+
+/**
+ * Convert all text elements in SVG to paths
+ */
+const convertAllTextToPaths = async (svgElement: SVGSVGElement): Promise<number> => {
+  const textElements = svgElement.querySelectorAll('text');
+  console.log(`🔤 Found ${textElements.length} text elements to convert to paths`);
+
+  if (textElements.length === 0) return 0;
+
+  // Group text elements by font family
+  const fontGroups = new Map<string, { elements: SVGTextElement[]; fontUrl: string }>();
+
+  textElements.forEach((textElement) => {
+    const fontFamily = textElement.getAttribute('font-family') ||
+      window.getComputedStyle(textElement).fontFamily;
+
+    const normalized = normalizeFontFamilyName(fontFamily);
+    if (!normalized) return;
+
+    const fontConfig = getFontConfig(normalized);
+    if (!fontConfig) return;
+
+    // For now, use the first variant (we can improve this to match font-weight/style)
+    const fontUrl = fontConfig.variants[0]?.url;
+    if (!fontUrl) return;
+
+    if (!fontGroups.has(normalized)) {
+      fontGroups.set(normalized, { elements: [], fontUrl });
+    }
+
+    fontGroups.get(normalized)!.elements.push(textElement);
+  });
+
+  console.log(`📦 Grouped into ${fontGroups.size} font families`);
+
+  let convertedCount = 0;
+
+  // Convert text elements for each font
+  for (const [fontFamily, { elements, fontUrl }] of fontGroups) {
+    try {
+      console.log(`🔤 Loading font for conversion: ${fontFamily}`);
+      const font = await loadFont(fontUrl);
+
+      for (const textElement of elements) {
+        const groupElement = await convertTextToPath(textElement, font);
+
+        if (groupElement) {
+          // Replace text element with group element containing paths
+          textElement.parentNode?.replaceChild(groupElement, textElement);
+          convertedCount++;
+        }
+      }
+
+      console.log(`✅ Converted ${elements.length} text elements to paths for ${fontFamily}`);
+    } catch (error) {
+      console.error(`Failed to convert text to paths for ${fontFamily}:`, error);
+    }
   }
 
-  // Remove existing @font-face rules to avoid conflicts
-  let existingStyle = (styleElement as { textContent: string | null }).textContent || '';
-  if (existingStyle) {
-    existingStyle = existingStyle.replace(/@font-face\s*\{[^}]*\}/g, '');
-    existingStyle = existingStyle.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
-    console.log('🧹 Removed existing @font-face rules from SVG');
-  }
-
-  // Add new font-face rules with data URLs
-  (styleElement as { textContent: string }).textContent = existingStyle + (existingStyle ? '\n\n' : '') + fontFaceCss;
-  
-  console.log(`✅ Embedded ${fontFaceCss.split('@font-face').length - 1} font-face rules in SVG`);
-  
-  return fontFaceCss;
+  console.log(`✅ Total converted: ${convertedCount}/${textElements.length} text elements to paths`);
+  return convertedCount;
 };
 
 /**
@@ -295,7 +455,7 @@ export const inlineAllImages = async (
 
 /**
  * Converts SVG to PNG using html2canvas
- * Ensures fonts are loaded and images are inlined before capture
+ * Works with text and inlined images
  */
 export const svgToPngDataUrl = async (
   svgElement: SVGSVGElement,
@@ -314,28 +474,21 @@ export const svgToPngDataUrl = async (
 
   if (onProgress) onProgress(70, 'SVG wird in Bild konvertiert...');
 
-  // Get fonts used in SVG
   const usedFonts = extractUsedFontFamilies(svgElement);
   const usedFontsArray = usedFonts.size > 0 ? Array.from(usedFonts) : [];
   
-  // Ensure fonts are loaded in the document
   if (usedFontsArray.length > 0) {
     console.log('🔤 Loading fonts:', usedFontsArray);
-    
-    // Load fonts in the document
     if (document.fonts && document.fonts.load) {
       const loadPromises: Promise<unknown>[] = [];
-      
       for (const family of usedFontsArray) {
         const fontConfig = getFontConfig(family);
         if (!fontConfig) continue;
-        
         for (const variant of fontConfig.variants) {
           const fontSpec = `${variant.style} ${variant.weight} 16px "${fontConfig.cssFamily}"`;
           loadPromises.push(document.fonts.load(fontSpec));
         }
       }
-      
       await Promise.allSettled(loadPromises);
       console.log('✅ Fonts loaded in document');
     }
@@ -355,9 +508,8 @@ export const svgToPngDataUrl = async (
   svgClone.setAttribute('height', String(height * scale));
   svgClone.setAttribute('viewBox', `0 0 ${width} ${height}`);
   
-  // Create container for html2canvas
   const container = document.createElement('div');
-  container.style.position = 'fixed'; // Use fixed instead of absolute for better visibility
+  container.style.position = 'fixed';
   container.style.left = '0px';
   container.style.top = '0px';
   container.style.width = `${width * scale}px`;
@@ -365,7 +517,7 @@ export const svgToPngDataUrl = async (
   container.style.overflow = 'visible';
   container.style.zIndex = '999999';
   container.style.pointerEvents = 'none';
-  container.style.opacity = '1'; // Ensure it's visible
+  container.style.opacity = '1';
   container.style.visibility = 'visible';
   
   svgClone.style.width = `${width * scale}px`;
@@ -377,24 +529,17 @@ export const svgToPngDataUrl = async (
   container.appendChild(svgClone);
   document.body.appendChild(container);
 
-  // Wait for all embedded images to load in the SVG clone
   const allImages = extractImageElements(svgClone);
   console.log('🖼️ Waiting for', allImages.length, 'embedded images to load in SVG clone...');
   
-  // Ensure all images have both href and xlink:href attributes for html2canvas
   allImages.forEach((img, index) => {
     const href = img.getAttribute('href') || img.getAttribute('xlink:href') || '';
     if (href) {
-      // Set both attributes to ensure html2canvas can find them
       img.setAttribute('href', href);
       img.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', href);
       console.log(`🖼️ Image ${index + 1} in container:`, href.substring(0, 50) + (href.length > 50 ? '...' : ''));
     }
   });
-  
-  // Verify images are in the container before html2canvas
-  const imagesInContainer = extractImageElements(svgClone);
-  console.log(`🔍 Verified ${imagesInContainer.length} images in container before html2canvas`);
   
   await Promise.all(allImages.map((img, index) => {
     return new Promise<void>((resolve) => {
@@ -407,7 +552,7 @@ export const svgToPngDataUrl = async (
         };
         tempImg.onerror = () => {
           console.warn(`⚠️ Image ${index + 1}/${allImages.length} failed to load`);
-          resolve(); // Continue even if one image fails
+          resolve();
         };
         tempImg.src = href;
       } else {
@@ -417,11 +562,8 @@ export const svgToPngDataUrl = async (
   }));
 
   console.log('✅ All embedded images loaded in SVG clone');
-  
-  // Additional wait to ensure images are fully rendered
   await new Promise(resolve => setTimeout(resolve, 300));
 
-  // Remove external font links before html2canvas
   const originalFontLinks = document.querySelectorAll('link[data-template-fonts="true"], link[href*="fonts.googleapis.com"], link[href*="fonts.gstatic.com"]');
   const removedLinks: HTMLLinkElement[] = [];
   
@@ -440,26 +582,21 @@ export const svgToPngDataUrl = async (
   console.log(`🧹 Temporarily removed ${removedLinks.length} external font links`);
 
   try {
-    // Wait for fonts to be ready
     await new Promise(resolve => setTimeout(resolve, 300));
 
-    // Use html2canvas to capture
-    console.log('🔄 Capturing SVG using html2canvas...');
-    
     const capturedCanvas = await html2canvas(container, {
       width: width * scale,
       height: height * scale,
       scale: 1,
       backgroundColor: null, // Transparent background so images show through
-      useCORS: true, // Allow CORS for data URLs
-      allowTaint: false, // Don't allow tainted canvas since we're using data URLs
+      useCORS: true,
+      allowTaint: false,
       logging: false,
       proxy: undefined,
-      imageTimeout: 15000, // Wait up to 15 seconds for images to load
+      imageTimeout: 15000,
       removeContainer: false,
-      foreignObjectRendering: true, // Enable foreignObject rendering for better SVG support
+      foreignObjectRendering: true,
       onclone: async (clonedDoc) => {
-        // Remove all external font links from cloned document
         const allExternalLinks = clonedDoc.querySelectorAll('link[rel="stylesheet"], link[href*="fonts.googleapis.com"], link[href*="fonts.gstatic.com"]');
         allExternalLinks.forEach(link => {
           const linkEl = link as HTMLLinkElement;
@@ -469,23 +606,19 @@ export const svgToPngDataUrl = async (
         });
         console.log(`🧹 Removed ${allExternalLinks.length} external links from cloned document`);
         
-        // Get cloned container and SVG first
         const clonedContainer = clonedDoc.querySelector('div');
         const clonedSvg = clonedContainer?.querySelector('svg') || clonedDoc.querySelector('svg');
         
-        // Inject fonts with data URLs into cloned document
         if (usedFontsArray.length > 0) {
           console.log('🔤 Injecting fonts into cloned document...');
           const fontFaceCss = await buildFontFaceCssWithDataUrls(usedFontsArray);
           
           if (fontFaceCss) {
-            // Create style element with font-face rules
             const style = clonedDoc.createElement('style');
             style.textContent = fontFaceCss;
             clonedDoc.head.insertBefore(style, clonedDoc.head.firstChild);
             console.log('📝 Injected font-face CSS into cloned document');
             
-            // Also inject into SVG if it exists
             if (clonedSvg) {
               let svgStyleElement = clonedSvg.querySelector('style') as Element | null;
               if (!svgStyleElement) {
@@ -497,195 +630,27 @@ export const svgToPngDataUrl = async (
               console.log('📝 Injected font-face CSS into cloned SVG');
             }
             
-            // Load fonts in cloned document
             if (clonedDoc.fonts && clonedDoc.fonts.load) {
               const loadPromises: Promise<unknown>[] = [];
-              
               for (const family of usedFontsArray) {
                 const fontConfig = getFontConfig(family);
                 if (!fontConfig) continue;
-                
                 for (const variant of fontConfig.variants) {
                   const fontSpec = `${variant.style} ${variant.weight} 16px "${fontConfig.cssFamily}"`;
                   loadPromises.push(clonedDoc.fonts.load(fontSpec));
                 }
               }
-              
               await Promise.allSettled(loadPromises);
               console.log('✅ Fonts loaded in cloned document');
-              
-              // Verify fonts are loaded
-              for (const family of usedFontsArray) {
-                const fontConfig = getFontConfig(family);
-                if (!fontConfig) continue;
-                const fontSpec = `normal 400 16px "${fontConfig.cssFamily}"`;
-                const isLoaded = clonedDoc.fonts.check(fontSpec);
-                console.log(`🔍 Font ${fontConfig.cssFamily} loaded in cloned doc: ${isLoaded}`);
-              }
             }
-            
-            // Additional wait for fonts to be applied
             await new Promise(resolve => setTimeout(resolve, 500));
           }
         }
-        
-        // Ensure images in cloned SVG are visible and properly loaded
-        
-        if (clonedSvg && clonedContainer) {
-          // Get images from original container to restore them if missing
-          const originalSvg = container.querySelector('svg');
-          const originalImages = originalSvg ? Array.from(originalSvg.querySelectorAll('image')) : [];
-          
-          const clonedImages = clonedSvg.querySelectorAll('image');
-          console.log(`🖼️ Found ${clonedImages.length} images in cloned SVG (original had ${originalImages.length})`);
-          
-          // If images are missing in clone, restore them from original
-          if (clonedImages.length === 0 && originalImages.length > 0) {
-            console.log('⚠️ Images missing in clone, restoring from original...');
-            
-            // First, try to restore in SVG
-            originalImages.forEach((originalImg, index) => {
-              const href = originalImg.getAttribute('href') || originalImg.getAttribute('xlink:href') || '';
-              if (href) {
-                // Copy all attributes from original
-                const clonedImg = clonedDoc.createElementNS('http://www.w3.org/2000/svg', 'image');
-                
-                // Copy all attributes
-                Array.from(originalImg.attributes).forEach(attr => {
-                  if (attr.name === 'href' || attr.name === 'xlink:href') {
-                    clonedImg.setAttribute('href', attr.value);
-                    clonedImg.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', attr.value);
-                  } else {
-                    clonedImg.setAttribute(attr.name, attr.value);
-                  }
-                });
-                
-                // Ensure both href attributes are set
-                clonedImg.setAttribute('href', href);
-                clonedImg.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', href);
-                
-                // Copy style if present
-                if (originalImg.getAttribute('style')) {
-                  clonedImg.setAttribute('style', originalImg.getAttribute('style') || '');
-                }
-                
-                // Insert at the beginning of SVG (before other elements) to ensure proper rendering
-                const firstChild = clonedSvg.firstChild;
-                if (firstChild) {
-                  clonedSvg.insertBefore(clonedImg, firstChild);
-                } else {
-                  clonedSvg.appendChild(clonedImg);
-                }
-                
-                console.log(`✅ Restored image ${index + 1} in cloned SVG`);
-              }
-            });
-            
-            // Also create img elements as fallback for html2canvas
-            // html2canvas sometimes has issues with SVG image elements
-            const fallbackLoadPromises: Promise<void>[] = [];
-            
-            for (let index = 0; index < originalImages.length; index++) {
-              const originalImg = originalImages[index];
-              const href = originalImg.getAttribute('href') || originalImg.getAttribute('xlink:href') || '';
-              if (href && href.startsWith('data:')) {
-                const img = clonedDoc.createElement('img');
-                img.src = href;
-                img.style.position = 'absolute';
-                
-                // Parse position and size from SVG attributes
-                const x = originalImg.getAttribute('x') || '0';
-                const y = originalImg.getAttribute('y') || '0';
-                const width = originalImg.getAttribute('width') || '100%';
-                const height = originalImg.getAttribute('height') || '100%';
-                const preserveAspectRatio = originalImg.getAttribute('preserveAspectRatio') || 'xMidYMid slice';
-                
-                // Convert to pixels if needed
-                const xPx = x.includes('%') ? x : `${parseFloat(x) || 0}px`;
-                const yPx = y.includes('%') ? y : `${parseFloat(y) || 0}px`;
-                const widthPx = width.includes('%') ? width : `${parseFloat(width) || 100}px`;
-                const heightPx = height.includes('%') ? height : `${parseFloat(height) || 100}px`;
-                
-                img.style.left = xPx;
-                img.style.top = yPx;
-                img.style.width = widthPx;
-                img.style.height = heightPx;
-                img.style.objectFit = preserveAspectRatio.includes('slice') ? 'cover' : 'contain';
-                img.style.pointerEvents = 'none';
-                img.style.zIndex = '0'; // Behind SVG content (text should be on top)
-                img.style.opacity = '1';
-                img.style.visibility = 'visible';
-                img.style.display = 'block';
-                img.style.margin = '0';
-                img.style.padding = '0';
-                img.style.border = 'none';
-                
-                // Ensure image loads before html2canvas captures
-                const loadPromise = new Promise<void>((resolve) => {
-                  img.onload = () => {
-                    console.log(`✅ Fallback img ${index + 1} loaded`);
-                    resolve();
-                  };
-                  img.onerror = () => {
-                    console.warn(`⚠️ Fallback img ${index + 1} failed to load`);
-                    resolve();
-                  };
-                });
-                
-                // Insert image into container - check if SVG is a child first
-                if (clonedSvg && clonedSvg.parentNode === clonedContainer) {
-                  clonedContainer.insertBefore(img, clonedSvg); // Insert before SVG so it's behind
-                } else {
-                  clonedContainer.appendChild(img); // Just append if SVG structure is different
-                }
-                console.log(`✅ Created fallback img element ${index + 1} for html2canvas at (${xPx}, ${yPx}) size ${widthPx}x${heightPx}`);
-                
-                fallbackLoadPromises.push(loadPromise);
-              }
-            }
-            
-            // Wait for all fallback images to load
-            await Promise.allSettled(fallbackLoadPromises);
-            
-            // Verify fallback images are in the cloned container
-            const fallbackImgs = clonedContainer.querySelectorAll('img');
-            console.log(`🔍 Verified ${fallbackImgs.length} fallback img elements in cloned container`);
-          }
-          
-          // Ensure all images have both href and xlink:href
-          const finalImages = clonedSvg.querySelectorAll('image');
-          finalImages.forEach((img, index) => {
-            const href = img.getAttribute('href') || img.getAttribute('xlink:href') || '';
-            if (href) {
-              // Set both attributes
-              img.setAttribute('href', href);
-              img.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', href);
-              console.log(`🖼️ Cloned image ${index + 1} href:`, href.substring(0, 50) + (href.length > 50 ? '...' : ''));
-              
-              // Ensure image is visible
-              img.style.opacity = '1';
-              img.style.visibility = 'visible';
-              
-              // Force image to load by creating a temporary image element
-              if (href.startsWith('data:')) {
-                const tempImg = new Image();
-                tempImg.src = href;
-                // Don't wait, just trigger the load
-              }
-            }
-          });
-        } else {
-          console.warn('⚠️ No SVG or container found in cloned document');
-        }
-        
-        // Wait a bit for images to be ready in the cloned document
-        await new Promise(resolve => setTimeout(resolve, 300));
       },
     });
 
     console.log('✅ SVG captured with html2canvas');
 
-    // Draw images directly onto the canvas if html2canvas didn't capture them
     const finalCanvas = document.createElement('canvas');
     finalCanvas.width = width * scale;
     finalCanvas.height = height * scale;
@@ -695,7 +660,6 @@ export const svgToPngDataUrl = async (
       throw new Error('Could not get final canvas context');
     }
 
-    // Set background
     if (backgroundColor !== 'transparent') {
       finalCtx.fillStyle = backgroundColor;
       finalCtx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
@@ -733,12 +697,10 @@ export const svgToPngDataUrl = async (
     }));
 
     // Then draw html2canvas result on top (with text)
-    // Use composite mode to preserve images where html2canvas is transparent
     finalCtx.globalCompositeOperation = 'source-over';
     finalCtx.drawImage(capturedCanvas, 0, 0);
     console.log('✅ Drew html2canvas result (with text) on top of images');
 
-    // Convert canvas to data URL
     let dataUrl = '';
     if (format === 'jpeg') {
       dataUrl = finalCanvas.toDataURL('image/jpeg', quality);
@@ -758,7 +720,6 @@ export const svgToPngDataUrl = async (
 
     return dataUrl;
   } finally {
-    // Restore font links
     removedLinks.forEach(link => {
       const originalHref = link.getAttribute('data-original-href');
       const originalRel = link.getAttribute('data-original-rel');
@@ -776,7 +737,6 @@ export const svgToPngDataUrl = async (
     });
     console.log(`✅ Restored ${removedLinks.length} external font links`);
     
-    // Remove container
     if (container.parentNode) {
       document.body.removeChild(container);
     }
@@ -860,8 +820,11 @@ export const convertSvgToImage = async (
 
   try {
     if (onProgress) {
-      onProgress(30, 'Bilder werden geladen...');
+      onProgress(20, 'Bilder werden geladen...');
     }
+
+    // Skip text-to-path conversion - html2canvas can render text directly
+    // await convertAllTextToPaths(svgClone);
 
     await inlineAllImages(svgClone, onImageStatusUpdate);
   } finally {
@@ -874,7 +837,7 @@ export const convertSvgToImage = async (
     onProgress(60, 'Bilder wurden geladen...');
   }
 
-  // Convert to PNG using resvg-js
+  // Convert to PNG using native Canvas API
   const dataUrl = await svgToPngDataUrl(svgClone, options);
 
   if (onProgress) {

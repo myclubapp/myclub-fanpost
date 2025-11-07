@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { handlePlatformDownload, type ImageLoadProgress } from "@/utils/svgToImage";
+import { handlePlatformDownloadLayered } from "@/utils/svgToImageLayered";
 import { AVAILABLE_FONTS, buildFontFaceCss, ensureTemplateFontsLoaded, normalizeFontFamilyName } from "@/config/fonts";
 
 type SportType = "unihockey" | "volleyball" | "handball";
@@ -647,6 +648,7 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
 
   /**
    * Download handler with platform-specific behavior
+   * Uses layered approach for better performance and reliability
    */
   const confirmDownload = async () => {
     // Show progress dialog
@@ -669,8 +671,8 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
     const templateCategory = selectedTemplate?.template_category || 'template';
     const fileName = `kanva-${templateCategory}-${gameId}-${Date.now()}.png`;
 
-    // Use the shared download handler
-    await handlePlatformDownload({
+    // Use the new layered download handler for better performance
+    await handlePlatformDownloadLayered({
       svgElement,
       fileName,
       isMobile,
