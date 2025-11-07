@@ -98,7 +98,27 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
 
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [imageStatuses, setImageStatuses] = useState<ImageLoadProgress[]>([]);
-  const fontFaceCss = useMemo(() => buildFontFaceCss(), []);
+
+  // Calculate used fonts dynamically from template config
+  const usedFonts = useMemo(() => {
+    if (!selectedTemplate?.config?.elements) return [];
+
+    const fonts = new Set<string>();
+    selectedTemplate.config.elements.forEach((element: any) => {
+      if ((element.type === 'text' || element.type === 'api-text') && element.fontFamily) {
+        const normalized = resolveFontFamily(element.fontFamily);
+        fonts.add(normalized);
+      }
+    });
+
+    return Array.from(fonts);
+  }, [selectedTemplate]);
+
+  // Only build font CSS for fonts actually used in the template
+  const fontFaceCss = useMemo(() => {
+    if (usedFonts.length === 0) return buildFontFaceCss([DEFAULT_FONT_FAMILY]);
+    return buildFontFaceCss(usedFonts);
+  }, [usedFonts]);
 
   useEffect(() => {
     void ensureTemplateFontsLoaded();
