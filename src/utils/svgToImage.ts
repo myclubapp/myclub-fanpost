@@ -162,7 +162,7 @@ const extractUsedFontFamilies = (svgElement: SVGSVGElement): Set<string> => {
 };
 
 /**
- * Extracts all elements with CSS background-image
+ * Extracts all elements with CSS background-image and converts computed styles to inline
  */
 const extractBackgroundImages = (svgElement: SVGSVGElement): Array<{ element: Element; url: string }> => {
   const allElements = svgElement.querySelectorAll('*');
@@ -175,8 +175,26 @@ const extractBackgroundImages = (svgElement: SVGSVGElement): Array<{ element: El
     if (bgImage && bgImage !== 'none') {
       // Extract URL from background-image: url("...")
       const urlMatch = bgImage.match(/url\(['"]?([^'"]+)['"]?\)/);
-      if (urlMatch && urlMatch[1] && /^https?:\/\//i.test(urlMatch[1])) {
-        backgroundImages.push({ element, url: urlMatch[1] });
+      if (urlMatch && urlMatch[1]) {
+        const url = urlMatch[1];
+        
+        // Only process HTTP/HTTPS URLs
+        if (/^https?:\/\//i.test(url)) {
+          backgroundImages.push({ element, url });
+          
+          // CRITICAL: Convert all relevant background styles to inline styles
+          // so they persist when the SVG is cloned
+          const currentStyle = element.getAttribute('style') || '';
+          const stylesToInline = [
+            `background-image: ${bgImage}`,
+            `background-size: ${computedStyle.backgroundSize}`,
+            `background-position: ${computedStyle.backgroundPosition}`,
+            `background-repeat: ${computedStyle.backgroundRepeat}`,
+          ];
+          
+          const newStyle = currentStyle + '; ' + stylesToInline.join('; ');
+          element.setAttribute('style', newStyle);
+        }
       }
     }
   });
@@ -389,13 +407,63 @@ export const inlineAllImages = async (
       // Fetch and convert image
       const dataUrl = await fetchImageAsDataUrl(url);
 
-      // Update the element's style to use the data URL
-      const currentStyle = element.getAttribute('style') || '';
-      const newStyle = currentStyle.replace(
-        /background-image:\s*url\(['"]?[^'"]+['"]?\)/gi,
-        `background-image: url('${dataUrl}')`
-      );
-      element.setAttribute('style', newStyle);
+      // Check if element is inside foreignObject (HTML content) or is a native SVG element
+      const isForeignObject = element.closest('foreignObject') !== null;
+      
+      if (isForeignObject) {
+        // For HTML elements inside foreignObject, update inline style
+        const currentStyle = element.getAttribute('style') || '';
+        const newStyle = currentStyle.replace(
+          /background-image:\s*url\(['"]?[^'"]+['"]?\)/gi,
+          `background-image: url('${dataUrl}')`
+        );
+        element.setAttribute('style', newStyle);
+      } else {
+        // For native SVG elements, convert background to SVG pattern
+        const computedStyle = window.getComputedStyle(element);
+        const bbox = (element as SVGGraphicsElement).getBBox?.();
+        
+        if (bbox) {
+          const patternId = `bg-pattern-${Date.now()}-${index}`;
+          const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
+          pattern.setAttribute('id', patternId);
+          pattern.setAttribute('x', '0');
+          pattern.setAttribute('y', '0');
+          pattern.setAttribute('width', String(bbox.width));
+          pattern.setAttribute('height', String(bbox.height));
+          pattern.setAttribute('patternUnits', 'userSpaceOnUse');
+          
+          const image = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+          image.setAttribute('href', dataUrl);
+          image.setAttribute('x', '0');
+          image.setAttribute('y', '0');
+          image.setAttribute('width', String(bbox.width));
+          image.setAttribute('height', String(bbox.height));
+          image.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+          
+          pattern.appendChild(image);
+          
+          // Add pattern to SVG defs
+          let defs = svgElement.querySelector('defs');
+          if (!defs) {
+            defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            svgElement.insertBefore(defs, svgElement.firstChild);
+          }
+          defs.appendChild(pattern);
+          
+          // Apply pattern as fill
+          element.setAttribute('fill', `url(#${patternId})`);
+          
+          // Remove background-image style
+          const currentStyle = element.getAttribute('style') || '';
+          const newStyle = currentStyle.replace(/background-image:[^;]+;?/gi, '');
+          if (newStyle.trim()) {
+            element.setAttribute('style', newStyle);
+          } else {
+            element.removeAttribute('style');
+          }
+        }
+      }
 
       // Update status to loaded
       imageStatuses[statusIndex].status = 'loaded';
