@@ -13,7 +13,8 @@
  * - More reliable rendering
  */
 
-import { normalizeFontFamilyName, getFontConfig } from '@/config/fonts';
+import { normalizeFontFamilyName, getFontConfig, getGoogleFontsUrl } from '@/config/fonts';
+import * as fontkit from 'fontkit';
 import html2canvas from 'html2canvas';
 
 /**
@@ -146,6 +147,252 @@ const fetchImageAsDataUrl = async (url: string): Promise<string> => {
 };
 
 /**
+ * Font cache to avoid re-loading the same font
+ */
+const fontCache = new Map<string, fontkit.Font>();
+
+/**
+ * Load a font using fontkit
+ * Can load from URL or data URL
+ */
+const loadFont = async (urlOrDataUrl: string): Promise<fontkit.Font> => {
+  // Check cache first
+  if (fontCache.has(urlOrDataUrl)) {
+    return fontCache.get(urlOrDataUrl)!;
+  }
+
+  try {
+    let arrayBuffer: ArrayBuffer;
+    
+    if (urlOrDataUrl.startsWith('data:')) {
+      // Load from data URL
+      const base64 = urlOrDataUrl.split(',')[1];
+      const binaryString = atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      arrayBuffer = bytes.buffer;
+    } else {
+      // Load from URL
+      const response = await fetch(urlOrDataUrl);
+      if (!response.ok) throw new Error(`Failed to fetch font: ${response.status}`);
+      arrayBuffer = await response.arrayBuffer();
+    }
+
+    // Convert ArrayBuffer to Uint8Array for fontkit compatibility
+    const uint8Array = new Uint8Array(arrayBuffer);
+    
+    // fontkit.create accepts Uint8Array or ArrayBuffer
+    const font = fontkit.create(uint8Array);
+
+    fontCache.set(urlOrDataUrl, font);
+    console.log(`✅ Loaded font: ${urlOrDataUrl.substring(0, 50)}...`);
+
+    return font;
+  } catch (error) {
+    console.error(`Failed to load font: ${urlOrDataUrl}`, error);
+    throw error;
+  }
+};
+
+/**
+ * Convert text element to SVG path
+ * Returns a group element containing all glyph paths
+ */
+const convertTextToPath = async (
+  textElement: SVGTextElement,
+  font: fontkit.Font
+): Promise<SVGGElement | null> => {
+  try {
+    const text = textElement.textContent || '';
+    if (!text) return null;
+
+    // Get text properties
+    const x = parseFloat(textElement.getAttribute('x') || '0');
+    const y = parseFloat(textElement.getAttribute('y') || '0');
+    const fontSize = parseFloat(textElement.getAttribute('font-size') || '16');
+    const fill = textElement.getAttribute('fill') || '#000000';
+    const stroke = textElement.getAttribute('stroke');
+    const strokeWidth = textElement.getAttribute('stroke-width');
+    const textAnchor = textElement.getAttribute('text-anchor') || 'start';
+    const letterSpacing = parseFloat(textElement.getAttribute('letter-spacing') || '0');
+
+    // Get font scale based on fontSize
+    const scale = fontSize / font.unitsPerEm;
+
+    // Create a glyph run
+    const glyphRun = font.layout(text);
+
+    // Create a group element to hold all paths
+    const groupElement = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    groupElement.setAttribute('fill', fill);
+    
+    if (stroke) groupElement.setAttribute('stroke', stroke);
+    if (strokeWidth) groupElement.setAttribute('stroke-width', strokeWidth);
+
+    // Copy any additional attributes
+    const opacity = textElement.getAttribute('opacity');
+    if (opacity) groupElement.setAttribute('opacity', opacity);
+
+    const existingTransform = textElement.getAttribute('transform');
+    if (existingTransform) {
+      groupElement.setAttribute('transform', existingTransform);
+    }
+
+    // Calculate text width for text-anchor alignment
+    let totalWidth = 0;
+    for (const position of glyphRun.glyphs) {
+      totalWidth += position.xAdvance * scale;
+    }
+    
+    // Adjust x position based on text-anchor
+    let startX = x;
+    if (textAnchor === 'middle') {
+      startX = x - totalWidth / 2;
+    } else if (textAnchor === 'end') {
+      startX = x - totalWidth;
+    }
+
+    let currentX = 0;
+
+    // Convert each glyph to a path
+    for (const position of glyphRun.glyphs) {
+      const glyph = position.glyph;
+
+      if (glyph.path) {
+        // Get the SVG path data from the glyph
+        const glyphPathData = glyph.path.toSVG();
+
+        if (glyphPathData) {
+          // Create individual path for this glyph
+          const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          pathElement.setAttribute('d', glyphPathData);
+
+          // Transform for this specific glyph: translate to position and scale
+          // Y is flipped because font coordinates are top-down
+          const glyphX = startX + currentX;
+          const glyphTransform = `translate(${glyphX}, ${y}) scale(${scale}, ${-scale})`;
+          pathElement.setAttribute('transform', glyphTransform);
+
+          groupElement.appendChild(pathElement);
+        }
+      }
+
+      // Move to next glyph position (including letter spacing)
+      currentX += position.xAdvance * scale + letterSpacing;
+    }
+
+    if (groupElement.children.length === 0) return null;
+
+    return groupElement;
+  } catch (error) {
+    console.error('Failed to convert text to path:', error);
+    return null;
+  }
+};
+
+/**
+ * Convert all text elements in SVG to paths
+ */
+const convertAllTextToPaths = async (svgElement: SVGSVGElement): Promise<number> => {
+  const textElements = svgElement.querySelectorAll('text');
+  console.log(`🔤 Found ${textElements.length} text elements to convert to paths`);
+
+  if (textElements.length === 0) return 0;
+
+  // Group text elements by font family
+  const fontGroups = new Map<string, { elements: SVGTextElement[]; fontUrl: string }>();
+
+  textElements.forEach((textElement) => {
+    const fontFamily = textElement.getAttribute('font-family') ||
+                      textElement.style.fontFamily ||
+                      window.getComputedStyle(textElement).fontFamily;
+
+    const normalized = normalizeFontFamilyName(fontFamily);
+    if (!normalized) {
+      console.warn(`⚠️ Could not normalize font family: "${fontFamily}"`);
+      return;
+    }
+
+    const fontConfig = getFontConfig(normalized);
+    if (!fontConfig) {
+      console.warn(`⚠️ No font config found for: "${normalized}"`);
+      return;
+    }
+
+    // Get font-weight and font-style from element
+    const fontWeight = textElement.getAttribute('font-weight') || 
+                     textElement.style.fontWeight || 
+                     '400';
+    const fontStyle = textElement.getAttribute('font-style') || 
+                    textElement.style.fontStyle || 
+                    'normal';
+
+    // Find matching variant
+    const variant = fontConfig.variants.find(v => 
+      v.weight === fontWeight && v.style === fontStyle
+    ) || fontConfig.variants[0];
+
+    if (!variant || !variant.url) {
+      console.warn(`⚠️ No font variant found for: ${normalized} ${fontWeight} ${fontStyle}`);
+      return;
+    }
+
+    if (!fontGroups.has(normalized)) {
+      fontGroups.set(normalized, { elements: [], fontUrl: variant.url });
+    }
+
+    fontGroups.get(normalized)!.elements.push(textElement);
+  });
+
+  console.log(`📦 Grouped into ${fontGroups.size} font families`);
+
+  let convertedCount = 0;
+
+  // Convert text elements for each font
+  for (const [fontFamily, { elements, fontUrl }] of fontGroups) {
+    try {
+      console.log(`🔤 Loading font for conversion: ${fontFamily} from ${fontUrl.substring(0, 50)}...`);
+      
+      // First, try to convert URL to data URL for better compatibility with fontkit
+      let fontSource = fontUrl;
+      if (!fontUrl.startsWith('data:')) {
+        try {
+          const response = await fetch(fontUrl);
+          if (response.ok) {
+            const blob = await response.blob();
+            fontSource = await blobToDataUrl(blob);
+            console.log(`✅ Converted font URL to data URL`);
+          }
+        } catch (error) {
+          console.warn(`⚠️ Failed to convert font URL to data URL, using URL directly:`, error);
+        }
+      }
+      
+      const font = await loadFont(fontSource);
+
+      for (const textElement of elements) {
+        const groupElement = await convertTextToPath(textElement, font);
+
+        if (groupElement) {
+          // Replace text element with group element containing paths
+          textElement.parentNode?.replaceChild(groupElement, textElement);
+          convertedCount++;
+        }
+      }
+
+      console.log(`✅ Converted ${elements.length} text elements to paths for ${fontFamily}`);
+    } catch (error) {
+      console.error(`Failed to convert text to paths for ${fontFamily}:`, error);
+    }
+  }
+
+  console.log(`✅ Total converted: ${convertedCount}/${textElements.length} text elements to paths`);
+  return convertedCount;
+};
+
+/**
  * Extracts font families used in text elements
  */
 const extractUsedFontFamilies = (svgElement: SVGSVGElement): Set<string> => {
@@ -154,6 +401,7 @@ const extractUsedFontFamilies = (svgElement: SVGSVGElement): Set<string> => {
 
   textElements.forEach((element) => {
     const fontFamily = element.getAttribute('font-family') ||
+                      element.style.fontFamily ||
                       window.getComputedStyle(element).fontFamily;
 
     if (fontFamily && fontFamily !== 'inherit') {
@@ -401,11 +649,12 @@ const svgBlobToImage = async (blob: Blob, waitForFonts = false): Promise<HTMLIma
 };
 
 /**
- * Embeds fonts in an SVG element
+ * Embeds fonts in an SVG element using multiple methods for maximum compatibility
  */
 const embedFontsInSvg = async (svgElement: SVGSVGElement, fontFamilies: string[]): Promise<void> => {
   if (fontFamilies.length === 0) return;
 
+  // Method 1: Build font CSS with data URLs
   const fontFaceCss = await buildFontFaceCssWithDataUrls(fontFamilies);
   if (!fontFaceCss) return;
 
@@ -413,17 +662,88 @@ const embedFontsInSvg = async (svgElement: SVGSVGElement, fontFamilies: string[]
   const existingStyles = svgElement.querySelectorAll('style');
   existingStyles.forEach(style => style.remove());
 
-  // Create new style element
+  // Method 2: Add Google Fonts link as comment (for reference)
+  const fontConfigs = fontFamilies.map(f => getFontConfig(f)).filter(Boolean);
+  const googleFontsLinks: string[] = [];
+  
+  for (const fontConfig of fontConfigs) {
+    if (fontConfig && fontConfig.googleFontsUrl) {
+      googleFontsLinks.push(fontConfig.googleFontsUrl);
+    }
+  }
+
+  // Method 3: Create comprehensive style element with multiple approaches
   const styleElement = document.createElementNS('http://www.w3.org/2000/svg', 'style');
   styleElement.setAttribute('type', 'text/css');
-
-  // Just set the CSS directly (browser will handle encoding)
-  styleElement.textContent = fontFaceCss;
+  
+  // Build comprehensive CSS with:
+  // 1. @font-face rules with data URLs
+  // 2. @import for Google Fonts (fallback)
+  // 3. Explicit font-family rules for text elements
+  
+  let cssContent = '';
+  
+  // Add Google Fonts import as fallback
+  if (googleFontsLinks.length > 0) {
+    for (const link of googleFontsLinks) {
+      cssContent += `@import url('${link}');\n`;
+    }
+    cssContent += '\n';
+  }
+  
+  // Add @font-face rules with data URLs
+  cssContent += fontFaceCss;
+  cssContent += '\n\n';
+  
+  // Add explicit font-family rules for all text elements
+  for (const family of fontFamilies) {
+    const fontConfig = getFontConfig(family);
+    if (fontConfig) {
+      cssContent += `text[font-family*="${fontConfig.cssFamily}"], text[font-family*="${family}"] { font-family: "${fontConfig.cssFamily}", sans-serif !important; }\n`;
+    }
+  }
+  
+  styleElement.textContent = cssContent;
 
   // Insert at the very beginning of SVG
   svgElement.insertBefore(styleElement, svgElement.firstChild);
 
-  console.log(`✅ Embedded ${fontFaceCss.split('@font-face').length - 1} font-face rules in SVG`);
+  // Method 4: Also add Google Fonts as external link (some renderers prefer this)
+  if (googleFontsLinks.length > 0) {
+    // Note: SVG doesn't support <link> directly, but we can add it as a comment for reference
+    // Some tools might parse it
+    const linkComment = document.createComment(`Google Fonts: ${googleFontsLinks.join(', ')}`);
+    svgElement.insertBefore(linkComment, svgElement.firstChild);
+  }
+
+  // Method 5: Explicitly set font-family on all text elements
+  const textElements = svgElement.querySelectorAll('text');
+  textElements.forEach((textEl) => {
+    const currentFont = textEl.getAttribute('font-family') || 
+                       textEl.style.fontFamily;
+    if (currentFont) {
+      const normalized = normalizeFontFamilyName(currentFont);
+      if (normalized) {
+        const fontConfig = getFontConfig(normalized);
+        if (fontConfig) {
+          // Set multiple font-family values for fallback
+          const fontFamilyValue = `"${fontConfig.cssFamily}", "${normalized}", sans-serif`;
+          textEl.setAttribute('font-family', fontFamilyValue);
+          textEl.style.fontFamily = fontFamilyValue;
+          
+          // Also ensure font-weight and font-style are set
+          const fontWeight = textEl.getAttribute('font-weight') || textEl.style.fontWeight || '400';
+          const fontStyle = textEl.getAttribute('font-style') || textEl.style.fontStyle || 'normal';
+          textEl.setAttribute('font-weight', fontWeight);
+          textEl.setAttribute('font-style', fontStyle);
+          textEl.style.fontWeight = fontWeight;
+          textEl.style.fontStyle = fontStyle;
+        }
+      }
+    }
+  });
+
+  console.log(`✅ Embedded ${fontFaceCss.split('@font-face').length - 1} font-face rules in SVG with multiple methods`);
 };
 
 /**
@@ -456,7 +776,7 @@ export const convertLayeredSvgToPng = async (
   const usedFonts = extractUsedFontFamilies(layers.text);
   const usedFontsArray = Array.from(usedFonts);
 
-  // Build font CSS with data URLs and inject into document head
+  // Build font CSS with data URLs and inject into document head AND SVG
   let fontStyleElement: HTMLStyleElement | null = null;
   if (usedFontsArray.length > 0) {
     console.log('🔤 Preparing fonts for text layer:', usedFontsArray);
@@ -464,7 +784,11 @@ export const convertLayeredSvgToPng = async (
     // Build font CSS with data URLs
     const fontFaceCss = await buildFontFaceCssWithDataUrls(usedFontsArray);
 
-    // Inject fonts into document head so html2canvas can use them
+    // CRITICAL: Embed fonts directly in the SVG so html2canvas can use them
+    await embedFontsInSvg(layers.text, usedFontsArray);
+    console.log('✅ Fonts embedded directly in text SVG');
+
+    // Also inject fonts into document head for fallback
     fontStyleElement = document.createElement('style');
     fontStyleElement.setAttribute('data-layered-export-fonts', 'true');
     fontStyleElement.textContent = fontFaceCss;
@@ -488,16 +812,27 @@ export const convertLayeredSvgToPng = async (
       await new Promise(r => setTimeout(r, 300));
     }
 
-    // Normalize font-family attributes on text elements
+    // Normalize font-family attributes on text elements - ensure exact match with CSS font names
     const textElements = layers.text.querySelectorAll('text');
     textElements.forEach((textEl) => {
       const currentFont = textEl.getAttribute('font-family') ||
-                         textEl.style.fontFamily;
+                         textEl.style.fontFamily ||
+                         window.getComputedStyle(textEl).fontFamily;
       if (currentFont) {
         const cleanFont = normalizeFontFamilyName(currentFont);
         if (cleanFont) {
-          textEl.setAttribute('font-family', cleanFont);
-          textEl.style.fontFamily = cleanFont;
+          // Set font-family with quotes to match CSS exactly
+          const fontWithQuotes = `"${cleanFont}"`;
+          textEl.setAttribute('font-family', fontWithQuotes);
+          textEl.style.fontFamily = fontWithQuotes;
+          
+          // Also ensure font-weight and font-style are set if not already
+          const fontWeight = textEl.getAttribute('font-weight') || textEl.style.fontWeight || '400';
+          const fontStyle = textEl.getAttribute('font-style') || textEl.style.fontStyle || 'normal';
+          textEl.setAttribute('font-weight', fontWeight);
+          textEl.setAttribute('font-style', fontStyle);
+          textEl.style.fontWeight = fontWeight;
+          textEl.style.fontStyle = fontStyle;
         }
       }
     });
@@ -548,68 +883,387 @@ export const convertLayeredSvgToPng = async (
     // Continue without images layer
   }
 
-  if (onProgress) onProgress(90, 'Text wird gerendert...');
+  if (onProgress) onProgress(85, 'Text wird auf Canvas gerendert...');
 
-  // 7. Convert text layer to canvas using html2canvas
-  // Use the same approach as the old working code
+  // 7. Render text directly to canvas (most reliable method)
+  // This bypasses html2canvas font issues by rendering text directly
   try {
-    // Clone text SVG
-    const textSvgClone = layers.text.cloneNode(true) as SVGSVGElement;
+    const textCanvas = document.createElement('canvas');
+    textCanvas.width = canvasWidth;
+    textCanvas.height = canvasHeight;
+    const textCtx = textCanvas.getContext('2d');
+    
+    if (!textCtx) {
+      throw new Error('Could not get text canvas context');
+    }
 
-    // Set SVG size
-    textSvgClone.setAttribute('width', String(canvasWidth));
-    textSvgClone.setAttribute('height', String(canvasHeight));
+    // Set background to transparent
+    textCtx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-    // Create container
-    const container = document.createElement('div');
-    container.style.position = 'fixed';
-    container.style.left = '0px';
-    container.style.top = '0px';
-    container.style.width = `${canvasWidth}px`;
-    container.style.height = `${canvasHeight}px`;
-    container.style.overflow = 'visible';
-    container.style.zIndex = '999999';
-    container.style.pointerEvents = 'none';
-    container.style.opacity = '1';
-    container.style.visibility = 'visible';
+    // Load fonts first - ensure they're ready before rendering
+    if (usedFontsArray.length > 0) {
+      // First, ensure fonts are in document head
+      const fontFaceCss = await buildFontFaceCssWithDataUrls(usedFontsArray);
+      if (fontFaceCss) {
+        // Inject fonts into document if not already there
+        const existingFontStyle = document.querySelector('style[data-layered-export-fonts]');
+        if (!existingFontStyle) {
+          const fontStyle = document.createElement('style');
+          fontStyle.setAttribute('data-layered-export-fonts', 'true');
+          fontStyle.textContent = fontFaceCss;
+          document.head.appendChild(fontStyle);
+        }
+      }
+      
+      // Load fonts using Font Loading API
+      if (document.fonts && document.fonts.load) {
+        const loadPromises: Promise<unknown>[] = [];
+        for (const family of usedFontsArray) {
+          const fontConfig = getFontConfig(family);
+          if (!fontConfig) continue;
+          for (const variant of fontConfig.variants) {
+            const fontSpec = `${variant.style} ${variant.weight} 16px "${fontConfig.cssFamily}"`;
+            loadPromises.push(document.fonts.load(fontSpec));
+          }
+        }
+        await Promise.allSettled(loadPromises);
+        console.log('✅ Fonts loaded for canvas rendering');
+        
+        // Wait and verify fonts are ready
+        await new Promise(r => setTimeout(r, 300));
+        
+        // Verify fonts are actually loaded
+        for (const family of usedFontsArray) {
+          const fontConfig = getFontConfig(family);
+          if (fontConfig && document.fonts.check) {
+            const isLoaded = document.fonts.check(`16px "${fontConfig.cssFamily}"`);
+            console.log(`🔍 Font "${fontConfig.cssFamily}" loaded: ${isLoaded}`);
+            if (!isLoaded) {
+              console.warn(`⚠️ Font "${fontConfig.cssFamily}" not loaded, waiting longer...`);
+              await new Promise(r => setTimeout(r, 500));
+            }
+          }
+        }
+      }
+    }
 
-    textSvgClone.style.width = `${canvasWidth}px`;
-    textSvgClone.style.height = `${canvasHeight}px`;
-    textSvgClone.style.display = 'block';
-    textSvgClone.style.opacity = '1';
-    textSvgClone.style.visibility = 'visible';
+    // Render each text element directly to canvas
+    const textElements = layers.text.querySelectorAll('text');
+    console.log(`🎨 Rendering ${textElements.length} text elements directly to canvas`);
+    
+    for (const textEl of textElements) {
+      const text = textEl.textContent || '';
+      if (!text) continue;
 
-    container.appendChild(textSvgClone);
-    document.body.appendChild(container);
+      const x = parseFloat(textEl.getAttribute('x') || '0') * scale;
+      const y = parseFloat(textEl.getAttribute('y') || '0') * scale;
+      const fontSize = parseFloat(textEl.getAttribute('font-size') || '16') * scale;
+      const fill = textEl.getAttribute('fill') || '#000000';
+      const stroke = textEl.getAttribute('stroke');
+      const strokeWidth = parseFloat(textEl.getAttribute('stroke-width') || '0') * scale;
+      const textAnchor = textEl.getAttribute('text-anchor') || 'start';
+      const fontWeight = textEl.getAttribute('font-weight') || '400';
+      const fontStyle = textEl.getAttribute('font-style') || 'normal';
+      const opacity = parseFloat(textEl.getAttribute('opacity') || '1');
+      const letterSpacing = parseFloat(textEl.getAttribute('letter-spacing') || '0') * scale;
 
-    // Wait for fonts and rendering
-    await new Promise(r => setTimeout(r, 300));
+      // Get font family
+      const fontFamily = textEl.getAttribute('font-family') || 
+                        textEl.style.fontFamily ||
+                        window.getComputedStyle(textEl).fontFamily;
+      const normalizedFont = normalizeFontFamilyName(fontFamily) || usedFontsArray[0] || 'Arial';
+      const fontConfig = getFontConfig(normalizedFont);
+      const finalFontFamily = fontConfig ? fontConfig.cssFamily : normalizedFont;
 
-    console.log('🔍 Rendering text layer with html2canvas (using document fonts)');
+      // Set font
+      textCtx.font = `${fontStyle} ${fontWeight} ${fontSize}px "${finalFontFamily}", sans-serif`;
+      textCtx.textAlign = textAnchor === 'middle' ? 'center' : textAnchor === 'end' ? 'right' : 'left';
+      textCtx.textBaseline = 'alphabetic';
+      textCtx.fillStyle = fill;
+      textCtx.globalAlpha = opacity;
+      
+      if (stroke && strokeWidth > 0) {
+        textCtx.strokeStyle = stroke;
+        textCtx.lineWidth = strokeWidth;
+      }
 
-    // Render with html2canvas (it will use fonts from document)
-    const textCanvas = await html2canvas(container, {
-      width: canvasWidth,
-      height: canvasHeight,
-      scale: 1,
-      backgroundColor: null,
-      useCORS: true,
-      allowTaint: false,
-      logging: false,
-      removeContainer: false,
-      foreignObjectRendering: false,
-    });
+      // Handle letter spacing
+      if (letterSpacing !== 0) {
+        // Manual letter spacing rendering
+        let currentX = x;
+        if (textAnchor === 'middle') {
+          // Calculate total width
+          let totalWidth = 0;
+          for (let i = 0; i < text.length; i++) {
+            totalWidth += textCtx.measureText(text[i]).width + (i < text.length - 1 ? letterSpacing : 0);
+          }
+          currentX = x - totalWidth / 2;
+        } else if (textAnchor === 'end') {
+          let totalWidth = 0;
+          for (let i = 0; i < text.length; i++) {
+            totalWidth += textCtx.measureText(text[i]).width + (i < text.length - 1 ? letterSpacing : 0);
+          }
+          currentX = x - totalWidth;
+        }
 
+        for (let i = 0; i < text.length; i++) {
+          const char = text[i];
+          if (stroke && strokeWidth > 0) {
+            textCtx.strokeText(char, currentX, y);
+          }
+          textCtx.fillText(char, currentX, y);
+          currentX += textCtx.measureText(char).width + letterSpacing;
+        }
+      } else {
+        // Normal rendering without letter spacing
+        if (stroke && strokeWidth > 0) {
+          textCtx.strokeText(text, x, y);
+        }
+        textCtx.fillText(text, x, y);
+      }
+
+      textCtx.globalAlpha = 1;
+    }
+
+    console.log('✅ Text rendered directly to canvas');
+    
     // Draw text canvas onto main canvas
     ctx.drawImage(textCanvas, 0, 0);
+    console.log('✅ Text canvas drawn onto main canvas');
+    
+    if (onProgress) onProgress(100, 'Fertig!');
+  } catch (canvasError) {
+    console.error('⚠️ Failed to render text directly to canvas:', canvasError);
+    console.log('⚠️ Falling back to html2canvas rendering');
+    
+    // Fallback to html2canvas
+    if (onProgress) onProgress(90, 'Text wird gerendert (Fallback)...');
 
-    // Clean up
-    document.body.removeChild(container);
+    // 8. Convert text layer to canvas using html2canvas (fallback)
+    try {
+      const textSvgClone = layers.text.cloneNode(true) as SVGSVGElement;
 
-    console.log('✅ Text layer rendered with html2canvas');
-  } catch (error) {
-    console.warn('⚠️ Failed to render text layer:', error);
-    // Continue without text layer
+      // Set SVG size
+      textSvgClone.setAttribute('width', String(canvasWidth));
+      textSvgClone.setAttribute('height', String(canvasHeight));
+
+      // Create container
+      const container = document.createElement('div');
+      container.style.position = 'fixed';
+      container.style.left = '0px';
+      container.style.top = '0px';
+      container.style.width = `${canvasWidth}px`;
+      container.style.height = `${canvasHeight}px`;
+      container.style.overflow = 'visible';
+      container.style.zIndex = '999999';
+      container.style.pointerEvents = 'none';
+      container.style.opacity = '1';
+      container.style.visibility = 'visible';
+
+      textSvgClone.style.width = `${canvasWidth}px`;
+      textSvgClone.style.height = `${canvasHeight}px`;
+      textSvgClone.style.display = 'block';
+      textSvgClone.style.opacity = '1';
+      textSvgClone.style.visibility = 'visible';
+
+      // Inject font CSS directly into container for html2canvas
+      if (usedFontsArray.length > 0) {
+        const fontFaceCss = await buildFontFaceCssWithDataUrls(usedFontsArray);
+        if (fontFaceCss) {
+          const containerStyle = document.createElement('style');
+          containerStyle.setAttribute('data-container-fonts', 'true');
+          containerStyle.textContent = fontFaceCss;
+          container.appendChild(containerStyle);
+          console.log('📝 Injected font CSS directly into container');
+        }
+        
+        // Also ensure all text elements in the clone have the correct font-family
+        const textElementsInClone = textSvgClone.querySelectorAll('text');
+        console.log(`🔍 Found ${textElementsInClone.length} text elements in SVG clone before mounting`);
+        textElementsInClone.forEach((textEl, index) => {
+          const currentFont = textEl.getAttribute('font-family') || textEl.style.fontFamily;
+          const cleanFont = normalizeFontFamilyName(currentFont) || usedFontsArray[0];
+          if (cleanFont) {
+            const fontWithQuotes = `"${cleanFont}"`;
+            textEl.setAttribute('font-family', fontWithQuotes);
+            textEl.style.fontFamily = fontWithQuotes;
+            // Also set it in the computed style by forcing a reflow
+            textEl.style.setProperty('font-family', fontWithQuotes, 'important');
+            console.log(`✅ Set font-family "${fontWithQuotes}" on text[${index}] before mounting`);
+          }
+        });
+      }
+
+      container.appendChild(textSvgClone);
+      document.body.appendChild(container);
+
+      // Wait for fonts and rendering
+      await new Promise(r => setTimeout(r, 500));
+
+      console.log('🔍 Rendering text layer with html2canvas (using embedded SVG fonts)');
+
+      // Render with html2canvas - text is already converted to paths, so no fonts needed
+      const textCanvas = await html2canvas(container, {
+        width: canvasWidth,
+        height: canvasHeight,
+        scale: 1,
+        backgroundColor: null,
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
+        removeContainer: false,
+        foreignObjectRendering: false, // Text is already paths, no fonts needed
+        onclone: async (clonedDoc) => {
+          // Ensure fonts are available in the cloned document
+          if (usedFontsArray.length > 0) {
+            const fontFaceCss = await buildFontFaceCssWithDataUrls(usedFontsArray);
+            if (fontFaceCss) {
+              // Remove any existing font links from cloned document
+              const existingLinks = clonedDoc.querySelectorAll('link[rel="stylesheet"], link[href*="fonts.googleapis.com"], link[href*="fonts.gstatic.com"]');
+              existingLinks.forEach(link => link.remove());
+              
+              // Method 1: Add Google Fonts link (some renderers prefer this)
+              const googleFontsUrl = getGoogleFontsUrl(usedFontsArray);
+              if (googleFontsUrl) {
+                const link = clonedDoc.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = googleFontsUrl;
+                link.setAttribute('data-google-fonts', 'true');
+                clonedDoc.head.insertBefore(link, clonedDoc.head.firstChild);
+                console.log('📝 Added Google Fonts link to cloned document head');
+              }
+              
+              // Method 2: Inject fonts into cloned document head (MUST be first)
+              const style = clonedDoc.createElement('style');
+              style.setAttribute('data-export-fonts', 'true');
+              
+              // Build comprehensive CSS with @import and @font-face
+              let comprehensiveCss = '';
+              if (googleFontsUrl) {
+                comprehensiveCss += `@import url('${googleFontsUrl}');\n\n`;
+              }
+              comprehensiveCss += fontFaceCss;
+              
+              style.textContent = comprehensiveCss;
+              clonedDoc.head.insertBefore(style, clonedDoc.head.firstChild);
+              console.log('📝 Injected font-face CSS into cloned document head');
+              
+              // Also inject fonts into the cloned container if it exists
+              const clonedContainer = clonedDoc.querySelector('div');
+              if (clonedContainer) {
+                const containerStyle = clonedDoc.createElement('style');
+                containerStyle.setAttribute('data-container-fonts', 'true');
+                containerStyle.textContent = fontFaceCss;
+                clonedContainer.insertBefore(containerStyle, clonedContainer.firstChild);
+                console.log('📝 Injected font-face CSS into cloned container');
+              }
+              
+              // Also ensure SVG has fonts embedded
+              const clonedSvg = clonedDoc.querySelector('svg');
+              if (clonedSvg) {
+                let svgStyleElement = clonedSvg.querySelector('style') as Element | null;
+                if (!svgStyleElement) {
+                  svgStyleElement = clonedDoc.createElementNS('http://www.w3.org/2000/svg', 'style');
+                  clonedSvg.insertBefore(svgStyleElement, clonedSvg.firstChild);
+                }
+                const existingSvgStyle = (svgStyleElement as { textContent: string | null }).textContent || '';
+                // Remove existing @font-face rules
+                const cleanedSvgStyle = existingSvgStyle.replace(/@font-face\s*\{[^}]*\}/g, '').trim();
+                (svgStyleElement as { textContent: string }).textContent = cleanedSvgStyle + (cleanedSvgStyle ? '\n\n' : '') + fontFaceCss;
+                console.log('📝 Injected font-face CSS into cloned SVG');
+                
+                // Try to find text elements - they might be in the SVG directly or in a foreignObject
+                let clonedTextElements = clonedSvg.querySelectorAll('text');
+                if (clonedTextElements.length === 0) {
+                  // Try finding in foreignObject (html2canvas might wrap SVG in foreignObject)
+                  const foreignObject = clonedDoc.querySelector('foreignObject');
+                  if (foreignObject) {
+                    clonedTextElements = foreignObject.querySelectorAll('text');
+                    console.log(`🔍 Found ${clonedTextElements.length} text elements in foreignObject`);
+                  }
+                }
+                
+                // Also try finding all text elements in the entire document
+                if (clonedTextElements.length === 0) {
+                  clonedTextElements = clonedDoc.querySelectorAll('text');
+                  console.log(`🔍 Found ${clonedTextElements.length} text elements in entire cloned document`);
+                }
+                
+                console.log(`🔍 Total found ${clonedTextElements.length} text elements in cloned SVG/document`);
+                
+                clonedTextElements.forEach((textEl, index) => {
+                  const currentFont = textEl.getAttribute('font-family') || 
+                                     textEl.style.fontFamily;
+                  console.log(`🔤 Text[${index}]: currentFont="${currentFont}", content="${textEl.textContent?.substring(0, 30)}"`);
+                  
+                  if (currentFont) {
+                    const cleanFont = normalizeFontFamilyName(currentFont);
+                    if (cleanFont) {
+                      const fontWithQuotes = `"${cleanFont}"`;
+                      textEl.setAttribute('font-family', fontWithQuotes);
+                      textEl.style.fontFamily = fontWithQuotes;
+                      console.log(`✅ Set font-family to "${fontWithQuotes}" for text[${index}]`);
+                    } else {
+                      console.warn(`⚠️ Could not normalize font: "${currentFont}"`);
+                    }
+                  } else {
+                    // If no font found, set it explicitly
+                    const defaultFont = usedFontsArray[0];
+                    if (defaultFont) {
+                      const fontWithQuotes = `"${defaultFont}"`;
+                      textEl.setAttribute('font-family', fontWithQuotes);
+                      textEl.style.fontFamily = fontWithQuotes;
+                      console.log(`✅ Set default font-family "${fontWithQuotes}" for text[${index}]`);
+                    }
+                  }
+                });
+                console.log(`✅ Normalized font-family for ${clonedTextElements.length} text elements in cloned SVG`);
+              }
+              
+              // Also try to apply fonts via CSS to all text elements in the cloned document
+              if (usedFontsArray.length > 0) {
+                const defaultFont = usedFontsArray[0];
+                const fontWithQuotes = `"${defaultFont}"`;
+                const textStyleRule = `text { font-family: ${fontWithQuotes} !important; }`;
+                const textStyle = clonedDoc.createElement('style');
+                textStyle.setAttribute('data-text-fonts', 'true');
+                textStyle.textContent = textStyleRule;
+                clonedDoc.head.appendChild(textStyle);
+                console.log(`📝 Added CSS rule to force font-family on all text elements: ${textStyleRule}`);
+              }
+              
+              // Load fonts in cloned document - wait longer for fonts to be ready
+              if (clonedDoc.fonts && clonedDoc.fonts.load) {
+                const loadPromises: Promise<unknown>[] = [];
+                for (const family of usedFontsArray) {
+                  const fontConfig = getFontConfig(family);
+                  if (!fontConfig) continue;
+                  for (const variant of fontConfig.variants) {
+                    const fontSpec = `${variant.style} ${variant.weight} 16px "${fontConfig.cssFamily}"`;
+                    loadPromises.push(clonedDoc.fonts.load(fontSpec));
+                  }
+                }
+                await Promise.allSettled(loadPromises);
+                console.log('✅ Fonts loaded in cloned document');
+                // Wait longer for fonts to be fully applied
+                await new Promise(r => setTimeout(r, 500));
+              }
+            }
+          }
+        },
+      });
+
+      // Draw text canvas onto main canvas
+      ctx.drawImage(textCanvas, 0, 0);
+
+      // Clean up
+      document.body.removeChild(container);
+
+      console.log('✅ Text layer rendered with html2canvas');
+    } catch (html2canvasError) {
+      console.warn('⚠️ Failed to render text layer with html2canvas:', html2canvasError);
+      // Continue without text layer
+    }
   } finally {
     // Clean up font style element
     if (fontStyleElement && fontStyleElement.parentNode) {
@@ -618,35 +1272,35 @@ export const convertLayeredSvgToPng = async (
     }
   }
 
-  if (onProgress) onProgress(95, 'Bild wird finalisiert...');
+    if (onProgress) onProgress(95, 'Bild wird finalisiert...');
 
-  // 8. Convert canvas to blob
-  const quality = format === 'jpeg' ? 0.92 : 1;
-  const mimeType = format === 'jpeg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
+    // 8. Convert canvas to blob
+    const quality = format === 'jpeg' ? 0.92 : 1;
+    const mimeType = format === 'jpeg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
 
-  const resultBlob = await new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (blob) {
-          resolve(blob);
-        } else {
-          reject(new Error('Failed to create blob from canvas'));
-        }
-      },
-      mimeType,
-      quality
-    );
-  });
+    const resultBlob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Failed to create blob from canvas'));
+          }
+        },
+        mimeType,
+        quality
+      );
+    });
 
-  // 9. Convert blob to data URL
-  const dataUrl = await blobToDataUrl(resultBlob);
+    // 9. Convert blob to data URL
+    const dataUrl = await blobToDataUrl(resultBlob);
 
-  console.log(`✅ Layered SVG converted to ${format}: ${(resultBlob.size / 1024).toFixed(1)} KB`);
+    console.log(`✅ Layered SVG converted to ${format}: ${(resultBlob.size / 1024).toFixed(1)} KB`);
 
-  if (onProgress) onProgress(100, 'Fertig!');
+    if (onProgress) onProgress(100, 'Fertig!');
 
-  return { dataUrl, blob: resultBlob };
-};
+    return { dataUrl, blob: resultBlob };
+  };
 
 /**
  * Downloads a data URL as a file
