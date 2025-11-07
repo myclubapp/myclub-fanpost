@@ -4,8 +4,8 @@
  */
 
 import toImg from 'react-svg-to-image';
-import { svgAsPngUri } from 'save-svg-as-png';
-import { normalizeFontFamilyName, AVAILABLE_FONTS } from '@/config/fonts';
+
+import { normalizeFontFamilyName, AVAILABLE_FONTS, ensureTemplateFontsLoaded } from '@/config/fonts';
 
 const DEFAULT_FONT_FAMILY = Object.values(AVAILABLE_FONTS)[0]?.cssFamily ?? 'Bebas Neue';
 
@@ -20,6 +20,7 @@ export interface ConversionOptions {
   width?: number;
   height?: number;
   scale?: number;
+  format?: 'png' | 'jpeg' | 'webp';
   backgroundColor?: string;
   onProgress?: (progress: number, message: string) => void;
   onImageStatusUpdate?: (statuses: ImageLoadProgress[]) => void;
@@ -270,14 +271,21 @@ export const svgToPngDataUrl = async (
     width: targetWidth,
     height: targetHeight,
     scale = 2,
+    format = 'png',
     backgroundColor = 'white',
     onProgress,
   } = options;
 
-  // Get SVG dimensions
+  // Make sure fonts are loaded before rendering to canvas
+  try {
+    await ensureTemplateFontsLoaded();
+  } catch {
+    // ignore font load errors, proceed
+  }
+
+  // Establish initial size from SVG
   let width = targetWidth || 1080;
   let height = targetHeight || 1350;
-
   if (!targetWidth || !targetHeight) {
     if (svgElement.viewBox && svgElement.viewBox.baseVal) {
       width = svgElement.viewBox.baseVal.width;
@@ -288,18 +296,16 @@ export const svgToPngDataUrl = async (
     }
   }
 
-  if (onProgress) {
-    onProgress(70, 'SVG wird in Bild konvertiert...');
-  }
+  if (onProgress) onProgress(70, 'SVG wird in Bild konvertiert...');
 
-  // Compute tight viewBox and export from a translated clone to avoid top-left cropping
+  // Ensure a tight viewBox and compute target export size
   svgElement.setAttribute('overflow', 'visible');
   const bbox = ensureTightViewBox(svgElement);
   const size = computeTargetSize(bbox.width, bbox.height, targetWidth, targetHeight);
   width = size.width;
   height = size.height;
 
-  // Create an offscreen clone and translate content so (0,0) is the top-left of the drawn area
+  // Create an offscreen clone and translate the drawn content to start at (0,0)
   const exportClone = svgElement.cloneNode(true) as SVGSVGElement;
   const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   while (exportClone.firstChild) {
@@ -319,28 +325,28 @@ export const svgToPngDataUrl = async (
   exportClone.style.height = `${height}px`;
 
   // Mount offscreen so computed styles are available
+  const tempId = `__export_svg_${Date.now()}`;
+  exportClone.id = tempId;
   exportClone.style.position = 'absolute';
   exportClone.style.left = '-100000px';
   exportClone.style.top = '-100000px';
   exportClone.style.opacity = '0';
   document.body.appendChild(exportClone);
 
-  // Convert using save-svg-as-png
-  let dataUrl: string;
+  // Convert using react-svg-to-image (keeps CSS styles & fonts as rendered)
+  let dataUrl = '';
   try {
-    dataUrl = await svgAsPngUri(exportClone, {
+    dataUrl = await toImg(`#${tempId}`, 'export', {
       scale,
-      backgroundColor,
-      encoderOptions: 1,
-    });
+      format,
+      quality: 1,
+      download: false,
+    }) as unknown as string;
   } finally {
     if (exportClone.parentNode) document.body.removeChild(exportClone);
   }
 
-
-  if (onProgress) {
-    onProgress(90, 'Bild wird finalisiert...');
-  }
+  if (onProgress) onProgress(90, 'Bild wird finalisiert...');
 
   return dataUrl;
 };
@@ -666,8 +672,14 @@ export const handlePlatformDownload = async (options: PlatformDownloadOptions): 
   } = options;
 
   try {
+    const lower = fileName.toLowerCase();
+    const fmt: 'png' | 'jpeg' | 'webp' =
+      lower.endsWith('.jpg') || lower.endsWith('.jpeg') ? 'jpeg' :
+      lower.endsWith('.webp') ? 'webp' : 'png';
+
     const result = await convertSvgToImage(svgElement, {
       scale: 2,
+      format: fmt,
       backgroundColor: 'white',
       onProgress: onProgressUpdate,
       onImageStatusUpdate,
