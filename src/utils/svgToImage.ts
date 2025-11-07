@@ -5,9 +5,59 @@
 
 import toImg from 'react-svg-to-image';
 
-import { normalizeFontFamilyName, AVAILABLE_FONTS, ensureTemplateFontsLoaded } from '@/config/fonts';
+import { normalizeFontFamilyName, AVAILABLE_FONTS, getFontConfig } from '@/config/fonts';
 
 const DEFAULT_FONT_FAMILY = Object.values(AVAILABLE_FONTS)[0]?.cssFamily ?? 'Bebas Neue';
+
+/**
+ * Ensures specific fonts are loaded by creating @font-face rules
+ */
+const ensureSpecificFontsLoaded = async (fontFamilies: string[]): Promise<void> => {
+  if (typeof document === 'undefined' || fontFamilies.length === 0) {
+    return Promise.resolve();
+  }
+
+  const loadPromises: Promise<unknown>[] = [];
+
+  for (const family of fontFamilies) {
+    const fontConfig = getFontConfig(family);
+    if (!fontConfig) continue;
+
+    for (const variant of fontConfig.variants) {
+      const fontSpec = `${variant.style} ${variant.weight} 16px "${fontConfig.cssFamily}"`;
+      
+      // Check if already loaded
+      if (document.fonts && document.fonts.check) {
+        if (!document.fonts.check(fontSpec)) {
+          // Create @font-face style if not exists
+          let styleEl = document.querySelector(`style[data-font="${fontConfig.cssFamily}-${variant.weight}-${variant.style}"]`);
+          if (!styleEl) {
+            styleEl = document.createElement('style');
+            styleEl.setAttribute('data-font', `${fontConfig.cssFamily}-${variant.weight}-${variant.style}`);
+            const format = variant.url.includes('.woff2') ? 'woff2' : 'woff';
+            styleEl.textContent = `@font-face {
+              font-family: '${fontConfig.cssFamily}';
+              src: url('${variant.url}') format('${format}');
+              font-weight: ${variant.weight};
+              font-style: ${variant.style};
+              font-display: swap;
+            }`;
+            document.head.appendChild(styleEl);
+          }
+          
+          // Load the font
+          if (document.fonts.load) {
+            loadPromises.push(document.fonts.load(fontSpec));
+          }
+        }
+      }
+    }
+  }
+
+  if (loadPromises.length > 0) {
+    await Promise.allSettled(loadPromises);
+  }
+};
 
 export interface ImageLoadProgress {
   url: string;
@@ -74,6 +124,41 @@ const fetchImageAsDataUrl = async (url: string): Promise<string> => {
 const extractImageElements = (svgElement: SVGSVGElement): HTMLImageElement[] => {
   const images = svgElement.querySelectorAll('image');
   return Array.from(images) as unknown as HTMLImageElement[];
+};
+
+/**
+ * Extracts all font families used in the SVG
+ */
+const extractUsedFontFamilies = (svgElement: SVGSVGElement): Set<string> => {
+  const fontFamilies = new Set<string>();
+  const allElements = svgElement.querySelectorAll('*');
+  
+  allElements.forEach((element) => {
+    const computedStyle = window.getComputedStyle(element);
+    const fontFamily = computedStyle.fontFamily;
+    
+    if (fontFamily && fontFamily !== 'inherit') {
+      // Extract first font family from the list (e.g., "Roboto, sans-serif" -> "Roboto")
+      const normalized = normalizeFontFamilyName(fontFamily);
+      if (normalized) {
+        fontFamilies.add(normalized);
+      }
+    }
+    
+    // Also check inline styles
+    const inlineStyle = element.getAttribute('style');
+    if (inlineStyle && inlineStyle.includes('font-family')) {
+      const match = inlineStyle.match(/font-family:\s*([^;]+)/);
+      if (match) {
+        const normalized = normalizeFontFamilyName(match[1]);
+        if (normalized) {
+          fontFamilies.add(normalized);
+        }
+      }
+    }
+  });
+  
+  return fontFamilies;
 };
 
 /**
@@ -347,9 +432,14 @@ export const svgToPngDataUrl = async (
     onProgress,
   } = options;
 
-  // Make sure fonts are loaded before rendering to canvas
+  // Extract and load only the fonts used in this SVG
   try {
-    await ensureTemplateFontsLoaded();
+    const usedFonts = extractUsedFontFamilies(svgElement);
+    if (usedFonts.size > 0) {
+      // Load only the fonts that are actually used
+      const fontFamilies = Array.from(usedFonts);
+      await ensureSpecificFontsLoaded(fontFamilies);
+    }
   } catch {
     // ignore font load errors, proceed
   }
