@@ -99,10 +99,6 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [imageStatuses, setImageStatuses] = useState<ImageLoadProgress[]>([]);
 
-  useEffect(() => {
-    void ensureTemplateFontsLoaded();
-  }, []);
-
   // Load user's existing background images
   const { data: userBackgrounds = [], refetch: refetchBackgrounds } = useQuery({
     queryKey: ['user-backgrounds', user?.id],
@@ -196,6 +192,16 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
 
     return Array.from(fonts);
   }, [selectedTemplate]);
+
+  // Load only the fonts that are actually used in the template
+  useEffect(() => {
+    if (usedFonts.length > 0) {
+      void ensureTemplateFontsLoaded(usedFonts);
+    } else if (selectedTemplate) {
+      // Fallback: load default font if no fonts are specified
+      void ensureTemplateFontsLoaded([DEFAULT_FONT_FAMILY]);
+    }
+  }, [usedFonts, selectedTemplate]);
 
   // Only build font CSS for fonts actually used in the template
   const fontFaceCss = useMemo(() => {
@@ -550,6 +556,12 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
                 paintOrder={element.paintOrder}
                 letterSpacing={resolvedLetterSpacing}
                 opacity={element.opacity}
+                style={{
+                  fontFamily: resolvedFontFamily,
+                  fontSize: element.fontSize,
+                  fontWeight: resolvedFontWeight,
+                  fontStyle: resolvedFontStyle,
+                }}
               >
                 {content}
               </text>
@@ -558,13 +570,13 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
           
           if (element.type === 'image' || element.type === 'api-image') {
             let href = element.href;
-            
+
             // Replace API image fields with actual data
             if (element.type === 'api-image' && element.apiField) {
               // Determine which game data to use (default to first game)
               let gameIndex = 0;
               let apiFieldName = element.apiField;
-              
+
               // Support prefix system: game-2.teamHomeLogo, game-3.teamAwayLogo
               if (apiFieldName.startsWith('game-2.')) {
                 gameIndex = 1;
@@ -575,12 +587,17 @@ export const GamePreviewDisplay = forwardRef<GamePreviewDisplayRef, GamePreviewD
               } else if (apiFieldName.startsWith('game.')) {
                 apiFieldName = apiFieldName.replace('game.', '');
               }
-              
+
               const targetGame = gameData[gameIndex];
               const fieldValue = targetGame ? (targetGame as any)[apiFieldName] : null;
               href = fieldValue || element.href;
             }
-            
+
+            // Skip rendering if no href is available
+            if (!href) {
+              return null;
+            }
+
             return (
               <image
                 key={element.id}
