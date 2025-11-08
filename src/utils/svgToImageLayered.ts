@@ -767,7 +767,9 @@ export const convertLayeredSvgToPng = async (
 
   if (onProgress) onProgress(20, 'Bilder werden vorbereitet...');
 
-  // 1. Inline all images in the images layer
+  // 1. Inline all images in both images and background layers
+  // Background layer may contain background images that need to be inlined
+  await inlineAllImages(layers.background, options.onImageStatusUpdate);
   await inlineAllImages(layers.images, options.onImageStatusUpdate);
 
   if (onProgress) onProgress(40, 'Schriften werden eingebettet...');
