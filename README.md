@@ -121,7 +121,7 @@ Die Anwendung konvertiert SVG-Templates in hochauflösende PNG-Bilder für Socia
 ### Verwendete Pakete
 
 #### 1. **html2canvas** (v1.4.1)
-- **Zweck**: Hauptbibliothek für das Rendering von DOM-Elementen (einschließlich SVG) auf Canvas
+- **Zweck**: Hauptbibliothek für das Rendering von DOM-Elementen (einschliesslich SVG) auf Canvas
 - **Verwendung**: Konvertiert das gemountete SVG-Element in ein Canvas-Element
 - **Package.json**: `"html2canvas": "^1.4.1"`
 
@@ -156,7 +156,7 @@ Die Hauptfunktion `convertSvgToImage()` durchläuft folgende Schritte:
 
 #### Phase 1: SVG-Vorbereitung (10-20%)
 1. **SVG klonen**: Original-SVG wird geklont, um Modifikationen zu vermeiden
-2. **Offscreen-Mounting**: SVG wird temporär außerhalb des Viewports gemountet
+2. **Offscreen-Mounting**: SVG wird temporär ausserhalb des Viewports gemountet
    ```typescript
    svgClone.style.position = 'absolute';
    svgClone.style.left = '-100000px';
@@ -476,8 +476,3 @@ export const handlePlatformDownload = async (options: PlatformDownloadOptions) =
 2. Font-Caching nutzen (bereits implementiert in `fontCache`)
 3. Weniger Font-Varianten laden
 
----
-
-### Lizenz
-
-Falls nicht anders angegeben, proprietär. Bitte intern verwenden oder Lizenzhinweise ergänzen.
