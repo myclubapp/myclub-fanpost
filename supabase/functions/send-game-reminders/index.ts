@@ -4,10 +4,10 @@ import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts'
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-const SPORT_API_URLS: Record<string, (teamId: string) => string> = {
-  unihockey: (teamId) => `https://api.swissunihockey.ch/rest/v1/teams/${teamId}/games`,
-  volleyball: (teamId) => `https://api.swissvolleyball.ch/rest/v1/teams/${teamId}/games`,
-  handball: (teamId) => `https://api.handball.ch/rest/v1/teams/${teamId}/games`,
+const SPORT_API_URLS: Record<string, (teamId: string, clubId?: string) => string> = {
+  unihockey: (teamId) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissunihockey?query=%7B%0A%20%20games(teamId%3A%20%22${teamId}%22)%20%7B%0A%20%20%20%20id%0A%20%20%20%20result%0A%20%20%20%20date%0A%20%20%20%20time%0A%20%20%20%20teamHome%0A%20%20%20%20teamAway%0A%20%20%7D%0A%7D%0A`,
+  volleyball: (teamId) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swissvolley?query=%7B%0A%20%20games(teamId%3A%20%22${teamId}%22)%20%7B%0A%20%20%20%20id%0A%20%20%20%20date%0A%20%20%20%20time%0A%20%20%20%20location%0A%20%20%20%20city%0A%20%20%20%20teamHome%0A%20%20%20%20teamAway%0A%20%20%20%20result%0A%20%20%7D%0A%7D%0A`,
+  handball: (teamId, clubId) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swisshandball?query=%7B%0A%20%20games(teamId%3A%20%22${teamId}%22%2C%20clubId%3A%20%22${clubId}%22)%20%7B%0A%20%20%20%20id%0A%20%20%20%20teamHome%0A%20%20%20%20teamAway%0A%20%20%20%20date%0A%20%20%20%20time%0A%20%20%20%20result%0A%20%20%7D%0A%7D%0A`,
 }
 
 const GAME_RESULT_TEMPLATE_ID = '5cc48985-a846-4ef3-85e7-ede1ef834367'
@@ -34,22 +34,38 @@ Deno.serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
-    // Alle User mit Team-Slots und deren E-Mail-Adressen holen
+    // Alle User mit Team-Slots holen
     const { data: teamSlots, error: slotsError } = await supabase
       .from('user_team_slots')
-      .select(`
-        team_id,
-        team_name,
-        sport,
-        club_id,
-        user_id,
-        profiles!inner(email)
-      `)
+      .select('team_id, team_name, sport, club_id, user_id')
     
     if (slotsError) {
       console.error('Error fetching team slots:', slotsError)
       throw slotsError
     }
+    
+    if (!teamSlots || teamSlots.length === 0) {
+      console.log('No team slots found')
+      return new Response(
+        JSON.stringify({ success: true, message: 'No team slots to process' }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+    
+    // Alle User-IDs sammeln und deren E-Mails holen
+    const userIds = [...new Set(teamSlots.map(slot => slot.user_id))]
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, email')
+      .in('id', userIds)
+    
+    if (profilesError) {
+      console.error('Error fetching profiles:', profilesError)
+      throw profilesError
+    }
+    
+    // E-Mail-Mapping erstellen
+    const emailMap = new Map(profiles?.map(p => [p.id, p.email]) || [])
 
     console.log(`Found ${teamSlots?.length || 0} team slots`)
     
@@ -57,8 +73,13 @@ Deno.serve(async (req) => {
     const userGames = new Map<string, { email: string; games: Array<Game & { sport: string; club_id: string; team_id: string }> }>()
     
     // Für jeden Team-Slot die heutigen Spiele abrufen
-    for (const slot of teamSlots || []) {
-      const userEmail = (slot.profiles as any).email
+    for (const slot of teamSlots) {
+      const userEmail = emailMap.get(slot.user_id)
+      
+      if (!userEmail) {
+        console.log(`No email found for user ${slot.user_id}`)
+        continue
+      }
       
       if (!slot.sport || !SPORT_API_URLS[slot.sport]) {
         console.log(`Skipping slot with unknown sport: ${slot.sport}`)
@@ -68,7 +89,7 @@ Deno.serve(async (req) => {
       try {
         console.log(`Fetching games for team ${slot.team_id} (${slot.sport})`)
         
-        const apiUrl = SPORT_API_URLS[slot.sport](slot.team_id)
+        const apiUrl = SPORT_API_URLS[slot.sport](slot.team_id, slot.club_id)
         const response = await fetch(apiUrl)
         
         if (!response.ok) {
@@ -76,7 +97,8 @@ Deno.serve(async (req) => {
           continue
         }
         
-        const games = await response.json()
+        const result = await response.json()
+        const games = result.data?.games || []
         
         // Filtere Spiele für heute
         const today = new Date()
@@ -85,7 +107,10 @@ Deno.serve(async (req) => {
         tomorrow.setDate(tomorrow.getDate() + 1)
         
         const todaysGames = games.filter((game: any) => {
-          const gameDate = new Date(game.gameDateTime || game.date)
+          // Parse date format DD.MM.YYYY
+          const [day, month, year] = game.date.split('.')
+          const gameDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+          gameDate.setHours(0, 0, 0, 0)
           return gameDate >= today && gameDate < tomorrow
         })
         
@@ -98,13 +123,12 @@ Deno.serve(async (req) => {
           
           // Füge die Spiele zur User-Liste hinzu
           for (const game of todaysGames) {
-            const gameDate = new Date(game.gameDateTime || game.date)
             userGames.get(userEmail)!.games.push({
               id: game.id,
-              date: gameDate.toLocaleDateString('de-CH'),
-              time: gameDate.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' }),
-              home_team: game.teamHomeText || game.home_team || slot.team_name,
-              away_team: game.teamAwayText || game.away_team || 'TBD',
+              date: game.date,
+              time: game.time,
+              home_team: game.teamHome,
+              away_team: game.teamAway,
               sport: slot.sport,
               club_id: slot.club_id,
               team_id: slot.team_id,
@@ -118,23 +142,23 @@ Deno.serve(async (req) => {
     
     console.log(`Sending emails to ${userGames.size} users`)
     
-    // SMTP-Client konfigurieren
-    const client = new SMTPClient({
-      connection: {
-        hostname: Deno.env.get('SMTP_HOST')!,
-        port: parseInt(Deno.env.get('SMTP_PORT') || '465'),
-        tls: true,
-        auth: {
-          username: Deno.env.get('SMTP_USER')!,
-          password: Deno.env.get('SMTP_PASS')!,
-        },
-      },
-    })
-    
     // E-Mails versenden
     let sentCount = 0
     for (const [email, userData] of userGames.entries()) {
       if (userData.games.length === 0) continue
+      
+      // SMTP-Client für jede E-Mail neu erstellen
+      const client = new SMTPClient({
+        connection: {
+          hostname: Deno.env.get('SMTP_HOST')!,
+          port: parseInt(Deno.env.get('SMTP_PORT') || '465'),
+          tls: true,
+          auth: {
+            username: Deno.env.get('SMTP_USER')!,
+            password: Deno.env.get('SMTP_PASS')!,
+          },
+        },
+      })
       
       const gamesListHtml = userData.games.map(game => `
         <tr>
@@ -260,14 +284,19 @@ Deno.serve(async (req) => {
           html: emailHtml,
         })
         
+        await client.close()
+        
         sentCount++
         console.log(`Email sent to ${email}`)
       } catch (error) {
         console.error(`Error sending email to ${email}:`, error)
+        try {
+          await client.close()
+        } catch (closeError) {
+          // Ignore close errors
+        }
       }
     }
-    
-    await client.close()
     
     console.log(`Job completed. Sent ${sentCount} emails.`)
     
