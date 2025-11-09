@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.send-game-reminders]
 verify_jwt = false
+
+[functions.send-game-announcements]
+verify_jwt = false

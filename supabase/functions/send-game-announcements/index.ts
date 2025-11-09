@@ -30,7 +30,7 @@ interface Game {
 
 Deno.serve(async (req) => {
   try {
-    console.log('Starting game reminders job...')
+    console.log('Starting game announcements job...')
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
@@ -56,9 +56,9 @@ Deno.serve(async (req) => {
     const userIds = [...new Set(teamSlots.map(slot => slot.user_id))]
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
-      .select('id, email, email_game_day_reminder')
+      .select('id, email, email_game_announcement_reminder')
       .in('id', userIds)
-      .eq('email_game_day_reminder', true) // Nur User, die Reminder aktiviert haben
+      .eq('email_game_announcement_reminder', true) // Nur User, die Ankündigungen aktiviert haben
     
     if (profilesError) {
       console.error('Error fetching profiles:', profilesError)
@@ -66,9 +66,9 @@ Deno.serve(async (req) => {
     }
     
     if (!profiles || profiles.length === 0) {
-      console.log('No users with game day reminders enabled')
+      console.log('No users with game announcement reminders enabled')
       return new Response(
-        JSON.stringify({ success: true, message: 'No users want game day reminders' }),
+        JSON.stringify({ success: true, message: 'No users want game announcements' }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       )
     }
@@ -76,12 +76,12 @@ Deno.serve(async (req) => {
     // E-Mail-Mapping erstellen
     const emailMap = new Map(profiles.map(p => [p.id, p.email]))
 
-    console.log(`Found ${teamSlots?.length || 0} team slots`)
+    console.log(`Found ${teamSlots.length} team slots`)
     
     // Gruppiere Team-Slots nach User
     const userGames = new Map<string, { email: string; games: Array<Game & { sport: string; club_id: string; team_id: string }> }>()
     
-    // Für jeden Team-Slot die heutigen Spiele abrufen
+    // Für jeden Team-Slot die Spiele in 3 Tagen abrufen
     for (const slot of teamSlots) {
       const userEmail = emailMap.get(slot.user_id)
       
@@ -109,29 +109,31 @@ Deno.serve(async (req) => {
         const result = await response.json()
         const games = result.data?.games || []
         
-        // Filtere Spiele für heute
+        // Filtere Spiele für in 3 Tagen
         const today = new Date()
         today.setHours(0, 0, 0, 0)
-        const tomorrow = new Date(today)
-        tomorrow.setDate(tomorrow.getDate() + 1)
+        const targetDate = new Date(today)
+        targetDate.setDate(targetDate.getDate() + 3)
+        const dayAfterTarget = new Date(targetDate)
+        dayAfterTarget.setDate(dayAfterTarget.getDate() + 1)
         
-        const todaysGames = games.filter((game: any) => {
+        const upcomingGames = games.filter((game: any) => {
           // Parse date format DD.MM.YYYY
           const [day, month, year] = game.date.split('.')
           const gameDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
           gameDate.setHours(0, 0, 0, 0)
-          return gameDate >= today && gameDate < tomorrow
+          return gameDate >= targetDate && gameDate < dayAfterTarget
         })
         
-        if (todaysGames.length > 0) {
-          console.log(`Found ${todaysGames.length} games today for team ${slot.team_id}`)
+        if (upcomingGames.length > 0) {
+          console.log(`Found ${upcomingGames.length} games in 3 days for team ${slot.team_id}`)
           
           if (!userGames.has(userEmail)) {
             userGames.set(userEmail, { email: userEmail, games: [] })
           }
           
           // Füge die Spiele zur User-Liste hinzu
-          for (const game of todaysGames) {
+          for (const game of upcomingGames) {
             userGames.get(userEmail)!.games.push({
               id: game.id,
               date: game.date,
@@ -186,7 +188,7 @@ Deno.serve(async (req) => {
                 <td align="center" style="border-radius: 25px;" bgcolor="#015afe">
                   <a href="https://kanva.app/studio/${game.sport}/${game.club_id}/${game.team_id}/${game.id}?template=${GAME_RESULT_TEMPLATE_ID}" target="_blank"
                     style="font-size: 16px; font-family: 'Maven Pro', Arial, sans-serif; color: #FFFFFF; text-decoration: none; padding: 12px 20px; border-radius: 25px; border: 1px solid #015afe; display: inline-block;">
-                    Post erstellen
+                    Ankündigung erstellen
                   </a>
                 </td>
               </tr>
@@ -199,7 +201,7 @@ Deno.serve(async (req) => {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Deine Spiele heute - KANVA</title>
+    <title>Spielankündigung - KANVA</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -218,7 +220,7 @@ Deno.serve(async (req) => {
 </head>
 <body style="background-color: #f4f4f4; margin: 0 !important; padding: 0 !important;">
     <div style="display: none; font-size: 1px; color: #fefefe; line-height: 1px; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
-        Heute stehen ${userData.games.length} ${userData.games.length === 1 ? 'Spiel' : 'Spiele'} an!
+        In 3 Tagen ${userData.games.length === 1 ? 'steht ein Spiel' : 'stehen ' + userData.games.length + ' Spiele'} an!
     </div>
     <table border="0" cellpadding="0" cellspacing="0" width="100%">
         <!-- LOGO -->
@@ -243,7 +245,7 @@ Deno.serve(async (req) => {
                     <tr>
                         <td bgcolor="#ffffff" align="center" valign="top"
                             style="padding: 40px 20px 20px 20px; border-radius: 4px 4px 0px 0px; color: #111111; font-family: 'Titillium Web', Arial, sans-serif; font-size: 48px; font-weight: 400; letter-spacing: 4px; line-height: 48px;">
-                            <h1 style="font-size: 48px; font-weight: 400; margin: 0;">Spieltag! 🔥</h1>
+                            <h1 style="font-size: 48px; font-weight: 400; margin: 0;">Bald geht's los! 📅</h1>
                         </td>
                     </tr>
                 </table>
@@ -257,7 +259,7 @@ Deno.serve(async (req) => {
                         <td bgcolor="#ffffff" align="left"
                             style="padding: 20px 30px 20px 30px; color: #666666; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 400; line-height: 25px;">
                             <p style="margin: 0;">
-                                Heute ${userData.games.length === 1 ? 'steht ein Spiel' : 'stehen ' + userData.games.length + ' Spiele'} deiner Teams an! Verpasse nicht die Chance, einen tollen Post zu erstellen und deine Fans zu begeistern.
+                                In 3 Tagen ${userData.games.length === 1 ? 'steht ein Spiel' : 'stehen ' + userData.games.length + ' Spiele'} deiner Teams an! Jetzt ist der perfekte Zeitpunkt, um eine mitreissende Spielankündigung zu erstellen und deine Fans zu mobilisieren.
                             </p>
                         </td>
                     </tr>
@@ -292,7 +294,7 @@ Deno.serve(async (req) => {
         await client.send({
           from: 'KANVA <info@my-club.app>',
           to: email,
-          subject: `🔥 ${userData.games.length === 1 ? 'Dein Spiel heute' : userData.games.length + ' Spiele heute'} - Erstelle jetzt deinen Post!`,
+          subject: `📅 ${userData.games.length === 1 ? 'Dein Spiel' : userData.games.length + ' Spiele'} in 3 Tagen - Erstelle jetzt die Ankündigung!`,
           content: 'auto',
           html: emailHtml,
         })
@@ -318,7 +320,7 @@ Deno.serve(async (req) => {
         success: true, 
         usersWithGames: userGames.size,
         emailsSent: sentCount,
-        message: `Sent ${sentCount} game reminder emails` 
+        message: `Sent ${sentCount} game announcement emails` 
       }),
       { 
         status: 200,
@@ -327,7 +329,7 @@ Deno.serve(async (req) => {
     )
     
   } catch (error: any) {
-    console.error('Error in send-game-reminders:', error)
+    console.error('Error in send-game-announcements:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 

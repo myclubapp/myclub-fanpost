@@ -1,4 +1,4 @@
-import { User, Crown, Users, Image, Settings, Trash2, FileText, ImageIcon } from "lucide-react";
+import { User, Crown, Users, Image, Settings, Trash2, FileText, ImageIcon, Mail } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ const menuItems = [
   { title: "Profil", url: "/profile", icon: User },
   { title: "Abonnement", url: "/profile/subscription", icon: Crown },
   { title: "Meine Teams", url: "/profile/teams", icon: Users },
+  { title: "E-Mail-Einstellungen", url: "/profile/email-preferences", icon: Mail },
   { title: "Vorlagen", url: "/profile/templates", icon: FileText },
   { title: "Logos und Bilder", url: "/profile/logos", icon: Image },
   { title: "Hintergrundbilder", url: "/profile/backgrounds", icon: ImageIcon },
