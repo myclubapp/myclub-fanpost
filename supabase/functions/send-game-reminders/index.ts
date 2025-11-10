@@ -195,98 +195,76 @@ Deno.serve(async (req) => {
         </tr>
       `).join('')
       
-      const emailHtml = `
-<!DOCTYPE html>
+      const emailHtml = `<!DOCTYPE html>
 <html>
 <head>
-    <title>Deine Spiele heute - KANVA</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css2?family=Maven+Pro&family=Titillium+Web:wght@900&display=swap" rel="stylesheet">
-    <style type="text/css">
-        body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-        img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
-        table { border-collapse: collapse !important; }
-        body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
-        a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; }
-        @media screen and (max-width:600px) { h1 { font-size: 32px !important; line-height: 32px !important; } }
-        div[style*="margin: 16px 0;"] { margin: 0 !important; }
-    </style>
+<title>Deine Spiele heute - KANVA</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Maven+Pro&family=Titillium+Web:wght@900&display=swap" rel="stylesheet">
+<style type="text/css">
+body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+table { border-collapse: collapse !important; }
+body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
+a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; }
+@media screen and (max-width:600px) { h1 { font-size: 32px !important; line-height: 32px !important; } }
+div[style*="margin: 16px 0;"] { margin: 0 !important; }
+</style>
 </head>
 <body style="background-color: #f4f4f4; margin: 0 !important; padding: 0 !important;">
-    <div style="display: none; font-size: 1px; color: #fefefe; line-height: 1px; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
-        Heute stehen ${userData.games.length} ${userData.games.length === 1 ? 'Spiel' : 'Spiele'} an!
-    </div>
-    <table border="0" cellpadding="0" cellspacing="0" width="100%">
-        <!-- LOGO -->
-        <tr>
-            <td bgcolor="#000000" align="center">
-                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
-                    <tr>
-                        <td align="center" valign="top" style="padding: 40px 10px 40px 10px;">
-                            <a href="https://getkanva.io" target="_blank">
-                                <img alt="Logo" src="https://getkanva.io/logo_dark_wide.png" width="40" height="40"
-                                    style="display: block; width: 200px; max-width: 200px; min-width: 40px; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; color: #ffffff; font-size: 18px;" border="0">
-                            </a>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-        <!-- HERO -->
-        <tr>
-            <td bgcolor="#000000" align="center" style="padding: 0px 10px 0px 10px;">
-                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
-                    <tr>
-                        <td bgcolor="#ffffff" align="center" valign="top"
-                            style="padding: 40px 20px 20px 20px; border-radius: 4px 4px 0px 0px; color: #111111; font-family: 'Titillium Web', Arial, sans-serif; font-size: 48px; font-weight: 400; letter-spacing: 4px; line-height: 48px;">
-                            <h1 style="font-size: 48px; font-weight: 400; margin: 0;">Spieltag! 🔥</h1>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-        <!-- COPY BLOCK -->
-        <tr>
-            <td bgcolor="#f4f4f4" align="center" style="padding: 0px 10px 0px 10px;">
-                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
-                    <tr>
-                        <td bgcolor="#ffffff" align="left"
-                            style="padding: 20px 30px 20px 30px; color: #666666; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 400; line-height: 25px;">
-                            <p style="margin: 0;">
-                                Heute ${userData.games.length === 1 ? 'steht ein Spiel' : 'stehen ' + userData.games.length + ' Spiele'} deiner Teams an! Verpasse nicht die Chance, einen tollen Post zu erstellen und deine Fans zu begeistern.
-                            </p>
-                        </td>
-                    </tr>
-                    <!-- GAMES LIST -->
-                    ${gamesListHtml}
-                </table>
-            </td>
-        </tr>
-        <!-- FOOTER -->
-        <tr>
-            <td bgcolor="#f4f4f4" align="center" style="padding: 0px 10px 0px 10px;">
-                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
-                    <tr>
-                        <td bgcolor="#f4f4f4" align="left"
-                            style="padding: 30px 30px 30px 30px; color: #666666; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 400; line-height: 18px;">
-                            <p style="margin: 0 0 10px 0;">KANVA - wo Emotionen zu Stories werden.</p>
-                            <p style="margin: 0; font-size: 12px; color: #999999;">
-                                Du kannst deine E-Mail-Einstellungen jederzeit in deinem 
-                                <a href="https://getkanva.io/profile" style="color: #015afe; text-decoration: none;">Profil</a> anpassen.
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
+<div style="display: none; font-size: 1px; color: #fefefe; line-height: 1px; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">Heute stehen ${userData.games.length} ${userData.games.length === 1 ? 'Spiel' : 'Spiele'} an!</div>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr>
+<td bgcolor="#000000" align="center">
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
+<tr>
+<td align="center" valign="top" style="padding: 40px 10px 40px 10px;"><a href="https://getkanva.io" target="_blank"><img alt="Logo" src="https://getkanva.io/logo_dark_wide.png" width="40" height="40" style="display: block; width: 200px; max-width: 200px; min-width: 40px; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; color: #ffffff; font-size: 18px;" border="0"></a></td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td bgcolor="#000000" align="center" style="padding: 0px 10px 0px 10px;">
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
+<tr>
+<td bgcolor="#ffffff" align="center" valign="top" style="padding: 40px 20px 20px 20px; border-radius: 4px 4px 0px 0px; color: #111111; font-family: 'Titillium Web', Arial, sans-serif; font-size: 48px; font-weight: 400; letter-spacing: 4px; line-height: 48px;">
+<h1 style="font-size: 48px; font-weight: 400; margin: 0;">Spieltag! 🔥</h1>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td bgcolor="#f4f4f4" align="center" style="padding: 0px 10px 0px 10px;">
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
+<tr>
+<td bgcolor="#ffffff" align="left" style="padding: 20px 30px 20px 30px; color: #666666; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 400; line-height: 25px;">
+<p style="margin: 0;">Heute ${userData.games.length === 1 ? 'steht ein Spiel' : 'stehen ' + userData.games.length + ' Spiele'} deiner Teams an! Verpasse nicht die Chance, einen tollen Post zu erstellen und deine Fans zu begeistern.</p>
+</td>
+</tr>
+${gamesListHtml}
+</table>
+</td>
+</tr>
+<tr>
+<td bgcolor="#f4f4f4" align="center" style="padding: 0px 10px 0px 10px;">
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
+<tr>
+<td bgcolor="#f4f4f4" align="left" style="padding: 30px 30px 30px 30px; color: #666666; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 400; line-height: 18px;">
+<p style="margin: 0 0 10px 0;">KANVA - wo Emotionen zu Stories werden.</p>
+<p style="margin: 0; font-size: 12px; color: #999999;">Du kannst deine E-Mail-Einstellungen jederzeit in deinem <a href="https://getkanva.io/profile" style="color: #015afe; text-decoration: none;">Profil</a> anpassen.</p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
 </body>
-</html>
-      `
+</html>`
       
       try {
         await client.send({
