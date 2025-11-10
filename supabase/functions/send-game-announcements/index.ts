@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
             <table border="0" cellspacing="0" cellpadding="0">
               <tr>
                 <td align="center" style="border-radius: 25px;" bgcolor="#015afe">
-                  <a href="https://kanva.app/studio/${game.sport}/${game.club_id}/${game.team_id}/${game.id}?template=${GAME_RESULT_TEMPLATE_ID}" target="_blank"
+                  <a href="https://getkanva.io/studio/${game.sport}/${game.club_id}/${game.team_id}/${game.id}?template=${GAME_RESULT_TEMPLATE_ID}" target="_blank"
                     style="font-size: 16px; font-family: 'Maven Pro', Arial, sans-serif; color: #FFFFFF; text-decoration: none; padding: 12px 20px; border-radius: 25px; border: 1px solid #015afe; display: inline-block;">
                     Ankündigung erstellen
                   </a>
@@ -229,8 +229,8 @@ Deno.serve(async (req) => {
                 <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
                     <tr>
                         <td align="center" valign="top" style="padding: 40px 10px 40px 10px;">
-                            <a href="https://kanva.app" target="_blank">
-                                <img alt="Logo" src="https://kanva.app/logo_dark_wide.png" width="40" height="40"
+                            <a href="https://getkanva.io" target="_blank">
+                                <img alt="Logo" src="https://getkanva.io/logo_dark_wide.png" width="40" height="40"
                                     style="display: block; width: 200px; max-width: 200px; min-width: 40px; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; color: #ffffff; font-size: 18px;" border="0">
                             </a>
                         </td>
@@ -278,7 +278,7 @@ Deno.serve(async (req) => {
                             <p style="margin: 0 0 10px 0;">KANVA - wo Emotionen zu Stories werden.</p>
                             <p style="margin: 0; font-size: 12px; color: #999999;">
                                 Du kannst deine E-Mail-Einstellungen jederzeit in deinem 
-                                <a href="https://kanva.app/profile" style="color: #015afe; text-decoration: none;">Profil</a> anpassen.
+                                <a href="https://getkanva.io/profile" style="color: #015afe; text-decoration: none;">Profil</a> anpassen.
                             </p>
                         </td>
                     </tr>
