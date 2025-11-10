@@ -11,6 +11,7 @@ export const EmailPreferencesSection = () => {
   const [updating, setUpdating] = useState(false);
   const [gameDayReminder, setGameDayReminder] = useState(true);
   const [gameAnnouncementReminder, setGameAnnouncementReminder] = useState(true);
+  const [announcementDaysBefore, setAnnouncementDaysBefore] = useState(3);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -24,7 +25,7 @@ export const EmailPreferencesSection = () => {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('email_game_day_reminder, email_game_announcement_reminder')
+        .select('email_game_day_reminder, email_game_announcement_reminder, announcement_days_before')
         .eq('id', user.id)
         .single();
 
@@ -33,6 +34,7 @@ export const EmailPreferencesSection = () => {
       if (data) {
         setGameDayReminder(data.email_game_day_reminder ?? true);
         setGameAnnouncementReminder(data.email_game_announcement_reminder ?? true);
+        setAnnouncementDaysBefore(data.announcement_days_before ?? 3);
       }
     } catch (error) {
       console.error('Error loading email preferences:', error);
@@ -46,7 +48,7 @@ export const EmailPreferencesSection = () => {
     }
   };
 
-  const updatePreference = async (field: 'email_game_day_reminder' | 'email_game_announcement_reminder', value: boolean) => {
+  const updatePreference = async (field: 'email_game_day_reminder' | 'email_game_announcement_reminder' | 'announcement_days_before', value: boolean | number) => {
     setUpdating(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -72,9 +74,11 @@ export const EmailPreferencesSection = () => {
       });
       // Revert the change
       if (field === 'email_game_day_reminder') {
-        setGameDayReminder(!value);
-      } else {
-        setGameAnnouncementReminder(!value);
+        setGameDayReminder(!value as boolean);
+      } else if (field === 'email_game_announcement_reminder') {
+        setGameAnnouncementReminder(!value as boolean);
+      } else if (field === 'announcement_days_before') {
+        // Don't revert for days before
       }
     } finally {
       setUpdating(false);
@@ -131,7 +135,7 @@ export const EmailPreferencesSection = () => {
               Spielankündigungs-Reminder
             </Label>
             <p className="text-sm text-muted-foreground">
-              Erhalte 3 Tage vor dem Spiel eine Erinnerung, um eine Ankündigung zu erstellen
+              Erhalte eine Erinnerung vor dem Spiel, um eine Ankündigung zu erstellen
             </p>
           </div>
           <Switch
@@ -144,6 +148,38 @@ export const EmailPreferencesSection = () => {
             disabled={updating}
           />
         </div>
+
+        {gameAnnouncementReminder && (
+          <div className="flex items-center justify-between space-x-4 rounded-lg border border-border p-4 bg-muted/30 ml-4">
+            <div className="flex-1 space-y-1">
+              <Label htmlFor="days-before" className="text-sm font-medium cursor-pointer">
+                Tage vor dem Spiel
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Wie viele Tage vor dem Spiel möchtest du erinnert werden?
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="days-before"
+                type="number"
+                min="1"
+                max="14"
+                value={announcementDaysBefore}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value) || 3;
+                  if (value >= 1 && value <= 14) {
+                    setAnnouncementDaysBefore(value);
+                    updatePreference('announcement_days_before', value);
+                  }
+                }}
+                disabled={updating}
+                className="w-16 px-3 py-2 text-center border border-border rounded-md bg-background"
+              />
+              <span className="text-sm text-muted-foreground">Tage</span>
+            </div>
+          </div>
+        )}
 
         <div className="text-xs text-muted-foreground pt-2 border-t border-border">
           <p>💡 Tipp: Du kannst diese Einstellungen jederzeit ändern. Die E-Mails werden nur versendet, wenn du mindestens ein Team-Slot gespeichert hast.</p>

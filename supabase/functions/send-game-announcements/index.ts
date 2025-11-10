@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     const userIds = [...new Set(teamSlots.map(slot => slot.user_id))]
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
-      .select('id, email, email_game_announcement_reminder')
+      .select('id, email, email_game_announcement_reminder, announcement_days_before')
       .in('id', userIds)
       .eq('email_game_announcement_reminder', true) // Nur User, die Ankündigungen aktiviert haben
     
@@ -73,17 +73,19 @@ Deno.serve(async (req) => {
       )
     }
     
-    // E-Mail-Mapping erstellen
+    // E-Mail-Mapping und Days-Before-Mapping erstellen
     const emailMap = new Map(profiles.map(p => [p.id, p.email]))
+    const daysBeforeMap = new Map(profiles.map(p => [p.id, p.announcement_days_before || 3]))
 
     console.log(`Found ${teamSlots.length} team slots`)
     
     // Gruppiere Team-Slots nach User
     const userGames = new Map<string, { email: string; games: Array<Game & { sport: string; club_id: string; team_id: string }> }>()
     
-    // Für jeden Team-Slot die Spiele in 3 Tagen abrufen
+    // Für jeden Team-Slot die Spiele abrufen (basierend auf User-Einstellung)
     for (const slot of teamSlots) {
       const userEmail = emailMap.get(slot.user_id)
+      const daysBefore = daysBeforeMap.get(slot.user_id) || 3
       
       if (!userEmail) {
         console.log(`No email found for user ${slot.user_id}`)
@@ -109,11 +111,11 @@ Deno.serve(async (req) => {
         const result = await response.json()
         const games = result.data?.games || []
         
-        // Filtere Spiele für in 3 Tagen
+        // Filtere Spiele basierend auf User-Einstellung (Standard: 3 Tage)
         const today = new Date()
         today.setHours(0, 0, 0, 0)
         const targetDate = new Date(today)
-        targetDate.setDate(targetDate.getDate() + 3)
+        targetDate.setDate(targetDate.getDate() + daysBefore)
         const dayAfterTarget = new Date(targetDate)
         dayAfterTarget.setDate(dayAfterTarget.getDate() + 1)
         
@@ -126,7 +128,7 @@ Deno.serve(async (req) => {
         })
         
         if (upcomingGames.length > 0) {
-          console.log(`Found ${upcomingGames.length} games in 3 days for team ${slot.team_id}`)
+          console.log(`Found ${upcomingGames.length} games in ${daysBefore} days for team ${slot.team_id}`)
           
           if (!userGames.has(userEmail)) {
             userGames.set(userEmail, { email: userEmail, games: [] })
@@ -197,6 +199,9 @@ Deno.serve(async (req) => {
         </tr>
       `).join('')
       
+      // Ermittle daysBefore für diesen User
+      const userDaysBefore = daysBeforeMap.get(Array.from(userGames.keys()).find(e => e === email) || '') || 3
+      
       const emailHtml = `
 <!DOCTYPE html>
 <html>
@@ -220,7 +225,7 @@ Deno.serve(async (req) => {
 </head>
 <body style="background-color: #f4f4f4; margin: 0 !important; padding: 0 !important;">
     <div style="display: none; font-size: 1px; color: #fefefe; line-height: 1px; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
-        In 3 Tagen ${userData.games.length === 1 ? 'steht ein Spiel' : 'stehen ' + userData.games.length + ' Spiele'} an!
+        In ${userDaysBefore} Tagen ${userData.games.length === 1 ? 'steht ein Spiel' : 'stehen ' + userData.games.length + ' Spiele'} an!
     </div>
     <table border="0" cellpadding="0" cellspacing="0" width="100%">
         <!-- LOGO -->
@@ -259,7 +264,7 @@ Deno.serve(async (req) => {
                         <td bgcolor="#ffffff" align="left"
                             style="padding: 20px 30px 20px 30px; color: #666666; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 400; line-height: 25px;">
                             <p style="margin: 0;">
-                                In 3 Tagen ${userData.games.length === 1 ? 'steht ein Spiel' : 'stehen ' + userData.games.length + ' Spiele'} deiner Teams an! Jetzt ist der perfekte Zeitpunkt, um eine mitreissende Spielankündigung zu erstellen und deine Fans zu mobilisieren.
+                                In ${userDaysBefore} Tagen ${userData.games.length === 1 ? 'steht ein Spiel' : 'stehen ' + userData.games.length + ' Spiele'} deiner Teams an! Jetzt ist der perfekte Zeitpunkt, um eine mitreissende Spielankündigung zu erstellen und deine Fans zu mobilisieren.
                             </p>
                         </td>
                     </tr>
@@ -291,10 +296,12 @@ Deno.serve(async (req) => {
       `
       
       try {
+        const userDaysBefore = daysBeforeMap.get(profiles.find(p => p.email === email)?.id || '') || 3
+        
         await client.send({
           from: 'KANVA <info@my-club.app>',
           to: email,
-          subject: `📅 ${userData.games.length === 1 ? 'Dein Spiel' : userData.games.length + ' Spiele'} in 3 Tagen - Erstelle jetzt die Ankündigung!`,
+          subject: `📅 ${userData.games.length === 1 ? 'Dein Spiel' : userData.games.length + ' Spiele'} in ${userDaysBefore} Tagen - Erstelle jetzt die Ankündigung!`,
           content: 'auto',
           html: emailHtml,
         })

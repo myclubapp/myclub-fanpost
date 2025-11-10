@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       profiles: {
         Row: {
+          announcement_days_before: number
           created_at: string
           email: string
           email_game_announcement_reminder: boolean | null
@@ -31,6 +32,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          announcement_days_before?: number
           created_at?: string
           email: string
           email_game_announcement_reminder?: boolean | null
@@ -46,6 +48,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          announcement_days_before?: number
           created_at?: string
           email?: string
           email_game_announcement_reminder?: boolean | null
