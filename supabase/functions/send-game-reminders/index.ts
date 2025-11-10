@@ -175,7 +175,7 @@ Deno.serve(async (req) => {
             <table border="0" cellspacing="0" cellpadding="0">
               <tr>
                 <td align="center" style="border-radius: 25px;" bgcolor="#015afe">
-                  <a href="https://kanva.app/studio/${game.sport}/${game.club_id}/${game.team_id}/${game.id}?template=${GAME_RESULT_TEMPLATE_ID}" target="_blank"
+                  <a href="https://getkanva.io/studio/${game.sport}/${game.club_id}/${game.team_id}/${game.id}?template=${GAME_RESULT_TEMPLATE_ID}" target="_blank"
                     style="font-size: 16px; font-family: 'Maven Pro', Arial, sans-serif; color: #FFFFFF; text-decoration: none; padding: 12px 20px; border-radius: 25px; border: 1px solid #015afe; display: inline-block;">
                     Post erstellen
                   </a>
