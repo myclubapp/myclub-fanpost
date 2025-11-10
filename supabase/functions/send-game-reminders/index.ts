@@ -10,7 +10,7 @@ const SPORT_API_URLS: Record<string, (teamId: string, clubId?: string) => string
   handball: (teamId, clubId) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swisshandball?query=%7B%0A%20%20games(teamId%3A%20%22${teamId}%22%2C%20clubId%3A%20%22${clubId}%22)%20%7B%0A%20%20%20%20id%0A%20%20%20%20teamHome%0A%20%20%20%20teamAway%0A%20%20%20%20date%0A%20%20%20%20time%0A%20%20%20%20result%0A%20%20%7D%0A%7D%0A`,
 }
 
-const GAME_RESULT_TEMPLATE_ID = '5cc48985-a846-4ef3-85e7-ede1ef834367'
+const KANVA_TEMPLATE_ID = '5cc48985-a846-4ef3-85e7-ede1ef834367'
 
 interface TeamSlot {
   team_id: string
@@ -184,7 +184,7 @@ Deno.serve(async (req) => {
             <table border="0" cellspacing="0" cellpadding="0">
               <tr>
                 <td align="center" style="border-radius: 25px;" bgcolor="#015afe">
-                  <a href="https://getkanva.io/studio/${game.sport}/${game.club_id}/${game.team_id}/${game.id}?template=${GAME_RESULT_TEMPLATE_ID}" target="_blank"
+                  <a href="https://getkanva.io/studio/${game.sport}/${game.club_id}/${game.team_id}/${game.id}?template=${KANVA_TEMPLATE_ID}" target="_blank"
                     style="font-size: 16px; font-family: 'Maven Pro', Arial, sans-serif; color: #FFFFFF; text-decoration: none; padding: 12px 20px; border-radius: 25px; border: 1px solid #015afe; display: inline-block;">
                     Post erstellen
                   </a>
