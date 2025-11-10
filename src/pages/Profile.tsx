@@ -12,6 +12,7 @@ import { LogoManagementSection } from '@/components/profile/LogoManagementSectio
 import { BackgroundManagementSection } from '@/components/profile/BackgroundManagementSection';
 import { SettingsSection } from '@/components/profile/SettingsSection';
 import { DeleteAccountSection } from '@/components/profile/DeleteAccountSection';
+import { EmailPreferencesSection } from '@/components/profile/EmailPreferencesSection';
 import Footer from '@/components/Footer';
 import { Loader2 } from 'lucide-react';
 
@@ -53,6 +54,7 @@ const Profile = () => {
                 <Route index element={<ProfileInfo />} />
                 <Route path="subscription" element={<SubscriptionSection />} />
                 <Route path="teams" element={<TeamSlotsSection />} />
+                <Route path="email-preferences" element={<EmailPreferencesSection />} />
                 <Route path="templates" element={<TemplateManagementSection />} />
                 <Route path="logos" element={<LogoManagementSection />} />
                 <Route path="backgrounds" element={<BackgroundManagementSection />} />

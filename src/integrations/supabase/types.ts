@@ -18,6 +18,8 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          email_game_announcement_reminder: boolean | null
+          email_game_day_reminder: boolean | null
           first_name: string | null
           id: string
           instagram_username: string | null
@@ -31,6 +33,8 @@ export type Database = {
         Insert: {
           created_at?: string
           email: string
+          email_game_announcement_reminder?: boolean | null
+          email_game_day_reminder?: boolean | null
           first_name?: string | null
           id: string
           instagram_username?: string | null
@@ -44,6 +48,8 @@ export type Database = {
         Update: {
           created_at?: string
           email?: string
+          email_game_announcement_reminder?: boolean | null
+          email_game_day_reminder?: boolean | null
           first_name?: string | null
           id?: string
           instagram_username?: string | null
