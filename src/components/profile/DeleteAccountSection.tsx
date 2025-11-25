@@ -7,10 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Trash2 } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export const DeleteAccountSection = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [deleting, setDeleting] = useState(false);
@@ -18,8 +20,8 @@ export const DeleteAccountSection = () => {
   const handleDeleteAccount = async () => {
     if (deleteConfirmation !== 'DELETE') {
       toast({
-        title: "Bestätigung fehlgeschlagen",
-        description: "Bitte gib 'DELETE' ein, um fortzufahren.",
+        title: t.profile.deleteAccount.confirmationFailed,
+        description: t.profile.deleteAccount.confirmationFailedDescription,
         variant: "destructive",
       });
       return;
@@ -28,9 +30,9 @@ export const DeleteAccountSection = () => {
     setDeleting(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
-        throw new Error('Nicht angemeldet');
+        throw new Error(t.profile.deleteAccount.notLoggedIn);
       }
 
       const { error } = await supabase.functions.invoke('delete-account', {
@@ -43,8 +45,8 @@ export const DeleteAccountSection = () => {
       if (error) throw error;
 
       toast({
-        title: "Account gelöscht",
-        description: "Ihr Account und alle Daten wurden erfolgreich gelöscht.",
+        title: t.profile.deleteAccount.deleteSuccess,
+        description: t.profile.deleteAccount.deleteSuccessDescription,
       });
 
       await supabase.auth.signOut();
@@ -52,8 +54,8 @@ export const DeleteAccountSection = () => {
     } catch (error: any) {
       console.error('Error deleting account:', error);
       toast({
-        title: "Fehler",
-        description: error.message || "Account konnte nicht gelöscht werden",
+        title: t.profile.deleteAccount.deleteError,
+        description: error.message || t.profile.deleteAccount.deleteErrorDescription,
         variant: "destructive",
       });
     } finally {
@@ -68,40 +70,39 @@ export const DeleteAccountSection = () => {
       <CardHeader>
         <CardTitle className="text-destructive flex items-center gap-2">
           <Trash2 className="h-5 w-5" />
-          Gefahrenzone
+          {t.profile.deleteAccount.title}
         </CardTitle>
         <CardDescription>
-          Unwiderrufliche Aktionen
+          {t.profile.deleteAccount.description}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="bg-destructive/10 rounded-lg p-4">
-          <h4 className="font-semibold mb-2 text-destructive">Profil löschen</h4>
+          <h4 className="font-semibold mb-2 text-destructive">{t.profile.deleteAccount.deleteProfile}</h4>
           <p className="text-sm text-muted-foreground mb-4">
-          Das Löschen Ihres Profils ist dauerhaft und kann nicht rückgängig gemacht werden. 
-            Alle Ihre Daten, Templates und Abonnements gehen unwiderruflich verloren.
+            {t.profile.deleteAccount.deleteDescription}
           </p>
           <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" size="sm">
                 <Trash2 className="h-4 w-4 mr-2" />
-                Profil löschen
+                {t.profile.deleteAccount.deleteButton}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Bist du absolut sicher?</AlertDialogTitle>
+                <AlertDialogTitle>{t.profile.deleteAccount.confirmTitle}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Diese Aktion kann nicht rückgängig gemacht werden. Ihr Account und alle zugehörigen Daten werden dauerhaft gelöscht:
+                  {t.profile.deleteAccount.confirmDescription}
                   <ul className="list-disc list-inside mt-2 space-y-1">
-                    <li>Alle persönlichen Daten</li>
-                    <li>Alle erstellten Templates</li>
-                    <li>Alle Team-Slots</li>
-                    <li>Ihre Subscription (falls vorhanden)</li>
+                    <li>{t.profile.deleteAccount.confirmList.personalData}</li>
+                    <li>{t.profile.deleteAccount.confirmList.templates}</li>
+                    <li>{t.profile.deleteAccount.confirmList.teamSlots}</li>
+                    <li>{t.profile.deleteAccount.confirmList.subscription}</li>
                   </ul>
                   <div className="mt-4 p-3 bg-destructive/10 rounded-md">
                     <p className="font-semibold text-sm mb-2">
-                      Bitte gib <span className="font-mono bg-background px-1">DELETE</span> ein, um zu bestätigen:
+                      {t.profile.deleteAccount.confirmPrompt} <span className="font-mono bg-background px-1">{t.profile.deleteAccount.confirmPromptWord}</span> {t.profile.deleteAccount.confirmPromptEnd}
                     </p>
                     <Input
                       value={deleteConfirmation}
@@ -114,7 +115,7 @@ export const DeleteAccountSection = () => {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel onClick={() => setDeleteConfirmation('')}>
-                  Abbrechen
+                  {t.profile.deleteAccount.cancel}
                 </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleDeleteAccount}
@@ -124,10 +125,10 @@ export const DeleteAccountSection = () => {
                   {deleting ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Wird gelöscht...
+                      {t.profile.deleteAccount.deleting}
                     </>
                   ) : (
-                    'Account endgültig löschen'
+                    t.profile.deleteAccount.deleteAction
                   )}
                 </AlertDialogAction>
               </AlertDialogFooter>

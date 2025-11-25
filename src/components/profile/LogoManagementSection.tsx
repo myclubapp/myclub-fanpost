@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload, Trash2, Lock, Image as ImageIcon } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Logo {
   id: string;
@@ -28,6 +29,7 @@ export function LogoManagementSection() {
   const { canUploadLogos, loading: limitsLoading } = useSubscriptionLimits();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [logos, setLogos] = useState<Logo[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -42,7 +44,7 @@ export function LogoManagementSection() {
 
   const loadLogos = async () => {
     if (!user) return;
-    
+
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -55,7 +57,7 @@ export function LogoManagementSection() {
       setLogos(data || []);
     } catch (error: any) {
       toast({
-        title: 'Fehler',
+        title: t.profile.logos.nameRequired,
         description: error.message,
         variant: 'destructive',
       });
@@ -67,8 +69,8 @@ export function LogoManagementSection() {
   const uploadLogo = async (file: File) => {
     if (!user || !logoName.trim()) {
       toast({
-        title: 'Fehler',
-        description: 'Bitte gib einen Namen für das Logo ein',
+        title: t.profile.logos.nameRequired,
+        description: t.profile.logos.nameRequiredDescription,
         variant: 'destructive',
       });
       return;
@@ -102,15 +104,15 @@ export function LogoManagementSection() {
       if (dbError) throw dbError;
 
       toast({
-        title: 'Erfolg',
-        description: 'Logo hochgeladen',
+        title: t.profile.logos.uploadSuccess,
+        description: t.profile.logos.uploadSuccessDescription,
       });
 
       setLogoName('');
       loadLogos();
     } catch (error: any) {
       toast({
-        title: 'Fehler',
+        title: t.profile.logos.nameRequired,
         description: error.message,
         variant: 'destructive',
       });
@@ -135,14 +137,14 @@ export function LogoManagementSection() {
       if (dbError) throw dbError;
 
       toast({
-        title: 'Erfolg',
-        description: 'Logo gelöscht',
+        title: t.profile.logos.deleteSuccess,
+        description: t.profile.logos.deleteSuccessDescription,
       });
 
       loadLogos();
     } catch (error: any) {
       toast({
-        title: 'Fehler',
+        title: t.profile.logos.nameRequired,
         description: error.message,
         variant: 'destructive',
       });
@@ -169,20 +171,20 @@ export function LogoManagementSection() {
       <CardHeader>
         <div className="flex items-center gap-2">
           <Lock className="h-5 w-5 text-muted-foreground" />
-          <CardTitle>Logos und Bilder</CardTitle>
+          <CardTitle>{t.profile.logos.locked}</CardTitle>
         </div>
         <CardDescription>
-          Diese Funktion ist nur für Pro- und Premium-Abonnenten verfügbar
+          {t.profile.logos.lockedDescription}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Alert>
           <AlertDescription>
-            Upgrade auf Pro oder Premium, um eigene Logos und Bilder hochzuladen und in deinen Vorlagen zu verwenden.
+            {t.profile.logos.upgradeMessage}
           </AlertDescription>
         </Alert>
           <Button onClick={handleUpgrade} className="w-full">
-            Upgraden
+            {t.profile.logos.upgrade}
           </Button>
         </CardContent>
       </Card>
@@ -192,40 +194,40 @@ export function LogoManagementSection() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Logos und Bilder</CardTitle>
+        <CardTitle>{t.profile.logos.title}</CardTitle>
         <CardDescription>
-          Lade deine eigenen Logos und Bilder hoch und verwende sie in deinen Vorlagen
+          {t.profile.logos.description}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="logo-name">Logo-Name</Label>
+            <Label htmlFor="logo-name">{t.profile.logos.logoName}</Label>
             <Input
               id="logo-name"
-              placeholder="z.B. Hauptsponsor"
+              placeholder={t.profile.logos.logoNamePlaceholder}
               value={logoName}
               onChange={(e) => setLogoName(e.target.value)}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="logo-type">Logo-Typ</Label>
+            <Label htmlFor="logo-type">{t.profile.logos.logoType}</Label>
             <Select value={logoType} onValueChange={setLogoType}>
               <SelectTrigger id="logo-type">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="sponsor">Sponsor</SelectItem>
-                <SelectItem value="club">Verein</SelectItem>
-                <SelectItem value="team">Team</SelectItem>
-                <SelectItem value="other">Andere</SelectItem>
+                <SelectItem value="sponsor">{t.profile.logos.types.sponsor}</SelectItem>
+                <SelectItem value="club">{t.profile.logos.types.club}</SelectItem>
+                <SelectItem value="team">{t.profile.logos.types.team}</SelectItem>
+                <SelectItem value="other">{t.profile.logos.types.other}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="logo-file">Logo-Datei</Label>
+            <Label htmlFor="logo-file">{t.profile.logos.logoFile}</Label>
             <Input
               id="logo-file"
               type="file"
@@ -241,7 +243,7 @@ export function LogoManagementSection() {
           {uploading && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Logo wird hochgeladen...</span>
+              <span>{t.profile.logos.uploading}</span>
             </div>
           )}
         </div>
@@ -253,21 +255,21 @@ export function LogoManagementSection() {
         ) : logos.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p>Noch keine Logos hochgeladen</p>
+            <p>{t.profile.logos.noLogos}</p>
           </div>
         ) : (
           <Tabs defaultValue="sponsor" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="sponsor">Sponsoren</TabsTrigger>
-              <TabsTrigger value="club">Verein</TabsTrigger>
-              <TabsTrigger value="team">Team</TabsTrigger>
-              <TabsTrigger value="other">Andere</TabsTrigger>
+              <TabsTrigger value="sponsor">{t.profile.logos.tabs.sponsor}</TabsTrigger>
+              <TabsTrigger value="club">{t.profile.logos.tabs.club}</TabsTrigger>
+              <TabsTrigger value="team">{t.profile.logos.tabs.team}</TabsTrigger>
+              <TabsTrigger value="other">{t.profile.logos.tabs.other}</TabsTrigger>
             </TabsList>
             
             <TabsContent value="sponsor" className="mt-4">
               {logos.filter(logo => logo.logo_type === 'sponsor').length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  Keine Sponsoren-Logos gefunden
+                  {t.profile.logos.noLogosFound.sponsor}
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -302,7 +304,7 @@ export function LogoManagementSection() {
             <TabsContent value="club" className="mt-4">
               {logos.filter(logo => logo.logo_type === 'club').length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  Keine Vereins-Logos gefunden
+                  {t.profile.logos.noLogosFound.club}
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -337,7 +339,7 @@ export function LogoManagementSection() {
             <TabsContent value="team" className="mt-4">
               {logos.filter(logo => logo.logo_type === 'team').length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  Keine Team-Logos gefunden
+                  {t.profile.logos.noLogosFound.team}
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -372,7 +374,7 @@ export function LogoManagementSection() {
             <TabsContent value="other" className="mt-4">
               {logos.filter(logo => logo.logo_type === 'other').length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  Keine anderen Bilder gefunden
+                  {t.profile.logos.noLogosFound.other}
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
