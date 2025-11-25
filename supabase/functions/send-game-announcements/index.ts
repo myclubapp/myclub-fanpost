@@ -173,127 +173,101 @@ Deno.serve(async (req) => {
         },
       })
       
-      const gamesListHtml = userData.games.map(game => `
-        <tr>
-          <td bgcolor="#ffffff" align="left"
-            style="padding: 15px 30px; border-bottom: 1px solid #f4f4f4; color: #111111; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; line-height: 22px;">
-            <p style="margin: 0;">${game.home_team} vs ${game.away_team}</p>
-            <p style="margin: 5px 0 0 0; font-size: 14px; font-weight: 400; color: #666666;">
-              ${game.date} um ${game.time}
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td bgcolor="#ffffff" align="center" style="padding: 10px 30px 20px 30px;">
-            <table border="0" cellspacing="0" cellpadding="0">
-              <tr>
-                <td align="center" style="border-radius: 25px;" bgcolor="#015afe">
-                  <a href="https://getkanva.io/studio/${game.sport}/${game.club_id}/${game.team_id}/${game.id}?template=${KANVA_TEMPLATE_ID}" target="_blank"
-                    style="font-size: 16px; font-family: 'Maven Pro', Arial, sans-serif; color: #FFFFFF; text-decoration: none; padding: 12px 20px; border-radius: 25px; border: 1px solid #015afe; display: inline-block;">
-                    Ankündigung erstellen
-                  </a>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      `).join('')
+      const gamesListHtml = userData.games.map(game => `<tr>
+<td bgcolor="#ffffff" align="left" style="padding: 15px 30px; border-bottom: 1px solid #f4f4f4; color: #111111; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; line-height: 22px;">
+<p style="margin: 0;">${game.home_team} vs ${game.away_team}</p>
+<p style="margin: 5px 0 0 0; font-size: 14px; font-weight: 400; color: #666666;">${game.date} um ${game.time}</p>
+</td>
+</tr>
+<tr>
+<td bgcolor="#ffffff" align="center" style="padding: 10px 30px 20px 30px;">
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td align="center" style="border-radius: 25px;" bgcolor="#015afe">
+<a href="https://getkanva.io/studio/${game.sport}/${game.club_id}/${game.team_id}/${game.id}?template=${KANVA_TEMPLATE_ID}" target="_blank" style="font-size: 16px; font-family: 'Maven Pro', Arial, sans-serif; color: #FFFFFF; text-decoration: none; padding: 12px 20px; border-radius: 25px; border: 1px solid #015afe; display: inline-block;">Ankündigung erstellen</a>
+</td>
+</tr>
+</table>
+</td>
+</tr>`).join('')
       
       // Ermittle daysBefore für diesen User
       const userDaysBefore = daysBeforeMap.get(Array.from(userGames.keys()).find(e => e === email) || '') || 3
       
-      const emailHtml = `
-<!DOCTYPE html>
+      const emailHtml = `<!DOCTYPE html>
 <html>
 <head>
-    <title>Spielankündigung - KANVA</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css2?family=Maven+Pro&family=Titillium+Web:wght@900&display=swap" rel="stylesheet">
-    <style type="text/css">
-        body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-        img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
-        table { border-collapse: collapse !important; }
-        body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
-        a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; }
-        @media screen and (max-width:600px) { h1 { font-size: 32px !important; line-height: 32px !important; } }
-        div[style*="margin: 16px 0;"] { margin: 0 !important; }
-    </style>
+<title>Spielankündigung - KANVA</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Maven+Pro&family=Titillium+Web:wght@900&display=swap" rel="stylesheet">
+<style type="text/css">
+body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+table { border-collapse: collapse !important; }
+body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
+a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; }
+@media screen and (max-width:600px) { h1 { font-size: 32px !important; line-height: 32px !important; } }
+div[style*="margin: 16px 0;"] { margin: 0 !important; }
+</style>
 </head>
 <body style="background-color: #f4f4f4; margin: 0 !important; padding: 0 !important;">
-    <div style="display: none; font-size: 1px; color: #fefefe; line-height: 1px; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
-        In ${userDaysBefore} Tagen ${userData.games.length === 1 ? 'steht ein Spiel' : 'stehen ' + userData.games.length + ' Spiele'} an!
-    </div>
-    <table border="0" cellpadding="0" cellspacing="0" width="100%">
-        <!-- LOGO -->
-        <tr>
-            <td bgcolor="#000000" align="center">
-                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
-                    <tr>
-                        <td align="center" valign="top" style="padding: 40px 10px 40px 10px;">
-                            <a href="https://getkanva.io" target="_blank">
-                                <img alt="Logo" src="https://getkanva.io/logo_dark_wide.png" width="40" height="40"
-                                    style="display: block; width: 200px; max-width: 200px; min-width: 40px; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; color: #ffffff; font-size: 18px;" border="0">
-                            </a>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-        <!-- HERO -->
-        <tr>
-            <td bgcolor="#000000" align="center" style="padding: 0px 10px 0px 10px;">
-                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
-                    <tr>
-                        <td bgcolor="#ffffff" align="center" valign="top"
-                            style="padding: 40px 20px 20px 20px; border-radius: 4px 4px 0px 0px; color: #111111; font-family: 'Titillium Web', Arial, sans-serif; font-size: 48px; font-weight: 400; letter-spacing: 4px; line-height: 48px;">
-                            <h1 style="font-size: 48px; font-weight: 400; margin: 0;">Bald geht's los! 📅</h1>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-        <!-- COPY BLOCK -->
-        <tr>
-            <td bgcolor="#f4f4f4" align="center" style="padding: 0px 10px 0px 10px;">
-                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
-                    <tr>
-                        <td bgcolor="#ffffff" align="left"
-                            style="padding: 20px 30px 20px 30px; color: #666666; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 400; line-height: 25px;">
-                            <p style="margin: 0;">
-                                In ${userDaysBefore} Tagen ${userData.games.length === 1 ? 'steht ein Spiel' : 'stehen ' + userData.games.length + ' Spiele'} deiner Teams an! Jetzt ist der perfekte Zeitpunkt, um eine mitreissende Spielankündigung zu erstellen und deine Fans zu mobilisieren.
-                            </p>
-                        </td>
-                    </tr>
-                    <!-- GAMES LIST -->
-                    ${gamesListHtml}
-                </table>
-            </td>
-        </tr>
-        <!-- FOOTER -->
-        <tr>
-            <td bgcolor="#f4f4f4" align="center" style="padding: 0px 10px 0px 10px;">
-                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
-                    <tr>
-                        <td bgcolor="#f4f4f4" align="left"
-                            style="padding: 30px 30px 30px 30px; color: #666666; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 400; line-height: 18px;">
-                            <p style="margin: 0 0 10px 0;">KANVA - wo Emotionen zu Stories werden.</p>
-                            <p style="margin: 0; font-size: 12px; color: #999999;">
-                                Du kannst deine E-Mail-Einstellungen jederzeit in deinem 
-                                <a href="https://getkanva.io/profile" style="color: #015afe; text-decoration: none;">Profil</a> anpassen.
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
+<div style="display: none; font-size: 1px; color: #fefefe; line-height: 1px; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">In ${userDaysBefore} Tagen ${userData.games.length === 1 ? 'steht ein Spiel' : 'stehen ' + userData.games.length + ' Spiele'} an!</div>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr>
+<td bgcolor="#000000" align="center">
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
+<tr>
+<td align="center" valign="top" style="padding: 40px 10px 40px 10px;">
+<a href="https://getkanva.io" target="_blank">
+<img alt="Logo" src="https://getkanva.io/logo_dark_wide.png" width="40" height="40" style="display: block; width: 200px; max-width: 200px; min-width: 40px; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; color: #ffffff; font-size: 18px;" border="0">
+</a>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td bgcolor="#000000" align="center" style="padding: 0px 10px 0px 10px;">
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
+<tr>
+<td bgcolor="#ffffff" align="center" valign="top" style="padding: 40px 20px 20px 20px; border-radius: 4px 4px 0px 0px; color: #111111; font-family: 'Titillium Web', Arial, sans-serif; font-size: 48px; font-weight: 400; letter-spacing: 4px; line-height: 48px;">
+<h1 style="font-size: 48px; font-weight: 400; margin: 0;">Bald geht's los! 📅</h1>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td bgcolor="#f4f4f4" align="center" style="padding: 0px 10px 0px 10px;">
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
+<tr>
+<td bgcolor="#ffffff" align="left" style="padding: 20px 30px 20px 30px; color: #666666; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 400; line-height: 25px;">
+<p style="margin: 0;">In ${userDaysBefore} Tagen ${userData.games.length === 1 ? 'steht ein Spiel' : 'stehen ' + userData.games.length + ' Spiele'} deiner Teams an! Jetzt ist der perfekte Zeitpunkt, um eine mitreissende Spielankündigung zu erstellen und deine Fans zu mobilisieren.</p>
+</td>
+</tr>
+${gamesListHtml}
+</table>
+</td>
+</tr>
+<tr>
+<td bgcolor="#f4f4f4" align="center" style="padding: 0px 10px 0px 10px;">
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
+<tr>
+<td bgcolor="#f4f4f4" align="left" style="padding: 30px 30px 30px 30px; color: #666666; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 400; line-height: 18px;">
+<p style="margin: 0 0 10px 0;">KANVA - wo Emotionen zu Stories werden.</p>
+<p style="margin: 0; font-size: 12px; color: #999999;">Du kannst deine E-Mail-Einstellungen jederzeit in deinem <a href="https://getkanva.io/profile" style="color: #015afe; text-decoration: none;">Profil</a> anpassen.</p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
 </body>
-</html>
-      `
+</html>`
       
       try {
         const userDaysBefore = daysBeforeMap.get(profiles.find(p => p.email === email)?.id || '') || 3
@@ -302,7 +276,7 @@ Deno.serve(async (req) => {
           from: 'KANVA <info@my-club.app>',
           to: email,
           subject: `📅 ${userData.games.length === 1 ? 'Dein Spiel' : userData.games.length + ' Spiele'} in ${userDaysBefore} Tagen - Erstelle jetzt die Ankündigung!`,
-          content: 'auto',
+          content: 'text/html',
           html: emailHtml,
         })
         
