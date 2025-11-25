@@ -169,31 +169,23 @@ Deno.serve(async (req) => {
         },
       })
       
-      const gamesListHtml = userData.games.map(game => `
-        <tr>
-          <td bgcolor="#ffffff" align="left"
-            style="padding: 15px 30px; border-bottom: 1px solid #f4f4f4; color: #111111; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; line-height: 22px;">
-            <p style="margin: 0;">${game.home_team} vs ${game.away_team}</p>
-            <p style="margin: 5px 0 0 0; font-size: 14px; font-weight: 400; color: #666666;">
-              ${game.date} um ${game.time}
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td bgcolor="#ffffff" align="center" style="padding: 10px 30px 20px 30px;">
-            <table border="0" cellspacing="0" cellpadding="0">
-              <tr>
-                <td align="center" style="border-radius: 25px;" bgcolor="#015afe">
-                  <a href="https://getkanva.io/studio/${game.sport}/${game.club_id}/${game.team_id}/${game.id}?template=${KANVA_TEMPLATE_ID}" target="_blank"
-                    style="font-size: 16px; font-family: 'Maven Pro', Arial, sans-serif; color: #FFFFFF; text-decoration: none; padding: 12px 20px; border-radius: 25px; border: 1px solid #015afe; display: inline-block;">
-                    Post erstellen
-                  </a>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      `).join('')
+      const gamesListHtml = userData.games.map(game => `<tr>
+<td bgcolor="#ffffff" align="left" style="padding: 15px 30px; border-bottom: 1px solid #f4f4f4; color: #111111; font-family: 'Maven Pro', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; line-height: 22px;">
+<p style="margin: 0;">${game.home_team} vs ${game.away_team}</p>
+<p style="margin: 5px 0 0 0; font-size: 14px; font-weight: 400; color: #666666;">${game.date} um ${game.time}</p>
+</td>
+</tr>
+<tr>
+<td bgcolor="#ffffff" align="center" style="padding: 10px 30px 20px 30px;">
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td align="center" style="border-radius: 25px;" bgcolor="#015afe">
+<a href="https://getkanva.io/studio/${game.sport}/${game.club_id}/${game.team_id}/${game.id}?template=${KANVA_TEMPLATE_ID}" target="_blank" style="font-size: 16px; font-family: 'Maven Pro', Arial, sans-serif; color: #FFFFFF; text-decoration: none; padding: 12px 20px; border-radius: 25px; border: 1px solid #015afe; display: inline-block;">Post erstellen</a>
+</td>
+</tr>
+</table>
+</td>
+</tr>`).join('')
       
       const emailHtml = `<!DOCTYPE html>
 <html>
@@ -271,7 +263,7 @@ ${gamesListHtml}
           from: 'KANVA <info@my-club.app>',
           to: email,
           subject: `🔥 ${userData.games.length === 1 ? 'Dein Spiel heute' : userData.games.length + ' Spiele heute'} - Erstelle jetzt deinen Post!`,
-          content: 'auto',
+          content: 'text/html',
           html: emailHtml,
         })
         
