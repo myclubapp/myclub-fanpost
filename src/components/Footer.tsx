@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Github, Linkedin } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Github, Linkedin, Leaf } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const Footer = () => {
@@ -120,18 +120,30 @@ const Footer = () => {
         </div>
 
         <div className="border-t pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-muted-foreground text-sm mb-4 md:mb-0">
-              © {new Date().getFullYear()} KANVA.{' '}
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex flex-col items-center md:items-start gap-2">
+              <p className="text-muted-foreground text-sm">
+                © {new Date().getFullYear()} KANVA.{' '}
+                <a
+                  href="https://creativecommons.org/licenses/by-sa/4.0/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-primary transition-colors underline"
+                >
+                  {t.footer.allRightsReserved}
+                </a>
+              </p>
               <a
-                href="https://creativecommons.org/licenses/by-sa/4.0/"
+                href="https://www.websitecarbon.com/website/getkanva-io/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-primary transition-colors underline"
+                className="text-muted-foreground hover:text-primary transition-colors text-xs flex items-center gap-1.5"
               >
-                {t.footer.allRightsReserved}
+                <Leaf className="h-3.5 w-3.5" />
+                <span className="font-mono">0.17g CO₂</span>
+                <span>pro Besuch</span>
               </a>
-            </p>
+            </div>
             <div className="flex flex-wrap justify-center gap-2 md:gap-6 text-sm">
               <Link to="/impressum" className="text-muted-foreground hover:text-primary transition-colors">{t.footer.imprint}</Link>
               <span className="text-muted-foreground hidden md:inline">|</span>
