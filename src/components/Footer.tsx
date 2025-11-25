@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Github, Linkedin } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Github, Linkedin, Leaf } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const Footer = () => {
@@ -137,10 +137,11 @@ const Footer = () => {
                 href="https://www.websitecarbon.com/website/getkanva-io/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors text-xs flex items-center gap-1"
+                className="text-muted-foreground hover:text-primary transition-colors text-xs flex items-center gap-1.5"
               >
+                <Leaf className="h-3.5 w-3.5" />
                 <span className="font-mono">0.17g CO₂</span>
-                <span>pro Seitenaufruf</span>
+                <span>pro Besuch</span>
               </a>
             </div>
             <div className="flex flex-wrap justify-center gap-2 md:gap-6 text-sm">
