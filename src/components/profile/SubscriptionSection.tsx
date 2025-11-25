@@ -34,11 +34,11 @@ export function SubscriptionSection() {
       
       // Show toast to inform user
       toast({
-        title: "Abo vorausgewählt",
-        description: `Das ${savedPlan === 'amateur' ? 'Amateur' : 'Pro'}-Abo wurde für dich vorausgewählt.`,
+        title: t.profile.subscription.preselectedPlan,
+        description: savedPlan === 'amateur' ? t.profile.subscription.preselectedAmateur : t.profile.subscription.preselectedPro,
       });
     }
-  }, [toast]);
+  }, [toast, t]);
 
   useEffect(() => {
     const success = searchParams.get('success');
@@ -46,20 +46,20 @@ export function SubscriptionSection() {
 
     if (success) {
       toast({
-        title: "Abonnement erfolgreich!",
-        description: "Ihr Abonnement wurde erfolgreich aktiviert.",
+        title: t.profile.subscription.subscriptionSuccess,
+        description: t.profile.subscription.subscriptionSuccessDescription,
       });
       checkSubscription();
       setSearchParams({});
     } else if (canceled) {
       toast({
-        title: "Abonnement abgebrochen",
-        description: "Der Kaufvorgang wurde abgebrochen.",
+        title: t.profile.subscription.subscriptionCanceled,
+        description: t.profile.subscription.subscriptionCanceledDescription,
         variant: "destructive",
       });
       setSearchParams({});
     }
-  }, [searchParams, setSearchParams, checkSubscription, toast]);
+  }, [searchParams, setSearchParams, checkSubscription, toast, t]);
 
   const handleUpgrade = async (planId: 'amateur' | 'pro' | 'premium') => {
     setLoading(true);
@@ -70,15 +70,15 @@ export function SubscriptionSection() {
       if (url) {
         window.open(url, '_blank');
         toast({
-          title: "Checkout geöffnet",
-          description: "Schließe den Kaufvorgang ab, um dein Abonnement zu aktivieren.",
+          title: t.profile.subscription.checkoutOpened,
+          description: t.profile.subscription.checkoutDescription,
         });
       } else {
-        throw new Error('Checkout URL konnte nicht erstellt werden');
+        throw new Error(t.profile.subscription.checkoutError);
       }
     } catch (error: any) {
       toast({
-        title: "Fehler",
+        title: t.messages.error,
         description: error.message,
         variant: "destructive",
       });
@@ -94,11 +94,11 @@ export function SubscriptionSection() {
       if (url) {
         window.open(url, '_blank');
       } else {
-        throw new Error('Customer Portal URL konnte nicht erstellt werden');
+        throw new Error(t.profile.subscription.portalError);
       }
     } catch (error: any) {
       toast({
-        title: "Fehler",
+        title: t.messages.error,
         description: error.message,
         variant: "destructive",
       });
@@ -139,15 +139,15 @@ export function SubscriptionSection() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 {isSubscribed ? <Crown className="h-5 w-5 text-yellow-500" /> : <User className="h-5 w-5" />}
-                {tier === 'free' && 'Free Account'}
-                {tier === 'amateur' && 'Amateur Account'}
-                {tier === 'pro' && 'Pro Account'}
-                {tier === 'premium' && 'Premium Account'}
+                {tier === 'free' && t.profile.subscription.freeAccount}
+                {tier === 'amateur' && t.profile.subscription.amateurAccount}
+                {tier === 'pro' && t.profile.subscription.proAccount}
+                {tier === 'premium' && t.profile.subscription.premiumAccount}
               </CardTitle>
               <CardDescription>
-                {isSubscribed 
-                  ? `Aktiv bis ${subscription?.subscription_end ? new Date(subscription.subscription_end).toLocaleDateString('de-CH') : 'N/A'}`
-                  : 'Kein aktives Abonnement'
+                {isSubscribed
+                  ? `${t.profile.subscription.activeUntil} ${subscription?.subscription_end ? new Date(subscription.subscription_end).toLocaleDateString('de-CH') : 'N/A'}`
+                  : t.profile.subscription.noActiveSubscription
                 }
               </CardDescription>
             </div>
@@ -160,7 +160,7 @@ export function SubscriptionSection() {
           <CardContent>
             <Button onClick={handleManageSubscription} disabled={loading} variant="outline" className="w-full">
               {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Abonnement verwalten
+              {t.profile.subscription.manageSubscription}
             </Button>
           </CardContent>
         )}
@@ -170,8 +170,8 @@ export function SubscriptionSection() {
       {!subscriptionLoading && (
         <Card>
           <CardHeader>
-            <CardTitle>Zahlungsintervall</CardTitle>
-            <CardDescription>Wähle, wie oft du zahlen möchtest</CardDescription>
+            <CardTitle>{t.profile.subscription.billingInterval}</CardTitle>
+            <CardDescription>{t.profile.subscription.billingIntervalDescription}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-center gap-3 sm:gap-4">
@@ -239,7 +239,7 @@ export function SubscriptionSection() {
                 <div className="space-y-2 sm:space-y-3">
                   <div className="flex items-center justify-between">
                     {plan.isCurrent && (
-                      <Badge variant="default" className="mb-2">Aktuell</Badge>
+                      <Badge variant="default" className="mb-2">{t.profile.subscription.current}</Badge>
                     )}
                     {plan.popular && !plan.isCurrent && (
                       <span className="bg-gradient-to-r from-[#2979FF] to-[#FF4E56] text-white text-xs font-bold px-2.5 sm:px-3 py-1 rounded-full mb-2">

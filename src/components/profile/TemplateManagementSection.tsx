@@ -8,6 +8,7 @@ import { useSubscription, SUBSCRIPTION_PRICES } from '@/hooks/useSubscription';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Loader2, Plus, Lock, FileText, Trash2, Edit, Copy } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -23,6 +24,7 @@ export function TemplateManagementSection() {
   const { tier, createCheckout } = useSubscription();
   const { canUseCustomTemplates, maxCustomTemplates, loading: limitsLoading } = useSubscriptionLimits();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,7 +51,7 @@ export function TemplateManagementSection() {
       setTemplates(data || []);
     } catch (error: any) {
       toast({
-        title: 'Fehler',
+        title: t.messages.error,
         description: error.message,
         variant: 'destructive',
       });
@@ -68,14 +70,14 @@ export function TemplateManagementSection() {
       if (error) throw error;
 
       toast({
-        title: 'Erfolg',
-        description: 'Vorlage gelöscht',
+        title: t.profile.templates.deleteSuccess,
+        description: t.profile.templates.deleteSuccessDescription,
       });
 
       loadTemplates();
     } catch (error: any) {
       toast({
-        title: 'Fehler',
+        title: t.messages.error,
         description: error.message,
         variant: 'destructive',
       });
@@ -86,8 +88,8 @@ export function TemplateManagementSection() {
     if (!user) return;
     if (templates.length >= maxCustomTemplates) {
       toast({
-        title: 'Limit erreicht',
-        description: 'Du hast die maximale Anzahl an Vorlagen erreicht.',
+        title: t.profile.templates.limitReached,
+        description: t.profile.templates.limitReachedDescription,
         variant: 'destructive',
       });
       return;
@@ -109,14 +111,14 @@ export function TemplateManagementSection() {
       if (error) throw error;
 
       toast({
-        title: 'Vorlage kopiert',
-        description: 'Die Vorlage wurde erfolgreich kopiert.',
+        title: t.profile.templates.copySuccess,
+        description: t.profile.templates.copySuccessDescription,
       });
 
       if (data) setTemplates([data as Template, ...templates]);
     } catch (error: any) {
       toast({
-        title: 'Fehler',
+        title: t.messages.error,
         description: error.message,
         variant: 'destructive',
       });
@@ -143,21 +145,21 @@ export function TemplateManagementSection() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Lock className="h-5 w-5 text-muted-foreground" />
-            <CardTitle>Vorlagen-Verwaltung</CardTitle>
+            <CardTitle>{t.profile.templates.locked}</CardTitle>
           </div>
           <CardDescription>
-            Diese Funktion ist nur für Amateur- ,Pro- und Premium-Abonnenten verfügbar
+            {t.profile.templates.lockedDescription}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert>
             <AlertDescription>
-              Upgrade auf Amateur, Pro oder Premium, um eigene Vorlagen zu erstellen und zu verwalten.
+              {t.profile.templates.upgradeMessage}
             </AlertDescription>
           </Alert>
           <Button onClick={handleUpgrade} disabled={upgrading} className="w-full">
             {upgrading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            Upgraden
+            {t.profile.templates.upgrade}
           </Button>
         </CardContent>
       </Card>
@@ -169,9 +171,9 @@ export function TemplateManagementSection() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Vorlagen-Verwaltung</CardTitle>
+            <CardTitle>{t.profile.templates.title}</CardTitle>
             <CardDescription>
-              Erstelle und verwalte deine eigenen Vorlagen
+              {t.profile.templates.description}
             </CardDescription>
           </div>
           <Badge variant="outline">
@@ -186,7 +188,7 @@ export function TemplateManagementSection() {
             className="w-full gap-2"
           >
             <Plus className="h-4 w-4" />
-            Neue Vorlage erstellen
+            {t.profile.templates.createNew}
           </Button>
         )}
 
@@ -197,7 +199,7 @@ export function TemplateManagementSection() {
         ) : templates.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p>Noch keine Vorlagen erstellt</p>
+            <p>{t.profile.templates.noTemplates}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -206,7 +208,7 @@ export function TemplateManagementSection() {
                 <div className="flex-1">
                   <div className="font-medium">{template.name}</div>
                   <div className="text-sm text-muted-foreground">
-                    {template.supported_games} Spiel{template.supported_games !== 1 ? 'e' : ''}
+                    {template.supported_games} {t.profile.templates.games.replace('{plural}', template.supported_games !== 1 ? 's' : '')}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -214,7 +216,7 @@ export function TemplateManagementSection() {
                     variant="ghost"
                     size="sm"
                     onClick={() => navigate(`/profile/templates/edit/${template.id}`)}
-                    title="Vorlage bearbeiten"
+                    title={t.profile.templates.edit}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
@@ -222,7 +224,7 @@ export function TemplateManagementSection() {
                     variant="ghost"
                     size="sm"
                     onClick={() => copyTemplate(template)}
-                    title="Vorlage kopieren"
+                    title={t.profile.templates.copy}
                   >
                     <Copy className="h-4 w-4" />
                   </Button>
@@ -230,7 +232,7 @@ export function TemplateManagementSection() {
                     variant="ghost"
                     size="sm"
                     onClick={() => deleteTemplate(template.id)}
-                    title="Vorlage löschen"
+                    title={t.profile.templates.delete}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

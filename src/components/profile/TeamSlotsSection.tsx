@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Loader2, Plus, Trash2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -24,6 +25,7 @@ export function TeamSlotsSection() {
   const navigate = useNavigate();
   const { maxTeams, loading: limitsLoading } = useSubscriptionLimits();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [teamSlots, setTeamSlots] = useState<TeamSlot[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,7 +50,7 @@ export function TeamSlotsSection() {
       setTeamSlots(data || []);
     } catch (error: any) {
       toast({
-        title: 'Fehler',
+        title: t.messages.error,
         description: error.message,
         variant: 'destructive',
       });
@@ -65,9 +67,10 @@ export function TeamSlotsSection() {
     
     if (daysSinceChange < 7) {
       const daysRemaining = 7 - daysSinceChange;
+      const plural = daysRemaining !== 1 ? 's' : '';
       toast({
-        title: 'Löschen nicht möglich',
-        description: `Team-Slots können nur 1x pro Woche geändert werden. Du kannst diesen Slot in ${daysRemaining} Tag${daysRemaining !== 1 ? 'en' : ''} löschen.`,
+        title: t.profile.teams.deleteNotPossible,
+        description: t.profile.teams.deleteNotPossibleDescription.replace('{days}', daysRemaining.toString()).replace('{plural}', plural),
         variant: 'destructive',
       });
       return;
@@ -82,14 +85,14 @@ export function TeamSlotsSection() {
       if (error) throw error;
 
       toast({
-        title: 'Erfolg',
-        description: 'Team-Slot gelöscht',
+        title: t.profile.teams.deleteSuccess,
+        description: t.profile.teams.deleteSuccessDescription,
       });
 
       loadTeamSlots();
     } catch (error: any) {
       toast({
-        title: 'Fehler',
+        title: t.messages.error,
         description: error.message,
         variant: 'destructive',
       });
@@ -142,13 +145,13 @@ export function TeamSlotsSection() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Meine Team-Slots</CardTitle>
+            <CardTitle>{t.profile.teams.title}</CardTitle>
             <CardDescription>
-              Du kannst bis zu {maxTeams} Team{maxTeams !== 1 ? 's' : ''} verwalten
+              {t.profile.teams.description.replace('{count}', maxTeams.toString()).replace('{plural}', maxTeams !== 1 ? 's' : '')}
             </CardDescription>
           </div>
           <Badge variant="outline">
-            {teamSlots.length} / {maxTeams} verwendet
+            {teamSlots.length} / {maxTeams} {t.profile.teams.used}
           </Badge>
         </div>
       </CardHeader>
@@ -157,14 +160,14 @@ export function TeamSlotsSection() {
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-            Du hast das Maximum von 1 Team‑Slot erreicht. Um für weitere Teams zu exportieren, upgrade dein Abo oder lösche einen bestehenden Slot in deinem Profil.
+              {t.profile.teams.limitReached}
             </AlertDescription>
           </Alert>
         )}
 
         {teamSlots.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            <p>Keine Teams gespeichert. Teams werden automatisch hinzugefügt, wenn du sie im Studio verwendest.</p>
+            <p>{t.profile.teams.noTeams}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -177,11 +180,11 @@ export function TeamSlotsSection() {
                   className="flex items-center justify-between p-4 border rounded-lg"
                 >
                   <div className="flex-1">
-                    <div className="font-medium">{slot.team_name || 'Unbekanntes Team'}</div>
+                    <div className="font-medium">{slot.team_name || t.profile.teams.unknownTeam}</div>
                     <div className="text-sm text-muted-foreground">
                       {slot.sport && <span className="capitalize">{slot.sport}</span>}
                       {days > 0 && (
-                        <span className="ml-2">• Änderbar in {days} Tag{days !== 1 ? 'en' : ''}</span>
+                        <span className="ml-2">• {t.profile.teams.changableIn.replace('{days}', days.toString()).replace('{plural}', days !== 1 ? 's' : '')}</span>
                       )}
                     </div>
                   </div>
@@ -191,14 +194,14 @@ export function TeamSlotsSection() {
                       size="sm"
                       onClick={() => handleTeamClick(slot)}
                     >
-                      Zum Studio
+                      {t.profile.teams.toStudio}
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => deleteTeamSlot(slot.id, slot.last_changed_at)}
                       disabled={!canDelete}
-                      title={!canDelete ? `Löschbar in ${days} Tag${days !== 1 ? 'en' : ''}` : 'Team-Slot löschen'}
+                      title={!canDelete ? t.profile.teams.deleteableIn.replace('{days}', days.toString()).replace('{plural}', days !== 1 ? 's' : '') : t.profile.teams.deleteSlotTitle}
                     >
                       <Trash2 className={`h-4 w-4 ${!canDelete ? 'opacity-50' : ''}`} />
                     </Button>

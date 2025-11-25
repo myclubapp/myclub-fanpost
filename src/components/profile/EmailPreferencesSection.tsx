@@ -4,6 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Loader2, Mail } from "lucide-react";
 
 export const EmailPreferencesSection = () => {
@@ -13,6 +14,7 @@ export const EmailPreferencesSection = () => {
   const [gameAnnouncementReminder, setGameAnnouncementReminder] = useState(true);
   const [announcementDaysBefore, setAnnouncementDaysBefore] = useState(3);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   useEffect(() => {
     loadPreferences();
@@ -39,8 +41,8 @@ export const EmailPreferencesSection = () => {
     } catch (error) {
       console.error('Error loading email preferences:', error);
       toast({
-        title: "Fehler",
-        description: "E-Mail-Einstellungen konnten nicht geladen werden",
+        title: t.messages.error,
+        description: t.profile.emailPreferences.loadError,
         variant: "destructive",
       });
     } finally {
@@ -62,14 +64,14 @@ export const EmailPreferencesSection = () => {
       if (error) throw error;
 
       toast({
-        title: "Gespeichert",
-        description: "E-Mail-Einstellungen wurden aktualisiert",
+        title: t.profile.emailPreferences.saved,
+        description: t.profile.emailPreferences.savedDescription,
       });
     } catch (error) {
       console.error('Error updating email preference:', error);
       toast({
-        title: "Fehler",
-        description: "Einstellungen konnten nicht gespeichert werden",
+        title: t.messages.error,
+        description: t.profile.emailPreferences.saveError,
         variant: "destructive",
       });
       // Revert the change
@@ -102,20 +104,20 @@ export const EmailPreferencesSection = () => {
       <CardHeader>
         <div className="flex items-center gap-2">
           <Mail className="h-5 w-5 text-primary" />
-          <CardTitle>E-Mail-Benachrichtigungen</CardTitle>
+          <CardTitle>{t.profile.emailPreferences.title}</CardTitle>
         </div>
         <CardDescription>
-          Verwalte deine E-Mail-Erinnerungen für Spiele
+          {t.profile.emailPreferences.description}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex items-center justify-between space-x-4 rounded-lg border border-border p-4 bg-muted/30">
           <div className="flex-1 space-y-1">
             <Label htmlFor="game-day-reminder" className="text-sm font-medium cursor-pointer">
-              Spieltag-Reminder
+              {t.profile.emailPreferences.gameDayReminder}
             </Label>
             <p className="text-sm text-muted-foreground">
-              Erhalte am Morgen des Spieltags eine E-Mail mit allen heutigen Spielen
+              {t.profile.emailPreferences.gameDayReminderDescription}
             </p>
           </div>
           <Switch
@@ -132,10 +134,10 @@ export const EmailPreferencesSection = () => {
         <div className="flex items-center justify-between space-x-4 rounded-lg border border-border p-4 bg-muted/30">
           <div className="flex-1 space-y-1">
             <Label htmlFor="game-announcement-reminder" className="text-sm font-medium cursor-pointer">
-              Spielankündigungs-Reminder
+              {t.profile.emailPreferences.gameAnnouncementReminder}
             </Label>
             <p className="text-sm text-muted-foreground">
-              Erhalte eine Erinnerung vor dem Spiel, um eine Ankündigung zu erstellen
+              {t.profile.emailPreferences.gameAnnouncementReminderDescription}
             </p>
           </div>
           <Switch
@@ -153,10 +155,10 @@ export const EmailPreferencesSection = () => {
           <div className="flex items-center justify-between space-x-4 rounded-lg border border-border p-4 bg-muted/30 ml-4">
             <div className="flex-1 space-y-1">
               <Label htmlFor="days-before" className="text-sm font-medium cursor-pointer">
-                Tage vor dem Spiel
+                {t.profile.emailPreferences.daysBefore}
               </Label>
               <p className="text-sm text-muted-foreground">
-                Wie viele Tage vor dem Spiel möchtest du erinnert werden?
+                {t.profile.emailPreferences.daysBeforeDescription}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -176,13 +178,13 @@ export const EmailPreferencesSection = () => {
                 disabled={updating}
                 className="w-16 px-3 py-2 text-center border border-border rounded-md bg-background"
               />
-              <span className="text-sm text-muted-foreground">Tage</span>
+              <span className="text-sm text-muted-foreground">{t.profile.emailPreferences.days}</span>
             </div>
           </div>
         )}
 
         <div className="text-xs text-muted-foreground pt-2 border-t border-border">
-          <p>💡 Tipp: Du kannst diese Einstellungen jederzeit ändern. Die E-Mails werden nur versendet, wenn du mindestens ein Team-Slot gespeichert hast.</p>
+          <p>💡 {t.profile.emailPreferences.tip}</p>
         </div>
       </CardContent>
     </Card>

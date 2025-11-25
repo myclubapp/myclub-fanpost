@@ -77,37 +77,37 @@ export const SettingsSection = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Einstellungen</CardTitle>
+        <CardTitle>{t.profile.settings.title}</CardTitle>
         <CardDescription>
-          Passe die Darstellung an deine Präferenzen an
+          {t.profile.settings.description}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-3">
-          <Label className="text-base font-semibold">Darstellung</Label>
+          <Label className="text-base font-semibold">{t.profile.settings.appearance}</Label>
           <p className="text-sm text-muted-foreground">
-            Wähle, wie die Anwendung angezeigt werden soll.
+            {t.profile.settings.appearanceDescription}
           </p>
           <RadioGroup value={theme} onValueChange={(value) => setTheme(value as "light" | "dark" | "system")}>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="light" id="light" />
               <Label htmlFor="light" className="flex items-center gap-2 cursor-pointer font-normal">
                 <Sun className="h-4 w-4" />
-                Hell
+                {t.profile.settings.light}
               </Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="dark" id="dark" />
               <Label htmlFor="dark" className="flex items-center gap-2 cursor-pointer font-normal">
                 <Moon className="h-4 w-4" />
-                Dunkel
+                {t.profile.settings.dark}
               </Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="system" id="system" />
               <Label htmlFor="system" className="flex items-center gap-2 cursor-pointer font-normal">
                 <Monitor className="h-4 w-4" />
-                System
+                {t.profile.settings.system}
               </Label>
             </div>
           </RadioGroup>
@@ -116,19 +116,19 @@ export const SettingsSection = () => {
         <div className="space-y-3 border-t pt-6">
           <Label className="text-base font-semibold flex items-center gap-2">
             <Instagram className="h-4 w-4" />
-            Instagram Integration
+            {t.profile.settings.instagram}
           </Label>
           <p className="text-sm text-muted-foreground">
-            Verknüpfe deinen Instagram-Account für schnelles Teilen.
+            {t.profile.settings.instagramDescription}
           </p>
           <div className="flex gap-2">
             <Input
-              placeholder="Benutzername (ohne @)"
+              placeholder={t.profile.settings.usernamePlaceholder}
               value={instagramUsername}
               onChange={(e) => setInstagramUsername(e.target.value)}
             />
             <Button onClick={handleSaveInstagram} disabled={saving}>
-              {saving ? 'Speichern...' : 'Speichern'}
+              {saving ? t.profile.settings.saving : t.profile.settings.save}
             </Button>
           </div>
         </div>
