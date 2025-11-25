@@ -3,21 +3,23 @@ import { NavLink } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useSubscription } from "@/hooks/useSubscription";
-
-const menuItems = [
-  { title: "Profil", url: "/profile", icon: User },
-  { title: "Abonnement", url: "/profile/subscription", icon: Crown },
-  { title: "Meine Teams", url: "/profile/teams", icon: Users },
-  { title: "E-Mail-Einstellungen", url: "/profile/email-preferences", icon: Mail },
-  { title: "Vorlagen", url: "/profile/templates", icon: FileText },
-  { title: "Logos und Bilder", url: "/profile/logos", icon: Image },
-  { title: "Hintergrundbilder", url: "/profile/backgrounds", icon: ImageIcon },
-  { title: "Einstellungen", url: "/profile/settings", icon: Settings },
-  { title: "Account löschen", url: "/profile/delete", icon: Trash2 },
-];
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export function ProfileSidebar() {
   const { tier } = useSubscription();
+  const { t } = useLanguage();
+
+  const menuItems = [
+    { title: t.profile.sidebar.profile, url: "/profile", icon: User },
+    { title: t.profile.sidebar.subscription, url: "/profile/subscription", icon: Crown },
+    { title: t.profile.sidebar.teams, url: "/profile/teams", icon: Users },
+    { title: t.profile.sidebar.emailPreferences, url: "/profile/email-preferences", icon: Mail },
+    { title: t.profile.sidebar.templates, url: "/profile/templates", icon: FileText },
+    { title: t.profile.sidebar.logos, url: "/profile/logos", icon: Image },
+    { title: t.profile.sidebar.backgrounds, url: "/profile/backgrounds", icon: ImageIcon },
+    { title: t.profile.sidebar.settings, url: "/profile/settings", icon: Settings },
+    { title: t.profile.sidebar.deleteAccount, url: "/profile/delete", icon: Trash2 },
+  ];
   
   return (
     <Card className="p-4">

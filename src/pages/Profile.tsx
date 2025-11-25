@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Header } from '@/components/Header';
 import { ProfileSidebar } from '@/components/ProfileSidebar';
 import { ProfileInfo } from '@/components/profile/ProfileInfo';
@@ -19,6 +20,7 @@ import { Loader2 } from 'lucide-react';
 const Profile = () => {
   const { user, loading: authLoading } = useAuth();
   const { loading: limitsLoading } = useSubscriptionLimits();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -44,7 +46,7 @@ const Profile = () => {
       
       <div className="container mx-auto px-4 py-8 pt-24 flex-grow">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8">Mein Profil</h1>
+          <h1 className="text-3xl font-bold mb-8">{t.profile.title}</h1>
           
           <div className="grid md:grid-cols-[250px_1fr] gap-8">
             <ProfileSidebar />

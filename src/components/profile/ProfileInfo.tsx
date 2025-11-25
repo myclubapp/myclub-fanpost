@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,14 +11,15 @@ import { Loader2, Save } from 'lucide-react';
 import { z } from 'zod';
 import { Checkbox } from '@/components/ui/checkbox';
 
-const profileSchema = z.object({
-  first_name: z.string().max(100, 'Vorname zu lang').optional(),
-  last_name: z.string().max(100, 'Nachname zu lang').optional(),
-});
-
 export const ProfileInfo = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
+
+  const profileSchema = z.object({
+    first_name: z.string().max(100, t.profile.info.firstNameTooLong).optional(),
+    last_name: z.string().max(100, t.profile.info.lastNameTooLong).optional(),
+  });
   
   const [loading, setLoading] = useState(false);
   const [firstName, setFirstName] = useState('');
@@ -160,12 +162,12 @@ export const ProfileInfo = () => {
       if (authError) throw authError;
 
       toast({
-        title: "Profil aktualisiert",
-        description: "Ihre Änderungen wurden gespeichert.",
+        title: t.profile.info.profileUpdated,
+        description: t.profile.info.changesSaved,
       });
     } catch (error: any) {
       toast({
-        title: "Fehler beim Speichern",
+        title: t.profile.info.saveError,
         description: error.message,
         variant: "destructive",
       });
@@ -177,14 +179,14 @@ export const ProfileInfo = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Persönliche Informationen</CardTitle>
+        <CardTitle>{t.profile.info.title}</CardTitle>
         <CardDescription>
-          Aktualisiere deine persönlichen Daten
+          {t.profile.info.description}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">E-Mail</Label>
+          <Label htmlFor="email">{t.profile.info.email}</Label>
           <Input
             id="email"
             type="email"
@@ -193,13 +195,13 @@ export const ProfileInfo = () => {
             className="bg-muted"
           />
           <p className="text-xs text-muted-foreground">
-            Die E-Mail-Adresse kann nicht geändert werden
+            {t.profile.info.emailNote}
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="firstName">Vorname</Label>
+            <Label htmlFor="firstName">{t.profile.info.firstName}</Label>
             <Input
               id="firstName"
               value={firstName}
@@ -213,7 +215,7 @@ export const ProfileInfo = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="lastName">Nachname</Label>
+            <Label htmlFor="lastName">{t.profile.info.lastName}</Label>
             <Input
               id="lastName"
               value={lastName}
@@ -229,46 +231,46 @@ export const ProfileInfo = () => {
 
         <div className="space-y-4 pt-4 border-t">
           <div className="space-y-3">
-            <Label className="text-base font-semibold">Studio-Einstellungen</Label>
+            <Label className="text-base font-semibold">{t.profile.info.studioSettings}</Label>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="remember-selection" 
+              <Checkbox
+                id="remember-selection"
                 checked={rememberLastSelection}
                 onCheckedChange={(checked) => setRememberLastSelection(checked as boolean)}
               />
               <Label htmlFor="remember-selection" className="text-sm cursor-pointer">
-                Letzte Auswahl merken
+                {t.profile.info.rememberLastSelection}
               </Label>
             </div>
             <p className="text-xs text-muted-foreground">
-              Wenn aktiviert, wird Ihre letzte Club- und Teamauswahl im Studio gespeichert.
+              {t.profile.info.rememberNote}
             </p>
-            
+
             {rememberLastSelection && (lastSport || lastClubName || lastTeamName) && (
               <div className="mt-4 p-3 bg-muted/50 rounded-lg space-y-2">
-                <p className="text-sm font-medium">Gespeicherte Auswahl:</p>
+                <p className="text-sm font-medium">{t.profile.info.savedSelection}</p>
                 {loadingLastSelection ? (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="h-3 w-3 animate-spin" />
-                    Lade...
+                    {t.profile.info.loading}
                   </div>
                 ) : (
                   <div className="space-y-1 text-sm">
                     {lastSport && (
                       <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground">Sportart:</span>
+                        <span className="text-muted-foreground">{t.profile.info.sport}</span>
                         <span className="font-medium">{lastSport}</span>
                       </div>
                     )}
                     {lastClubName && (
                       <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground">Club:</span>
+                        <span className="text-muted-foreground">{t.profile.info.club}</span>
                         <span className="font-medium">{lastClubName}</span>
                       </div>
                     )}
                     {lastTeamName && (
                       <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground">Team:</span>
+                        <span className="text-muted-foreground">{t.profile.info.team}</span>
                         <span className="font-medium">{lastTeamName}</span>
                       </div>
                     )}
@@ -286,7 +288,7 @@ export const ProfileInfo = () => {
             ) : (
               <Save className="h-4 w-4" />
             )}
-            Profil speichern
+            {t.profile.info.saveProfile}
           </Button>
         </div>
       </CardContent>
