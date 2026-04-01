@@ -107,7 +107,8 @@ const Index = () => {
     };
 
     loadLastSelection();
-  }, [user, sport, clubId, teamId, loadedLastSelection, navigate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, sport, clubId, teamId, loadedLastSelection]);
 
   // Save last selection to profile when it changes
   useEffect(() => {
@@ -218,30 +219,16 @@ const Index = () => {
     fetchTeamName();
   }, [selectedTeamId, selectedTeamName, selectedSport, selectedClubId]);
 
+  // Sync URL params to state
   useEffect(() => {
-    if (sport && sport !== selectedSport) {
-      setSelectedSport(sport);
-    }
-  }, [sport]);
-
-  useEffect(() => {
-    if (clubId && clubId !== selectedClubId) {
-      setSelectedClubId(clubId);
-    }
-  }, [clubId]);
-
-  useEffect(() => {
-    if (teamId && teamId !== selectedTeamId) {
-      setSelectedTeamId(teamId);
-    }
-  }, [teamId]);
-
-  useEffect(() => {
+    if (sport && sport !== selectedSport) setSelectedSport(sport);
+    if (clubId && clubId !== selectedClubId) setSelectedClubId(clubId);
+    if (teamId && teamId !== selectedTeamId) setSelectedTeamId(teamId);
     if (gameId) {
       const gameIdsFromUrl = gameId.split(',').map(id => id.trim()).filter(id => id);
       setSelectedGameIds(gameIdsFromUrl);
     }
-  }, [gameId]);
+  }, [sport, clubId, teamId, gameId]);
 
   // Ensure volleyball and handball have gamesData available even when navigating directly with a gameId
   useEffect(() => {

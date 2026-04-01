@@ -1,3 +1,4 @@
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
@@ -5,9 +6,11 @@ import { ThemeProvider } from "./components/theme-provider";
 import { LanguageProvider } from "./contexts/LanguageContext";
 
 createRoot(document.getElementById("root")!).render(
-  <ThemeProvider defaultTheme="system" storageKey="ui-theme">
-    <LanguageProvider>
-      <App />
-    </LanguageProvider>
-  </ThemeProvider>
+  <StrictMode>
+    <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+      <LanguageProvider>
+        <App />
+      </LanguageProvider>
+    </ThemeProvider>
+  </StrictMode>
 );

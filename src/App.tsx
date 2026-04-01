@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,17 +6,18 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { TemplateRedirect } from "@/components/TemplateRedirect";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import Profile from "./pages/Profile";
-import TemplateEditor from "./pages/TemplateEditor";
-import Studio from "./pages/Studio";
-import Impressum from "./pages/Impressum";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import PrivacyPolicyDe from "./pages/PrivacyPolicyDe";
-import TermsAndConditions from "./pages/TermsAndConditions";
-import TermsAndConditionsDe from "./pages/TermsAndConditionsDe";
-import NotFound from "./pages/NotFound";
+
+const Index = lazy(() => import("./pages/Index"));
+const Auth = lazy(() => import("./pages/Auth"));
+const Profile = lazy(() => import("./pages/Profile"));
+const TemplateEditor = lazy(() => import("./pages/TemplateEditor"));
+const Studio = lazy(() => import("./pages/Studio"));
+const Impressum = lazy(() => import("./pages/Impressum"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const PrivacyPolicyDe = lazy(() => import("./pages/PrivacyPolicyDe"));
+const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
+const TermsAndConditionsDe = lazy(() => import("./pages/TermsAndConditionsDe"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
@@ -26,6 +28,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <Suspense fallback={<div className="flex items-center justify-center min-h-screen" />}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
@@ -50,6 +53,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

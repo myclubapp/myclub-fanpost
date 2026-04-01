@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Clock, ChevronRight, Check } from "lucide-react";
@@ -36,7 +36,7 @@ const SPORT_API_URLS: Record<SportType, (teamId: string, clubId?: string) => str
   handball: (teamId, clubId) => `https://europe-west6-myclubmanagement.cloudfunctions.net/api/swisshandball?query=%7B%0A%20%20games(teamId%3A%20%22${teamId}%22%2C%20clubId%3A%20%22${clubId}%22)%20%7B%0A%20%20%20%20id%0A%20%20%20%20teamHome%0A%20%20%20%20teamAway%0A%20%20%20%20teamHomeLogo%0A%20%20%20%20teamAwayLogo%0A%20%20%20%20date%0A%20%20%20%20time%0A%20%20%20%20result%0A%20%20%20%20resultDetail%0A%20%20%7D%0A%7D%0A`
 };
 
-export const GameList = ({ sportType, teamId, clubId, onGameSelect, initialSelectedGameIds = [] }: GameListProps) => {
+export const GameList = memo(({ sportType, teamId, clubId, onGameSelect, initialSelectedGameIds = [] }: GameListProps) => {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedGameIds, setSelectedGameIds] = useState<string[]>(initialSelectedGameIds);
@@ -320,4 +320,4 @@ export const GameList = ({ sportType, teamId, clubId, onGameSelect, initialSelec
       )}
     </>
   );
-};
+});
