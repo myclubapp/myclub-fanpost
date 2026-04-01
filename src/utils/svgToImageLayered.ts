@@ -124,6 +124,7 @@ const blobToDataUrl = (blob: Blob): Promise<string> => {
  */
 const fetchImageAsDataUrl = async (url: string): Promise<string> => {
   const proxyBase = `https://rgufivgtyonitgjlozog.functions.supabase.co/image-proxy?url=`;
+  const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJndWZpdmd0eW9uaXRnamxvem9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4NjM2ODMsImV4cCI6MjA3NTQzOTY4M30.ppMKqVnBQUfeHrHSF30faERdeWwALbdoDs1BAjGR6-w';
 
   try {
     const response = await fetch(url, { mode: 'cors' });
@@ -135,7 +136,12 @@ const fetchImageAsDataUrl = async (url: string): Promise<string> => {
 
     try {
       const proxyUrl = proxyBase + encodeURIComponent(url);
-      const response = await fetch(proxyUrl, { mode: 'cors' });
+      const response = await fetch(proxyUrl, {
+        mode: 'cors',
+        headers: {
+          'Authorization': `Bearer ${anonKey}`,
+        },
+      });
       if (!response.ok) throw new Error(`Proxy HTTP ${response.status}`);
       const blob = await response.blob();
       return await blobToDataUrl(blob);
