@@ -144,11 +144,18 @@ export const GameList = ({ sportType, teamId, clubId, onGameSelect, initialSelec
         todayGames.sort((a, b) => parseDate(a.date).getTime() - parseDate(b.date).getTime());
         futureGames.sort((a, b) => parseDate(a.date).getTime() - parseDate(b.date).getTime());
         
+        // Auto-enable past games if no upcoming/today games exist
+        const hasUpcoming = todayGames.length > 0 || futureGames.length > 0;
+        if (!hasUpcoming && pastGames.length > 0 && !showPastGames) {
+          setShowPastGames(true);
+          return; // will re-fetch with showPastGames=true
+        }
+
         // Combine: if showPastGames, include past games at the top
-        const sortedGames = showPastGames 
+        const sortedGames = showPastGames
           ? [...pastGames, ...todayGames, ...futureGames]
           : [...todayGames, ...futureGames];
-        
+
         setGames(sortedGames);
       } catch (error) {
         console.error("Error fetching games:", error);
